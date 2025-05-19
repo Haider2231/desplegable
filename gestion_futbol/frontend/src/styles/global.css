@@ -1,0 +1,253 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+/* Puedes agregar aquí tus estilos globales o dejarlo vacío por ahora */
+html, body, #root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.futbol-header-bg {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  position: relative;
+  overflow: hidden;
+}
+.futbol-header-bg::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255,255,255,0.12) 0px,
+    rgba(255,255,255,0.12) 2px,
+    transparent 2px,
+    transparent 40px
+  );
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.7;
+}
+.pretty-header-bg {
+  background: linear-gradient(120deg, #00c6fb 0%, #005bea 100%);
+  position: relative;
+  overflow: hidden;
+}
+.pretty-header-bg::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 80% 20%, #43e97b33 0%, transparent 60%),
+              radial-gradient(circle at 20% 80%, #38f9d733 0%, transparent 60%),
+              repeating-radial-gradient(circle at 50% 50%, #fff2 0 2px, transparent 2px 40px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.7;
+}
+@keyframes ball-bounce {
+  0% { transform: translateY(0);}
+  100% { transform: translateY(-10px);}
+}
+@keyframes fadeinBadge {
+  0% { opacity: 0; transform: translateY(10px) scale(0.96);}
+  100% { opacity: 0.97; transform: translateY(0) scale(1);}
+}
+.pretty-btn:hover, .pretty-btn:focus {
+  filter: brightness(1.08) drop-shadow(0 2px 12px #005bea55);
+  transform: translateY(-2px) scale(1.04);
+}
+.user-greeting-animated:hover .pretty-badge,
+.user-greeting-animated:focus .pretty-badge {
+  box-shadow: 0 8px 32px 0 #00c6fb55;
+  transform: scale(1.05);
+  background: rgba(255,255,255,0.82);
+}
+.user-greeting-animated:hover .pretty-avatar,
+.user-greeting-animated:focus .pretty-avatar {
+  transform: translateY(-50%) scale(1.13) rotate(-6deg);
+  box-shadow: 0 0 0 8px #00c6fb55, 0 0 32px 8px #005bea99;
+  background-position: 100% 50%;
+  transition: background-position 0.6s;
+}
+.pretty-avatar {
+  animation: avatar-gradient-move 6s linear infinite alternate;
+}
+@keyframes avatar-gradient-move {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+.main-footer {
+  width: 100%;
+  margin-top: auto;
+  /* El resto del estilo está en línea en el componente */
+}
+.pretty-footer-bg {
+  background: linear-gradient(90deg, #00c6fb 0%, #005bea 100%);
+}
+.football-header-bg {
+  background: linear-gradient(135deg, #388e3c 0%, #43a047 100%);
+  position: relative;
+  overflow: hidden;
+}
+.football-header-bg::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.13) 0px,
+      rgba(255,255,255,0.13) 2px,
+      transparent 2px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.10) 0px,
+      rgba(255,255,255,0.10) 2px,
+      transparent 2px,
+      transparent 40px
+    );
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.7;
+}
+.football-footer-bg {
+  background: linear-gradient(135deg, #388e3c 0%, #43a047 100%);
+  position: relative;
+  overflow: hidden;
+}
+.football-footer-bg::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.13) 0px,
+      rgba(255,255,255,0.13) 2px,
+      transparent 2px,
+      transparent 40px
+    );
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.7;
+}
+.football-home-bg {
+  background: linear-gradient(135deg, #388e3c 0%, #43a047 100%);
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fondo de cancha de fútbol realista para el home */
+.football-home-bg::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    /* Banda superior */
+    linear-gradient(to bottom, #fff 0 4px, transparent 4px 100%),
+    /* Banda inferior */
+    linear-gradient(to top, #fff 0 4px, transparent 4px 100%),
+    /* Banda izquierda */
+    linear-gradient(to right, #fff 0 4px, transparent 4px 100%),
+    /* Banda derecha */
+    linear-gradient(to left, #fff 0 4px, transparent 4px 100%),
+    /* Línea de medio campo */
+    linear-gradient(to right, transparent 49.7%, #fff 49.7%, #fff 50.3%, transparent 50.3%),
+    /* Área grande izquierda */
+    linear-gradient(to right, #fff 0 3px, transparent 3px 100%),
+    /* Área grande derecha */
+    linear-gradient(to left, #fff 0 3px, transparent 3px 100%),
+    /* Semicírculo área izquierda */
+    radial-gradient(ellipse 60px 60px at 0% 50%, transparent 0 44px, #fff 44px 48px, transparent 48px 60px),
+    /* Semicírculo área derecha */
+    radial-gradient(ellipse 60px 60px at 100% 50%, transparent 0 44px, #fff 44px 48px, transparent 48px 60px),
+    /* Esquina superior izquierda */
+    radial-gradient(circle at 0 0, transparent 0 38px, #fff 38px 44px, transparent 44px 60px),
+    /* Esquina superior derecha */
+    radial-gradient(circle at 100% 0, transparent 0 38px, #fff 38px 44px, transparent 44px 60px),
+    /* Esquina inferior izquierda */
+    radial-gradient(circle at 0 100%, transparent 0 38px, #fff 38px 44px, transparent 44px 60px),
+    /* Esquina inferior derecha */
+    radial-gradient(circle at 100% 100%, transparent 0 38px, #fff 38px 44px, transparent 44px 60px);
+  background-repeat: no-repeat;
+  background-size:
+    100% 4px,    /* superior */
+    100% 4px,    /* inferior */
+    4px 100%,    /* izquierda */
+    4px 100%,    /* derecha */
+    100% 100%,   /* medio campo */
+    80px 180px,  /* área izq */
+    80px 180px,  /* área der */
+    120px 120px, /* semicírculo izq */
+    120px 120px, /* semicírculo der */
+    90px 90px,   /* esquina sup izq */
+    90px 90px,   /* esquina sup der */
+    90px 90px,   /* esquina inf izq */
+    90px 90px;   /* esquina inf der */
+  background-position:
+    top left,        /* superior */
+    bottom left,     /* inferior */
+    top left,        /* izquierda */
+    top right,       /* derecha */
+    center,          /* medio campo */
+    left center,     /* área izq */
+    right center,    /* área der */
+    left center,     /* semicírculo izq */
+    right center,    /* semicírculo der */
+    top left,        /* esquina sup izq */
+    top right,       /* esquina sup der */
+    bottom left,     /* esquina inf izq */
+    bottom right;    /* esquina inf der */
+  opacity: 0.85;
+}
+
+/* Círculo central de la cancha */
+.football-home-bg::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 180px;
+  height: 180px;
+  transform: translate(-50%, -50%);
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: none;
+  z-index: 1;
+  opacity: 0.95;
+  box-shadow: 0 0 0 8px rgba(255,255,255,0.08);
+}
+
+/* Punto central */
+.football-home-bg .center-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 50%;
+  z-index: 2;
+  box-shadow: 0 0 8px 2px #fff, 0 0 0 8px rgba(56,142,60,0.25);
+  opacity: 0.95;
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

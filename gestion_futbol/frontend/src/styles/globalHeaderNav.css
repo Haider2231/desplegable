@@ -1,0 +1,131 @@
+:root {
+  --verde1: #4caf50;
+  --verde2: #43a047;
+  --verde3: #388e3c;
+  --verde4: #2e7d32;
+  --verde5: #1b5e20;
+  --blanco: #fff;
+  --amarillo: #ffe082;
+}
+
+/* Header animado */
+.header-futbol {
+  position: relative;
+  width: 100%;
+  padding: 2rem 0 1.5rem 0;
+  background: linear-gradient(120deg, var(--verde1), var(--verde3), var(--verde5));
+  background-size: 200% 200%;
+  animation: bg-move 6s ease-in-out infinite;
+  box-shadow: 0 4px 16px rgba(44, 62, 80, 0.15);
+  text-align: center;
+  overflow: hidden;
+}
+
+@keyframes bg-move {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.header-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 3.5rem;
+  color: var(--amarillo);
+  letter-spacing: 2px;
+  margin: 0;
+  text-shadow: 2px 2px 8px #1b5e20;
+}
+
+.header-buttons {
+  position: absolute;
+  right: 30px;
+  top: 30px;
+  display: flex;
+  gap: 1rem;
+}
+
+.head-btn {
+  font-family: 'Anton', sans-serif;
+  background: var(--blanco);
+  color: var(--verde5);
+  border: none;
+  border-radius: 6px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 2px 2px 8px #1b5e20;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.head-btn:hover {
+  background: var(--amarillo);
+  color: var(--verde4);
+  transform: scale(1.07);
+}
+
+/* Modal */
+.modal-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: var(--blanco);
+  border-radius: 10px;
+  padding: 2rem 1.5rem 1rem 1.5rem;
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.25);
+  min-width: 340px;
+  position: relative;
+}
+.close-modal-btn {
+  margin-top: 1rem;
+  background: var(--verde3);
+  color: var(--blanco);
+  border: none;
+  border-radius: 5px;
+  padding: 0.5rem 1.2rem;
+  font-size: 1rem;
+  font-family: 'Anton', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.close-modal-btn:hover {
+  background: var(--verde5);
+}
+
+/* Navbar animado */
+.navbar-futbol {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  background: linear-gradient(90deg, var(--verde5), var(--verde2), var(--verde5));
+  background-size: 300% 100%;
+  animation: navbar-move 8s linear infinite;
+  padding: 0.7rem 0;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+}
+
+@keyframes navbar-move {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.nav-btn {
+  font-family: 'Anton', sans-serif;
+  color: var(--blanco);
+  text-decoration: none;
+  font-size: 1.1rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 5px;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.nav-btn.active, .nav-btn:hover {
+  background: var(--amarillo);
+  color: var(--verde5);
+  transform: scale(1.08);
+}

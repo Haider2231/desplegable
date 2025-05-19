@@ -1,0 +1,7 @@
+{
+  "name": "fullstack-app",
+  "scripts": {
+    "build": "cd gestion_futbol/frontend && npm install && npm run build",
+    "start": "cd gestion_futbol/backend && node index.js"
+  }
+}

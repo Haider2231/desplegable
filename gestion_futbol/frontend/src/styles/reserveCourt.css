@@ -1,0 +1,104 @@
+/* Estilos modernos para la página de reservar cancha */
+.reserve-bg {
+  min-height: 100vh;
+  background: linear-gradient(120deg, #43e97b 0%, #38f9d7 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.reserve-container {
+  background: rgba(255,255,255,0.97);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
+  padding: 2.5rem 2rem 2rem 2rem;
+  min-width: 350px;
+  max-width: 700px;
+  width: 100%;
+}
+
+.reserve-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 2rem;
+  color: #0b8c3a;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.reserve-error {
+  color: #d32f2f;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.reserve-success {
+  color: #388e3c;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.reserve-empty {
+  color: #888;
+  font-size: 1.1rem;
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.reserve-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.reserve-card {
+  background: linear-gradient(120deg, #e0ffe8 0%, #e0f7fa 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(44, 62, 80, 0.10);
+  padding: 1.2rem 1.5rem;
+  min-width: 220px;
+  max-width: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+  border: 2px solid #43e97b;
+  transition: transform 0.15s;
+  position: relative;
+}
+.reserve-card:hover {
+  transform: scale(1.04);
+  border-color: #0b8c3a;
+}
+
+.reserve-card-label {
+  font-weight: 700;
+  color: #0b8c3a;
+  margin-right: 4px;
+}
+
+.reserve-btn {
+  margin-top: 0.5rem;
+  background: linear-gradient(90deg, #43e97b 0%, #0b8c3a 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  font-family: 'Anton', sans-serif;
+  font-weight: 700;
+  box-shadow: 2px 2px 12px #b2f7ef;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.reserve-btn:hover:enabled {
+  background: linear-gradient(90deg, #0b8c3a 0%, #43e97b 100%);
+  color: #fff;
+  transform: scale(1.05);
+}
+.reserve-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

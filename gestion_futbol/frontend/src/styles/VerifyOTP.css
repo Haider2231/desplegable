@@ -1,0 +1,116 @@
+.otp-form {
+  width: 100%;
+  max-width: 370px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 32px #1b5e2055;
+  padding: 2.2rem 1.5rem 2.5rem 1.5rem;
+  position: relative;
+  z-index: 2;
+  border: 2px solid #43a047;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.otp-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.otp-title {
+  font-family: 'Bebas Neue', Impact, Arial, sans-serif;
+  font-size: 2rem;
+  color: #388e3c;
+  margin-bottom: 1.2rem;
+  letter-spacing: 2px;
+}
+
+.otp-email {
+  width: 100%;
+  margin-bottom: 1.2rem;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #43a047;
+  font-size: 1.08rem;
+  color: #388e3c;
+  background: #f7fff7;
+  outline: none;
+}
+
+.otp-inp {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.otp-input {
+  width: 38px;
+  height: 48px;
+  font-size: 2rem;
+  text-align: center;
+  border-radius: 8px;
+  border: 2px solid #43a047;
+  background: #fff;
+  color: #388e3c;
+  font-family: 'Bebas Neue', Impact, Arial, sans-serif;
+  outline: none;
+  transition: border 0.2s;
+}
+.otp-input:focus {
+  border: 2.5px solid #1de982;
+  background: #e8ffe8;
+}
+
+.otp-btn {
+  width: 100%;
+  background: linear-gradient(90deg, #388e3c 0%, #43a047 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.9rem 0;
+  font-size: 1.15rem;
+  font-family: 'Bebas Neue', Impact, Arial, sans-serif;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  cursor: pointer;
+  box-shadow: 0 2px 12px #43a04733;
+  letter-spacing: 1px;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.otp-btn:hover {
+  background: linear-gradient(90deg, #43a047 0%, #388e3c 100%);
+  color: #fff;
+  transform: scale(1.04);
+}
+
+.otp-btn-resend {
+  background: none;
+  border: none;
+  color: #388e3c;
+  font-size: 1rem;
+  font-family: 'Montserrat', Arial, sans-serif;
+  margin-bottom: 1.2rem;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+.otp-btn-resend:hover {
+  color: #1de982;
+}
+
+.otp-svg {
+  width: 80px;
+  height: 80px;
+  display: block;
+  margin: 0 auto;
+  opacity: 0.18;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 0;
+}
