@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Rutas organizadas
-const authRoutes = require("./routes/auth");
+const authRoutes = require("./routes/authRoutes");
 app.use("/auth", authRoutes);
 app.use("/canchas", require("./routes/canchaRoutes"));
 app.use("/reservas", require("./routes/reservaRoutes"));
