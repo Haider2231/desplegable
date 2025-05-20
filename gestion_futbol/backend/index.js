@@ -35,7 +35,7 @@ app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, "..", "frontend", "dist", "index.html"));
 });
 
-consolo.log("Conectando a la base de datos...");
+console.log("Conectando a la base de datos...");
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
