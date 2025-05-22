@@ -104,9 +104,9 @@ export default function AdminUsersPanel() {
   // Filtro de búsqueda
   const filteredUsuarios = usuarios.filter(
     u =>
-      u.nombre.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase()) ||
-      u.rol.toLowerCase().includes(search.toLowerCase())
+      (u.nombre && u.nombre.toLowerCase().includes(search.toLowerCase())) ||
+      (u.email && u.email.toLowerCase().includes(search.toLowerCase())) ||
+      (u.rol && u.rol.toLowerCase().includes(search.toLowerCase()))
   );
 
   // Animación para filas (fade-in con delay)

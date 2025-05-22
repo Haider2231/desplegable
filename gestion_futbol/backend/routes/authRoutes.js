@@ -18,7 +18,7 @@ router.get(
 );
 
 router.post(
-  "/usuarios",
+  "/usuarios/admin",
   verificarToken,
   verificarRol(["admin"]),
   authController.createUsuario
