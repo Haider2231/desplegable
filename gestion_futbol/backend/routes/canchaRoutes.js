@@ -12,7 +12,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Cambia "dueño" por "propietario" en los roles permitidos
-router.get("/", verificarToken, canchaController.getCanchas);
+router.get("/", canchaController.getCanchas);
 router.post("/", verificarToken, verificarRol(["propietario", "admin"]), upload.array("imagenes", 5), canchaController.createCancha);
 
 module.exports = router;

@@ -11,7 +11,7 @@ exports.getCanchas = async (req, res) => {
              c.lng, 
              c.dueno_id, 
              c.telefono_contacto,
-             json_agg(CONCAT('http://localhost:5000', ci.url)) AS imagenes
+             json_agg(CONCAT('https://canchassinteticas.site', ci.url)) AS imagenes
       FROM canchas c
       LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
       GROUP BY c.id
