@@ -30,6 +30,7 @@ export default function MapView({ canchas }) {
     }
 
     function markerPopupHtml(cancha) {
+      const token = localStorage.getItem("token");
       let content = `<div style="max-width: 300px;">`;
       if (cancha.imagenes && cancha.imagenes.length > 0) {
         content += `<div>`;
@@ -41,10 +42,17 @@ export default function MapView({ canchas }) {
       content += `<strong>${cancha.nombre}</strong><br>`;
       content += cancha.direccion ? `${cancha.direccion}<br>` : "";
       content += `<strong>Teléfono:</strong> ${cancha.telefono_contacto}<br>`;
-      content += `<button onclick="window.location.href='/reservar?cancha_id=${cancha.cancha_id}'"
-        style="margin-top: 10px; padding: 5px 10px; background-color: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer;">
-        Reservar
+      if (token) {
+        content += `<button onclick="window.location.href='/reservar?cancha_id=${cancha.cancha_id}'"
+          style="margin-top: 10px; padding: 5px 10px; background-color: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer;">
+          Reservar
         </button>`;
+      } else {
+        content += `<button onclick="window.location.href='/login'"
+          style="margin-top: 10px; padding: 5px 10px; background-color: #388e3c; color: white; border: none; border-radius: 5px; cursor: pointer;">
+          Inicia sesión para reservar
+        </button>`;
+      }
       content += `</div>`;
       return content;
     }
@@ -86,8 +94,8 @@ export default function MapView({ canchas }) {
 
   return (
     <div>
-      {/* Mensaje visible si no hay canchas */}
-      {(!Array.isArray(canchas) || canchas.length === 0) && (
+      {/* Mensaje visible solo si realmente no hay canchas */}
+      {Array.isArray(canchas) && canchas.length === 0 && (
         <div style={{ color: "red", margin: 10 }}>
           No hay canchas para mostrar en el mapa.
         </div>

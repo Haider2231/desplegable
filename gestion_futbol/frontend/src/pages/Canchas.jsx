@@ -28,11 +28,6 @@ export default function Home() {
 
   // Obtener canchas al montar el componente
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("Debes iniciar sesión para ver las canchas.");
-      return;
-    }
     getCanchas()
       .then((data) => {
         if (Array.isArray(data)) {
