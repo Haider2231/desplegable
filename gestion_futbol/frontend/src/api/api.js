@@ -43,16 +43,16 @@ export const getEstadisticasAdmin = () =>
 
 
 export const getUsuarios = () =>
-  api.get("/authRoutes/usuarios").then((res) => res.data);
+  api.get("/auth/usuarios").then((res) => res.data);
 
 export const deleteUsuario = (id) =>
-  api.delete(`/authRoutes/usuarios/${id}`).then((res) => res.data);
+  api.delete(`/auth/usuarios/${id}`).then((res) => res.data);
 
 export const updateUsuario = (id, data) =>
-  api.put(`/authRoutes/usuarios/${id}`, data).then((res) => res.data);
+  api.put(`/auth/usuarios/${id}`, data).then((res) => res.data);
 
 export const createUsuario = (data) =>
-  api.post("/authRoutes/usuarios", data).then((res) => res.data);
+  api.post("/auth/usuarios", data).then((res) => res.data);
 
 
 // ...agrega más métodos según tus endpoints...
