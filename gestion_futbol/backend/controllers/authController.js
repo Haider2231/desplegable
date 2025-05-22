@@ -201,13 +201,11 @@ exports.createUsuario = async (req, res) => {
     return res.status(400).json({ error: "Faltan datos requeridos" });
   }
   try {
-    const bcrypt = require("bcryptjs");
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await require("../db").query(
+    const result = await pool.query(
       "INSERT INTO usuarios (nombre, email, password, rol, verificado) VALUES ($1, $2, $3, $4, true) RETURNING id, nombre, email, rol",
       [nombre, email, hashedPassword, rol]
     );
-    // Asegura que el objeto retornado tenga todas las propiedades necesarias
     const user = result.rows[0];
     res.status(201).json({
       id: user.id,
@@ -216,6 +214,8 @@ exports.createUsuario = async (req, res) => {
       rol: user.rol
     });
   } catch (err) {
+    // Log para depuración
+    console.error("Error al crear usuario admin:", err);
     res.status(500).json({ error: "Error al crear usuario" });
   }
 };

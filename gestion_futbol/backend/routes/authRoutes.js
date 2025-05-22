@@ -4,11 +4,11 @@ const authController = require("../controllers/authController");
 const { verificarToken, verificarRol } = require("../middlewares/authMiddleware");
 
 router.post("/login", authController.login);
-router.post("/usuarios", authController.registerUser);
+router.post("/usuarios", authController.registerUser); // Registro público
 router.post("/verificar", authController.verifyUser);
- router.post("/forgot-password", authController.forgotPassword);
- router.post("/reset-password", authController.resetPassword);
- router.post("/check-email", authController.checkEmailExists);
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/reset-password", authController.resetPassword);
+router.post("/check-email", authController.checkEmailExists);
 // ENDPOINTS ADMIN USUARIOS
 router.get(
   "/usuarios",
