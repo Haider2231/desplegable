@@ -16,6 +16,7 @@ import ManageCourts from "./pages/ManageCourts";
 import ForgotPassword from "./components/Auth/ForgotPassword";
 import ResetPassword from "./components/Auth/ResetPassword";
 import Estadisticas from "./pages/Estadisticas";
+import AdminUsersPanel from "./components/admin/AdminUsersPanel";
 
 function App() {
   return (
@@ -77,6 +78,7 @@ function App() {
                       <Estadisticas />
                     </div>
                   } />
+                  <Route path="/admin-users" element={<AdminUsersPanel />} />
                 </Routes>
               </div>
               <Footer />

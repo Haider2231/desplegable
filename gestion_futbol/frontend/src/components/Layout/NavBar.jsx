@@ -68,25 +68,28 @@ export default function NavBar() {
         </>
       )}
 
-      {rol === "admin"  && (
-       <>
-        <NavLink to="/courts" className="nav-btn">
-          Canchas
-        </NavLink>
-        <NavLink to="/estadisticas" className="nav-btn">
-          Estadísticas
-        </NavLink>
-       </>
+      {rol === "admin" && (
+        <>
+          <NavLink to="/courts" className="nav-btn">
+            Canchas
+          </NavLink>
+          <NavLink to="/estadisticas" className="nav-btn">
+            Estadísticas
+          </NavLink>
+          <NavLink to="/admin-users" className="nav-btn">
+            Panel usuarios
+          </NavLink>
+        </>
       )}
 
       {rol === "propietario" && (
         <>
-        <NavLink to="/manage-courts" className="nav-btn">
-          Gestionar canchas
-        </NavLink>
-        <NavLink to="/estadisticas" className="nav-btn">
-          Estadísticas
-        </NavLink>
+          <NavLink to="/manage-courts" className="nav-btn">
+            Gestionar canchas
+          </NavLink>
+          <NavLink to="/estadisticas" className="nav-btn">
+            Estadísticas
+          </NavLink>
         </>
       )}
     </nav>
