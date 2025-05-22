@@ -181,3 +181,63 @@ exports.checkEmailExists = async (req, res) => {
     res.status(500).json({ error: "Error al verificar el correo" });
   }
 };
+
+// Obtener todos los usuarios (solo admin)
+exports.getUsuarios = async (req, res) => {
+  try {
+    const result = await require("../db").query(
+      "SELECT id, nombre, email, rol FROM usuarios WHERE verificado = true ORDER BY id"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener usuarios" });
+  }
+};
+
+// Crear usuario (solo admin)
+exports.createUsuario = async (req, res) => {
+  const { nombre, email, password, rol } = req.body;
+  if (!nombre || !email || !password || !rol) {
+    return res.status(400).json({ error: "Faltan datos requeridos" });
+  }
+  try {
+    const bcrypt = require("bcryptjs");
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await require("../db").query(
+      "INSERT INTO usuarios (nombre, email, password, rol, verificado) VALUES ($1, $2, $3, $4, true) RETURNING id, nombre, email, rol",
+      [nombre, email, hashedPassword, rol]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: "Error al crear usuario" });
+  }
+};
+
+// Actualizar usuario (solo admin)
+exports.updateUsuario = async (req, res) => {
+  const { nombre, email, rol } = req.body;
+  const { id } = req.params;
+  if (!nombre || !email || !rol) {
+    return res.status(400).json({ error: "Faltan datos requeridos" });
+  }
+  try {
+    const result = await require("../db").query(
+      "UPDATE usuarios SET nombre=$1, email=$2, rol=$3 WHERE id=$4 RETURNING id, nombre, email, rol",
+      [nombre, email, rol, id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: "Error al actualizar usuario" });
+  }
+};
+
+// Eliminar usuario (solo admin)
+exports.deleteUsuario = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await require("../db").query("DELETE FROM usuarios WHERE id=$1", [id]);
+    res.json({ message: "Usuario eliminado" });
+  } catch (err) {
+    res.status(500).json({ error: "Error al eliminar usuario" });
+  }
+};

@@ -1,0 +1,143 @@
+.admin-users-panel {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px #43e97b22;
+  padding: 2.5rem 2rem;
+  margin: 2rem auto;
+  max-width: 1200px;
+  min-height: 500px;
+  overflow-x: auto;
+  font-family: 'Montserrat', Arial, sans-serif;
+  position: relative;
+}
+.admin-users-title {
+  text-align: center;
+  margin-bottom: 32px;
+  color: #388e3c;
+  font-weight: 800;
+  font-size: 2.1rem;
+  letter-spacing: 1px;
+}
+.admin-users-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  align-items: center;
+}
+.admin-users-search {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1.5px solid #43e97b;
+  font-size: 1.08rem;
+  width: 260px;
+  margin-right: 16px;
+  outline: none;
+  box-shadow: 0 2px 8px #43e97b11;
+}
+.admin-users-btn {
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 32px;
+  font-weight: 700;
+  font-size: 1.08rem;
+  box-shadow: 0 2px 12px #43e97b33;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(.4,2,.6,1);
+}
+.admin-users-btn:hover {
+  transform: scale(1.09) rotate(-2deg) translateY(-2px);
+  box-shadow: 0 8px 24px #43e97b55;
+  background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+  filter: brightness(1.08);
+}
+.admin-users-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #f8fffe;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px #43e97b11;
+  animation: slideDownTable 0.8s cubic-bezier(.4,2,.6,1);
+}
+.admin-users-table th {
+  padding: 14px;
+  color: #388e3c;
+  font-weight: 700;
+  font-size: 1.07rem;
+  background: linear-gradient(90deg, #e0ffe8 0%, #e0f7fa 100%);
+}
+.admin-users-table td {
+  padding: 12px;
+}
+.admin-users-row {
+  transition: background 0.2s;
+  animation: fadeInRow 0.7s both;
+}
+.admin-users-row:nth-child(even) {
+  background: #f4fefb;
+}
+.admin-users-row:nth-child(odd) {
+  background: #fff;
+}
+.admin-users-row:hover {
+  background: #e0ffe8 !important;
+  transition: background 0.18s;
+}
+.admin-users-row.row-highlight {
+  animation: highlightRow 1.2s;
+}
+@keyframes fadeInRow {
+  0% { opacity: 0; transform: translateY(40px) scale(0.97) skewY(2deg); filter: blur(2px);}
+  60% { opacity: 1; transform: translateY(-4px) scale(1.01) skewY(-1deg); filter: blur(0.5px);}
+  100% { opacity: 1; transform: translateY(0) scale(1) skewY(0); filter: blur(0);}
+}
+@keyframes slideDownTable {
+  0% { opacity: 0; transform: translateY(-60px) scale(0.98) skewY(-2deg); filter: blur(3px);}
+  80% { opacity: 1; transform: translateY(4px) scale(1.01) skewY(1deg); filter: blur(0.5px);}
+  100% { opacity: 1; transform: translateY(0) scale(1) skewY(0); filter: blur(0);}
+}
+@keyframes highlightRow {
+  0% { background: #fffbe6; }
+  100% { background: inherit; }
+}
+.admin-users-input,
+.admin-users-select {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1.5px solid #43e97b;
+  width: 100%;
+  font-size: 1rem;
+}
+.admin-users-action-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 7px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-right: 8px;
+  box-shadow: 0 2px 8px #43e97b33;
+  transition: all 0.18s cubic-bezier(.4,2,.6,1);
+}
+.admin-users-action-btn.save {
+  background: #43e97b;
+  color: #fff;
+}
+.admin-users-action-btn.cancel {
+  background: #e0e0e0;
+  color: #333;
+}
+.admin-users-action-btn.edit {
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+  color: #fff;
+}
+.admin-users-action-btn.delete {
+  background: #d32f2f;
+  color: #fff;
+  box-shadow: 0 2px 8px #d32f2f33;
+}
+.admin-users-action-btn:active {
+  transform: scale(0.97);
+}
