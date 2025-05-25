@@ -10,7 +10,7 @@ export default function AdminUsersPanel() {
   const [editData, setEditData] = useState({ nombre: "", email: "", rol: "" });
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 10;
+  const usersPerPage = 20;
 
   // Obtener todos los usuarios
   useEffect(() => {
@@ -94,10 +94,26 @@ export default function AdminUsersPanel() {
       cancelButtonText: "Cancelar",
     });
     if (!formValues) return;
+    // Validación básica antes de enviar
+    if (
+      !formValues.nombre ||
+      !formValues.email ||
+      !formValues.password ||
+      !formValues.rol
+    ) {
+      Swal.fire("Error", "Todos los campos son obligatorios", "error");
+      return;
+    }
     try {
       const data = await createUsuario(formValues);
-      setUsuarios([...usuarios, data]);
-      Swal.fire("Creado", "Usuario creado correctamente", "success");
+      // Si el backend retorna el usuario creado, agrégalo a la lista
+      if (data && data.id) {
+        setUsuarios([...usuarios, data]);
+        Swal.fire("Creado", "Usuario creado correctamente", "success");
+      } else {
+        // Si el backend retorna error o no retorna el usuario
+        Swal.fire("Error", data?.error || "No se pudo crear el usuario", "error");
+      }
     } catch (err) {
       Swal.fire("Error", err?.response?.data?.error || "No se pudo crear el usuario", "error");
     }

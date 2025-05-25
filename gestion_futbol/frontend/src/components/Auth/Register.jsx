@@ -141,7 +141,7 @@ export default function Register({ onRegister }) {
             <button
               className="social-button google"
               type="button"
-              onClick={goToRegister}
+              onClick={goToLogin}
             >
               <svg
                 className="svg"
@@ -155,7 +155,7 @@ export default function Register({ onRegister }) {
             <button
               className="social-button apple"
               type="button"
-              onClick={goToRegister}
+              onClick={goToLogin}
             >
               <svg
                 className="svg"
