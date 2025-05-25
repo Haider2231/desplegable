@@ -135,7 +135,7 @@ exports.forgotPassword = async (req, res) => {
     const token = crypto.randomBytes(32).toString("hex");
     resetTokens[token] = { email, expires: Date.now() + 1000 * 60 * 30 }; // 30 minutos
   
-    const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+    const resetLink = `https://canchassinteticas.site/reset-password?token=${token}`;
     await transporter.sendMail({
       from: "diazmontejodiegoalejandro@gmail.com",
       to: email,
