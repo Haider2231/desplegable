@@ -63,6 +63,6 @@ export const updateUsuario = (id, data) =>
   api.put(`/auth/usuarios/${id}`, data).then((res) => res.data);
 
 export const createUsuario = (data) =>
-  api.post("/auth/usuarios", data).then((res) => res.data);
+  api.post("/auth/usuarios/admin", data).then((res) => res.data);
 
 // ...agrega más métodos según tus endpoints...
