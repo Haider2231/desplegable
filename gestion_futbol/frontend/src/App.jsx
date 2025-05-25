@@ -16,7 +16,7 @@ import ManageCourts from "./pages/ManageCourts";
 import ForgotPassword from "./components/Auth/ForgotPassword";
 import ResetPassword from "./components/Auth/ResetPassword";
 import Estadisticas from "./pages/Estadisticas";
-import AdminUsersPanel from "./components/Admin/AdminUserPanel";
+import AdminUsersPanel from "../components/Admin/AdminUsersPanel";
 import Pagos from "./pages/Pagos";
 import ReservaExitosa from "./pages/ReservaExitosa";
 
