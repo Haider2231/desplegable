@@ -14,7 +14,7 @@ async function enviarCorreoPropietario({ propietarioEmail, establecimiento, canc
   });
 
   const mailOptions = {
-    from: `"Fútbol Piloto" <trasmileniopruebas@gmail.com">`,
+    from: '"Fútbol Piloto" <trasmileniopruebas@gmail.com>', // <-- corregido aquí
     to: propietarioEmail,
     subject: "Nueva reserva en tu establecimiento",
     html: `
@@ -31,7 +31,12 @@ async function enviarCorreoPropietario({ propietarioEmail, establecimiento, canc
     `
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err && err.message ? err.message : err };
+  }
 }
 
 // Crear una reserva
@@ -56,6 +61,7 @@ exports.createReserva = async (req, res) => {
     await pool.query("COMMIT");
 
     // --- Enviar correo al propietario ---
+    let correoResult = { success: true };
     try {
       // Obtener datos de la reserva, cancha, establecimiento y propietario
       const reservaId = result.rows[0].id;
@@ -85,7 +91,7 @@ exports.createReserva = async (req, res) => {
 
       // Como no hay factura ni abono en este flujo, solo notifica la reserva
       if (propietarioEmail) {
-        await enviarCorreoPropietario({
+        correoResult = await enviarCorreoPropietario({
           propietarioEmail,
           establecimiento: { nombre: r.establecimiento_nombre },
           cancha: { nombre: r.cancha_nombre },
@@ -98,12 +104,15 @@ exports.createReserva = async (req, res) => {
         });
       }
     } catch (correoErr) {
-      // No detiene la reserva si falla el correo, solo loguea
-      console.error("Error enviando correo al propietario:", correoErr);
+      correoResult = { success: false, error: correoErr && correoErr.message ? correoErr.message : correoErr };
     }
     // --- Fin correo propietario ---
 
-    res.status(201).json({ message: "Reserva creada exitosamente", reserva_id: result.rows[0].id });
+    res.status(201).json({
+      message: "Reserva creada exitosamente",
+      reserva_id: result.rows[0].id,
+      correo: correoResult // <-- aquí puedes ver el resultado del correo en el frontend
+    });
   } catch (error) {
     await pool.query("ROLLBACK");
     console.error("Error al crear la reserva:", error, error.stack);
