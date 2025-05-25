@@ -10,7 +10,7 @@ export default function AdminUsersPanel() {
   const [editData, setEditData] = useState({ nombre: "", email: "", rol: "" });
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 20;
+  const usersPerPage = 10;
 
   // Obtener todos los usuarios
   useEffect(() => {
