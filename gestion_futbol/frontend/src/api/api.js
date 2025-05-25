@@ -24,13 +24,25 @@ export const register = ({ nombre, email, password, rol = "usuario" }) =>
 export const verify = (email, codigo) =>
   api.post("/auth/verificar", { email, codigo }).then((res) => res.data);
 
-export const getCanchas = () => api.get("/canchas").then((res) => res.data);
+// Permite filtrar por establecimiento_id o dueno_id
+export const getCanchas = (filtros = {}) => {
+  let url = "/canchas";
+  const params = [];
+  if (filtros.establecimiento_id) params.push(`establecimiento_id=${filtros.establecimiento_id}`);
+  if (filtros.dueno_id) params.push(`dueno_id=${filtros.dueno_id}`);
+  if (params.length) url += "?" + params.join("&");
+  return api.get(url).then((res) => res.data);
+};
+
+// Trae canchas con horarios para un establecimiento
+export const getCanchasConHorarios = (establecimiento_id) =>
+  api.get(`/establecimientos/${establecimiento_id}/canchas-con-horarios`).then((res) => res.data);
 
 export const getDisponibilidad = (canchaId) =>
   api.get(`/disponibilidades/cancha/${canchaId}`).then((res) => res.data);
 
-export const reservar = (disponibilidad_id) =>
-  api.post("/reservas", { disponibilidad_id }).then((res) => res.data);
+export const reservar = (disponibilidad_id, opciones = {}) =>
+  api.post("/reservas", { disponibilidad_id, ...opciones }).then((res) => res.data);
 
 export const getEstadisticasUsuario = () =>
   api.get("/estadisticas/usuario").then((res) => res.data);
@@ -40,7 +52,6 @@ export const getEstadisticasPropietario = () =>
 
 export const getEstadisticasAdmin = () =>
   api.get("/estadisticas/admin").then((res) => res.data);
-
 
 export const getUsuarios = () =>
   api.get("/auth/usuarios").then((res) => res.data);
@@ -52,7 +63,6 @@ export const updateUsuario = (id, data) =>
   api.put(`/auth/usuarios/${id}`, data).then((res) => res.data);
 
 export const createUsuario = (data) =>
-  api.post("/auth/usuarios/admin", data).then((res) => res.data);
-
+  api.post("/auth/usuarios", data).then((res) => res.data);
 
 // ...agrega más métodos según tus endpoints...

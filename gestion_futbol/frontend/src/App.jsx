@@ -16,7 +16,9 @@ import ManageCourts from "./pages/ManageCourts";
 import ForgotPassword from "./components/Auth/ForgotPassword";
 import ResetPassword from "./components/Auth/ResetPassword";
 import Estadisticas from "./pages/Estadisticas";
-import AdminUsersPanel from "./components/admin/AdminUsersPanel";
+import AdminUsersPanel from "./components/Admin/AdminUserPanel";
+import Pagos from "./pages/Pagos";
+import ReservaExitosa from "./pages/ReservaExitosa";
 
 function App() {
   return (
@@ -79,6 +81,8 @@ function App() {
                     </div>
                   } />
                   <Route path="/admin-users" element={<AdminUsersPanel />} />
+                  <Route path="/pagos" element={<Pagos />} />
+                  <Route path="/reserva-exitosa" element={<ReservaExitosa />} />
                 </Routes>
               </div>
               <Footer />

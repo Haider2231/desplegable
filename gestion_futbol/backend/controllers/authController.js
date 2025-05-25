@@ -134,8 +134,8 @@ exports.forgotPassword = async (req, res) => {
     // Generar token único y guardar temporalmente
     const token = crypto.randomBytes(32).toString("hex");
     resetTokens[token] = { email, expires: Date.now() + 1000 * 60 * 30 }; // 30 minutos
-
-    const resetLink = `https://canchassinteticas.site/reset-password?token=${token}`;
+  
+    const resetLink = `http://localhost:5173/reset-password?token=${token}`;
     await transporter.sendMail({
       from: "diazmontejodiegoalejandro@gmail.com",
       to: email,
@@ -201,21 +201,14 @@ exports.createUsuario = async (req, res) => {
     return res.status(400).json({ error: "Faltan datos requeridos" });
   }
   try {
+    const bcrypt = require("bcryptjs");
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await pool.query(
+    const result = await require("../db").query(
       "INSERT INTO usuarios (nombre, email, password, rol, verificado) VALUES ($1, $2, $3, $4, true) RETURNING id, nombre, email, rol",
       [nombre, email, hashedPassword, rol]
     );
-    const user = result.rows[0];
-    res.status(201).json({
-      id: user.id,
-      nombre: user.nombre,
-      email: user.email,
-      rol: user.rol
-    });
+    res.status(201).json(result.rows[0]);
   } catch (err) {
-    // Log para depuración
-    console.error("Error al crear usuario admin:", err);
     res.status(500).json({ error: "Error al crear usuario" });
   }
 };

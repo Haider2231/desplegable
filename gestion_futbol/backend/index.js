@@ -26,6 +26,9 @@ app.use("/reservas", require("./routes/reservaRoutes"));
 app.use("/disponibilidades", require("./routes/disponibilidadRoutes"));
 app.use("/estadisticas", require("./routes/estadisticasRoutes"));
 app.get("/test-db", require("./controllers/testController"));
+// Agrega la ruta de facturas
+app.use("/facturas", require("./routes/facturaRoutes"));
+app.use("/establecimientos", require("./routes/establecimientoRoutes"));
 
 // Sirve archivos estáticos del build de React
 app.use(express.static(path.join(__dirname, "..", "frontend", "dist")));

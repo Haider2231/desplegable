@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
 import MapView from "../components/Map/MapView";
-import { getCanchas } from "../api/api";
 import "../styles/homeModern.css";
 import Footer from "../components/Layout/Footer";
 
 export default function Home() {
   const [dbStatus, setDbStatus] = useState("");
-  const [canchas, setCanchas] = useState([]);
+  const [establecimientos, setEstablecimientos] = useState([]);
   const [error, setError] = useState("");
 
   // Probar conexión backend/DB
@@ -26,19 +25,20 @@ export default function Home() {
     }
   };
 
-  // Obtener canchas al montar el componente
+  // Obtener establecimientos al montar el componente
   useEffect(() => {
-    getCanchas()
+    fetch("/establecimientos")
+      .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          setCanchas(data);
+          setEstablecimientos(data);
         } else if (data.error) {
           setError(data.error);
         } else {
-          setError("No se pudieron cargar las canchas.");
+          setError("No se pudieron cargar los establecimientos.");
         }
       })
-      .catch(() => setError("Error al cargar las canchas."));
+      .catch(() => setError("Error al cargar los establecimientos."));
   }, []);
 
   return (
@@ -53,18 +53,9 @@ export default function Home() {
           position: "relative",
         }}
       >
-        
-        <div
-          className="home-hero"
-          style={{
-          }}
-        >
-        </div>
-        <div
-          className="home-map-section"
-          style={{ position: "relative", zIndex: 2 }}
-        >
-          <MapView canchas={canchas} />
+        <div className="home-hero" style={{}}></div>
+        <div className="home-map-section" style={{ position: "relative", zIndex: 2 }}>
+          <MapView establecimientos={establecimientos} />
         </div>
       </div>
     </>

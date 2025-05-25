@@ -11,8 +11,10 @@ export default defineConfig({
       "/disponibilidades": "http://localhost:5000",
       "/uploads": "http://localhost:5000",
       "/estadisticas": "http://localhost:5000",
-      "/test-db": "http://localhost:5000"
-      
+      "/test-db": "http://localhost:5000",
+      "/pagos": "http://localhost:5000",
+      "/facturas": "http://localhost:5000",
+      "/establecimientos" :"http://localhost:5000"
     }
   }
 });

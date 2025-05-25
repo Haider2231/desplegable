@@ -10,6 +10,7 @@ export default function RegisterCourt() {
   const telefonoRef = useRef();
   const cantidadRef = useRef();
   const imagenesRef = useRef();
+  const valorRef = useRef();
 
   // Inicializar Google Maps Autocomplete una sola vez
   React.useEffect(() => {
@@ -42,6 +43,7 @@ export default function RegisterCourt() {
     formData.append("lng", lng);
     formData.append("telefono_contacto", telefonoRef.current.value);
     formData.append("cantidad_canchas", cantidadRef.current.value);
+    formData.append("valor", valorRef.current.value); // Nuevo campo
 
     // Obtener el dueno_id del token (decodifica el JWT)
     let dueno_id = null;
@@ -86,6 +88,7 @@ export default function RegisterCourt() {
         telefonoRef.current.value = "";
         cantidadRef.current.value = "";
         imagenesRef.current.value = "";
+        valorRef.current.value = ""; // Limpiar nuevo campo
         setLat(null);
         setLng(null);
       } else {
@@ -112,6 +115,9 @@ export default function RegisterCourt() {
 
         <label>Cantidad de canchas:</label>
         <input type="number" ref={cantidadRef} required style={{ width: "100%", marginBottom: 12 }} />
+
+        <label>Valor de la cancha:</label>
+        <input type="number" ref={valorRef} required style={{ width: "100%", marginBottom: 12 }} />
 
         <label>Subir Imagen:</label>
         <input type="file" ref={imagenesRef} accept="image/*" multiple required style={{ width: "100%", marginBottom: 12 }} />

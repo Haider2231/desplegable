@@ -16,6 +16,8 @@ import {
   getEstadisticasPropietario,
   getEstadisticasAdmin,
 } from "../api/api";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable"; // <-- usa este import, NO 'import "jspdf-autotable"'
 
 ChartJS.register(
   CategoryScale,
@@ -67,6 +69,67 @@ export default function Estadisticas({ rol: propRol }) {
       .finally(() => setLoading(false));
   }, [rol]);
 
+  // Función para descargar PDF de estadísticas
+  const handleDescargarPDF = () => {
+    if (!data) {
+      alert("No hay datos para descargar.");
+      return;
+    }
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Reporte de Estadísticas", 14, 18);
+
+    if (rol === "usuario") {
+      doc.setFontSize(14);
+      doc.text("Tus estadísticas", 14, 30);
+      doc.setFontSize(12);
+      doc.text(`Total reservas: ${data.total_reservas}`, 14, 40);
+      doc.text(`Horas jugadas: ${data.horas_jugadas}`, 14, 48);
+
+      if (Array.isArray(data.canchas_mas_reservadas) && data.canchas_mas_reservadas.length > 0) {
+        doc.text("Canchas más reservadas:", 14, 58);
+        autoTable(doc, {
+          startY: 62,
+          head: [["Cancha", "Reservas"]],
+          body: data.canchas_mas_reservadas.map(c => [c.nombre, c.reservas])
+        });
+      }
+    } else if (rol === "propietario") {
+      doc.setFontSize(14);
+      doc.text("Estadísticas de tus canchas", 14, 30);
+      doc.setFontSize(12);
+      doc.text(`Reservas totales: ${data.total_reservas}`, 14, 40);
+      doc.text(`Ingresos estimados: $${data.ingresos}`, 14, 48);
+
+      if (Array.isArray(data.canchas) && data.canchas.length > 0) {
+        doc.text("Reservas por cancha:", 14, 58);
+        autoTable(doc, {
+          startY: 62,
+          head: [["Cancha", "Reservas"]],
+          body: data.canchas.map(c => [c.nombre, c.reservas])
+        });
+      }
+    } else if (rol === "admin") {
+      doc.setFontSize(14);
+      doc.text("Estadísticas Generales", 14, 30);
+      doc.setFontSize(12);
+      doc.text(`Usuarios registrados: ${data.usuarios}`, 14, 40);
+      doc.text(`Canchas: ${data.canchas}`, 14, 48);
+      doc.text(`Reservas totales: ${data.reservas}`, 14, 56);
+
+      if (Array.isArray(data.actividad) && data.actividad.length > 0) {
+        doc.text("Reservas por día (últimos 7 días):", 14, 66);
+        autoTable(doc, {
+          startY: 70,
+          head: [["Fecha", "Reservas"]],
+          body: data.actividad.map(d => [d.fecha, d.reservas])
+        });
+      }
+    }
+
+    doc.save("estadisticas.pdf");
+  };
+
   if (loading)
     return (
       <div style={{ textAlign: "center", margin: 24 }}>
@@ -95,6 +158,23 @@ export default function Estadisticas({ rol: propRol }) {
         }}
       >
         <h3 style={{ textAlign: "center" }}>Tus estadísticas</h3>
+        <button
+          onClick={handleDescargarPDF}
+          disabled={!data}
+          style={{
+            marginBottom: 16,
+            background: data ? "#43a047" : "#ccc",
+            color: "#fff",
+            border: "none",
+            borderRadius: 6,
+            padding: "8px 18px",
+            fontWeight: "bold",
+            cursor: data ? "pointer" : "not-allowed",
+            float: "right"
+          }}
+        >
+          Descargar PDF
+        </button>
         {Array.isArray(data.canchas_mas_reservadas) &&
         data.canchas_mas_reservadas.length > 0 ? (
           <Bar
@@ -132,6 +212,23 @@ export default function Estadisticas({ rol: propRol }) {
         }}
       >
         <h3 style={{ textAlign: "center" }}>Estadísticas de tus canchas</h3>
+        <button
+          onClick={handleDescargarPDF}
+          disabled={!data}
+          style={{
+            marginBottom: 16,
+            background: data ? "#43a047" : "#ccc",
+            color: "#fff",
+            border: "none",
+            borderRadius: 6,
+            padding: "8px 18px",
+            fontWeight: "bold",
+            cursor: data ? "pointer" : "not-allowed",
+            float: "right"
+          }}
+        >
+          Descargar PDF
+        </button>
         {Array.isArray(data.canchas) && data.canchas.length > 0 ? (
           <Pie
             data={{
@@ -150,7 +247,8 @@ export default function Estadisticas({ rol: propRol }) {
         )}
         <div style={{ marginTop: 16 }}>
           <strong>Reservas totales:</strong> {data.total_reservas} <br />
-          <strong>Ingresos estimados:</strong> ${data.ingresos}
+          <strong>Ingresos por Mercado Pago:</strong> ${data.ingresos} <br />
+
         </div>
       </div>
     );
@@ -182,7 +280,23 @@ export default function Estadisticas({ rol: propRol }) {
         >
           Estadísticas Generales
         </h3>
-
+        <button
+          onClick={handleDescargarPDF}
+          disabled={!data}
+          style={{
+            marginBottom: 16,
+            background: data ? "#43a047" : "#ccc",
+            color: "#fff",
+            border: "none",
+            borderRadius: 6,
+            padding: "8px 18px",
+            fontWeight: "bold",
+            cursor: data ? "pointer" : "not-allowed",
+            float: "right"
+          }}
+        >
+          Descargar PDF
+        </button>
         <div
           style={{
             display: "flex",

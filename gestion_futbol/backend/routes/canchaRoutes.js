@@ -11,8 +11,13 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Cambia "dueño" por "propietario" en los roles permitidos
+// GET /canchas?establecimiento_id=ID
 router.get("/", canchaController.getCanchas);
+
+// POST /canchas (solo establecimiento_id)
 router.post("/", verificarToken, verificarRol(["propietario", "admin"]), upload.array("imagenes", 5), canchaController.createCancha);
+
+// GET /canchas/:id/disponibilidad
+router.get("/:id/disponibilidad", canchaController.getDisponibilidadByCancha);
 
 module.exports = router;

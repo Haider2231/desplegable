@@ -9,6 +9,8 @@ export default function AdminUsersPanel() {
   const [editingUser, setEditingUser] = useState(null);
   const [editData, setEditData] = useState({ nombre: "", email: "", rol: "" });
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 10;
 
   // Obtener todos los usuarios
   useEffect(() => {
@@ -104,9 +106,76 @@ export default function AdminUsersPanel() {
   // Filtro de búsqueda
   const filteredUsuarios = usuarios.filter(
     u =>
-      (u.nombre && u.nombre.toLowerCase().includes(search.toLowerCase())) ||
-      (u.email && u.email.toLowerCase().includes(search.toLowerCase())) ||
-      (u.rol && u.rol.toLowerCase().includes(search.toLowerCase()))
+      u.nombre.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase()) ||
+      u.rol.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Paginación
+  const totalPages = Math.ceil(filteredUsuarios.length / usersPerPage);
+  const paginatedUsuarios = filteredUsuarios.slice(
+    (currentPage - 1) * usersPerPage,
+    currentPage * usersPerPage
+  );
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  // Barra de paginación
+  const Pagination = () => (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", margin: "18px 0" }}>
+      <button
+        onClick={() => handlePageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        style={{
+          background: "none",
+          border: "none",
+          color: "#888",
+          fontSize: 22,
+          cursor: currentPage === 1 ? "not-allowed" : "pointer",
+          marginRight: 8
+        }}
+      >
+        &#60;
+      </button>
+      {[...Array(totalPages)].map((_, idx) => (
+        <button
+          key={idx + 1}
+          onClick={() => handlePageChange(idx + 1)}
+          style={{
+            background: currentPage === idx + 1 ? "#2962ff" : "none",
+            color: currentPage === idx + 1 ? "#fff" : "#aaa",
+            border: "none",
+            borderRadius: 6,
+            fontWeight: 700,
+            fontSize: 18,
+            width: 36,
+            height: 36,
+            margin: "0 4px",
+            cursor: currentPage === idx + 1 ? "default" : "pointer"
+          }}
+          disabled={currentPage === idx + 1}
+        >
+          {idx + 1}
+        </button>
+      ))}
+      <button
+        onClick={() => handlePageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        style={{
+          background: "none",
+          border: "none",
+          color: "#888",
+          fontSize: 22,
+          cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+          marginLeft: 8
+        }}
+      >
+        &#62;
+      </button>
+    </div>
   );
 
   // Animación para filas (fade-in con delay)
@@ -145,6 +214,8 @@ export default function AdminUsersPanel() {
           Crear usuario
         </button>
       </div>
+      {/* Paginación arriba */}
+      {filteredUsuarios.length > usersPerPage && <Pagination />}
       {loading ? (
         <div style={{ textAlign: "center", color: "#388e3c", fontWeight: 600, fontSize: "1.2rem" }}>
           <span style={{ animation: "spin 1.2s linear infinite", display: "inline-block" }}>⚽</span> Cargando usuarios...
@@ -158,115 +229,119 @@ export default function AdminUsersPanel() {
           No hay usuarios registrados.
         </div>
       ) : (
-        <table className="admin-users-table" style={tableAnimation}>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Rol</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsuarios.map((u, idx) => (
-              <tr
-                key={u.id}
-                className={
-                  "admin-users-row" +
-                  (editingUser === u.id ? " row-highlight" : "")
-                }
-                style={rowAnimation(idx)}
-              >
-                <td>
-                  {editingUser === u.id ? (
-                    <input
-                      name="nombre"
-                      value={editData.nombre}
-                      onChange={handleEditChange}
-                      className="admin-users-input"
-                    />
-                  ) : (
-                    <span style={{ fontWeight: 600 }}>{u.nombre}</span>
-                  )}
-                </td>
-                <td>
-                  {editingUser === u.id ? (
-                    <input
-                      name="email"
-                      value={editData.email}
-                      onChange={handleEditChange}
-                      className="admin-users-input"
-                    />
-                  ) : (
-                    <span style={{ color: "#388e3c" }}>{u.email}</span>
-                  )}
-                </td>
-                <td>
-                  {editingUser === u.id ? (
-                    <select
-                      name="rol"
-                      value={editData.rol}
-                      onChange={handleEditChange}
-                      className="admin-users-select"
-                    >
-                      <option value="usuario">Usuario</option>
-                      <option value="propietario">Propietario</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  ) : (
-                    <span
-                      style={{
-                        color:
-                          u.rol === "admin"
-                            ? "#d32f2f"
-                            : u.rol === "propietario"
-                            ? "#007991"
-                            : "#388e3c",
-                        fontWeight: 700,
-                        textTransform: "capitalize"
-                      }}
-                    >
-                      {u.rol}
-                    </span>
-                  )}
-                </td>
-                <td>
-                  {editingUser === u.id ? (
-                    <>
-                      <button
-                        className="admin-users-action-btn save"
-                        onClick={() => handleEditSave(u.id)}
-                      >
-                        Guardar
-                      </button>
-                      <button
-                        className="admin-users-action-btn cancel"
-                        onClick={() => setEditingUser(null)}
-                      >
-                        Cancelar
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        className="admin-users-action-btn edit"
-                        onClick={() => handleEdit(u)}
-                      >
-                        <span role="img" aria-label="edit"></span> Editar
-                      </button>
-                      <button
-                        className="admin-users-action-btn delete"
-                        onClick={() => handleDelete(u.id)}
-                      >
-                        <span role="img" aria-label="delete"></span> Eliminar
-                      </button>
-                    </>
-                  )}
-                </td>
+        <>
+          <table className="admin-users-table" style={tableAnimation}>
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {paginatedUsuarios.map((u, idx) => (
+                <tr
+                  key={u.id}
+                  className={
+                    "admin-users-row" +
+                    (editingUser === u.id ? " row-highlight" : "")
+                  }
+                  style={rowAnimation(idx)}
+                >
+                  <td>
+                    {editingUser === u.id ? (
+                      <input
+                        name="nombre"
+                        value={editData.nombre}
+                        onChange={handleEditChange}
+                        className="admin-users-input"
+                      />
+                    ) : (
+                      <span style={{ fontWeight: 600 }}>{u.nombre}</span>
+                    )}
+                  </td>
+                  <td>
+                    {editingUser === u.id ? (
+                      <input
+                        name="email"
+                        value={editData.email}
+                        onChange={handleEditChange}
+                        className="admin-users-input"
+                      />
+                    ) : (
+                      <span style={{ color: "#388e3c" }}>{u.email}</span>
+                    )}
+                  </td>
+                  <td>
+                    {editingUser === u.id ? (
+                      <select
+                        name="rol"
+                        value={editData.rol}
+                        onChange={handleEditChange}
+                        className="admin-users-select"
+                      >
+                        <option value="usuario">Usuario</option>
+                        <option value="propietario">Propietario</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    ) : (
+                      <span
+                        style={{
+                          color:
+                            u.rol === "admin"
+                              ? "#d32f2f"
+                              : u.rol === "propietario"
+                              ? "#007991"
+                              : "#388e3c",
+                          fontWeight: 700,
+                          textTransform: "capitalize"
+                        }}
+                      >
+                        {u.rol}
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    {editingUser === u.id ? (
+                      <>
+                        <button
+                          className="admin-users-action-btn save"
+                          onClick={() => handleEditSave(u.id)}
+                        >
+                          Guardar
+                        </button>
+                        <button
+                          className="admin-users-action-btn cancel"
+                          onClick={() => setEditingUser(null)}
+                        >
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="admin-users-action-btn edit"
+                          onClick={() => handleEdit(u)}
+                        >
+                          <span role="img" aria-label="edit"></span> Editar
+                        </button>
+                        <button
+                          className="admin-users-action-btn delete"
+                          onClick={() => handleDelete(u.id)}
+                        >
+                          <span role="img" aria-label="delete"></span> Eliminar
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {/* Paginación abajo */}
+          {filteredUsuarios.length > usersPerPage && <Pagination />}
+        </>
       )}
     </div>
   );
