@@ -65,4 +65,8 @@ export const updateUsuario = (id, data) =>
 export const createUsuario = (data) =>
   api.post("/auth/usuarios/admin", data).then((res) => res.data);
 
+export const getEstablecimientos = () =>
+  api.get("/establecimientos").then((res) => res.data);
+
+
 // ...agrega más métodos según tus endpoints...
