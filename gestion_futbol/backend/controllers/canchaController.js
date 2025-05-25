@@ -8,7 +8,7 @@ exports.getCanchas = async (req, res) => {
     if (establecimiento_id) {
       result = await pool.query(
         `SELECT c.id AS cancha_id, c.establecimiento_id, c.nombre, c.dueno_id,
-                json_agg(CONCAT('https://canchassinteticas.site', ci.url)) AS imagenes
+                json_agg(CONCAT('https://canchassinteticas', ci.url)) AS imagenes
          FROM canchas c
          LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
          WHERE c.establecimiento_id = $1
@@ -18,7 +18,7 @@ exports.getCanchas = async (req, res) => {
     } else if (dueno_id) {
       result = await pool.query(
         `SELECT c.id AS cancha_id, c.establecimiento_id, c.nombre, c.dueno_id,
-                json_agg(CONCAT('https://canchassinteticas.site', ci.url)) AS imagenes
+                json_agg(CONCAT('https://canchassinteticas', ci.url)) AS imagenes
          FROM canchas c
          LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
          WHERE c.dueno_id = $1
@@ -28,7 +28,7 @@ exports.getCanchas = async (req, res) => {
     } else {
       result = await pool.query(
         `SELECT c.id AS cancha_id, c.establecimiento_id, c.nombre, c.dueno_id,
-                json_agg(CONCAT('https://canchassinteticas.site', ci.url)) AS imagenes
+                json_agg(CONCAT('https://canchassinteticas', ci.url)) AS imagenes
          FROM canchas c
          LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
          GROUP BY c.id`
@@ -84,7 +84,7 @@ exports.getCanchasByEstablecimiento = async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT c.id AS cancha_id, c.establecimiento_id,
-              json_agg(CONCAT('https://canchassinteticas.site', ci.url)) AS imagenes
+              json_agg(CONCAT('https://canchassinteticas', ci.url)) AS imagenes
        FROM canchas c
        LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
        WHERE c.establecimiento_id = $1
