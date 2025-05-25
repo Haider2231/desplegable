@@ -8,13 +8,13 @@ async function enviarCorreoPropietario({ propietarioEmail, establecimiento, canc
   const transporter = nodemailer.createTransport({
     service: "gmail", // o tu proveedor
     auth: {
-      user: process.env.EMAIL_USER, // tu correo
-      pass: process.env.EMAIL_PASS, // tu contraseña o app password
+      user: "trasmileniopruebas@gmail.com", // tu correo
+      pass: "nhbrvpeyyljakcze", // tu contraseña o app password
     },
   });
 
   const mailOptions = {
-    from: `"Fútbol Piloto" <${process.env.EMAIL_USER}>`,
+    from: `"Fútbol Piloto" <trasmileniopruebas@gmail.com">`,
     to: propietarioEmail,
     subject: "Nueva reserva en tu establecimiento",
     html: `
