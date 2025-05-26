@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/globalHeaderNav.css";
 
+
 export default function Header() {
   const navigate = useNavigate();
+  const [showRegistroModal, setShowRegistroModal] = useState(false);
+  const [showInstrucciones, setShowInstrucciones] = useState(false);
 
   // Obtener usuario del token
   let user = null;
@@ -39,7 +42,7 @@ export default function Header() {
         overflow: "hidden",
         borderTop: "6px solid #fff",
         fontFamily: "'Bebas Neue', Impact, Arial, sans-serif",
-        marginTop: 0, // Asegura que no haya margen superior
+        marginTop: 0,
       }}
     >
       <div
@@ -114,7 +117,7 @@ export default function Header() {
               <button
                 className="football-btn"
                 style={{
-                  background: "linear-gradient(90deg, #43a047 0%, #388e3c 100%)",
+                  background: "linear-gradient(90deg, #388e3c 0%, #43a047 100%)",
                   color: "#fff",
                   fontWeight: 700,
                   borderRadius: "16px",
@@ -129,7 +132,27 @@ export default function Header() {
                 }}
                 onClick={() => navigate("/register")}
               >
-                ¿Tienes una cancha? Súbela aquí
+                Registrarse
+              </button>
+              <button
+                className="football-btn"
+                style={{
+                  background: "linear-gradient(90deg, #43a047 0%, #388e3c 100%)",
+                  color: "#fff",
+                  fontWeight: 700,
+                  borderRadius: "16px",
+                  padding: "12px 32px",
+                  fontSize: "1.13rem",
+                  boxShadow: "0 4px 16px #1b5e2055",
+                  border: "2px solid #fff",
+                  fontFamily: "'Bebas Neue', Impact, Arial, sans-serif",
+                  letterSpacing: "1px",
+                  cursor: "pointer",
+                  transition: "all 0.22s cubic-bezier(.4,2,.6,1)",
+                }}
+                onClick={() => setShowRegistroModal(true)}
+              >
+                Registra tu cancha
               </button>
             </>
           ) : (
@@ -237,6 +260,159 @@ export default function Header() {
             </>
           )}
         </div>
+
+        {/* Modal lateral/flotante para requisitos de registro de cancha */}
+        {showRegistroModal && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              background: "rgba(0,0,0,0.25)",
+              zIndex: 2000,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+            onClick={() => setShowRegistroModal(false)}
+          >
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: 18,
+                boxShadow: "0 8px 32px #43e97b33",
+                padding: "2.5rem 2rem",
+                maxWidth: 480,
+                width: "100%",
+                position: "relative",
+                overflowY: "auto",
+                maxHeight: "90vh"
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowRegistroModal(false)}
+                style={{
+                  position: "absolute",
+                  top: 16,
+                  right: 16,
+                  background: "#ffd6d6",
+                  color: "#d32f2f",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "6px 12px",
+                  fontWeight: 700,
+                  cursor: "pointer"
+                }}
+              >Cerrar</button>
+              <h2 style={{
+                color: "#007991",
+                fontWeight: 900,
+                fontSize: 24,
+                marginBottom: 18,
+                textAlign: "center"
+              }}>
+                Registra tu cancha en nuestra plataforma
+              </h2>
+              <div style={{ color: "#333", fontSize: 16, marginBottom: 18 }}>
+                Para comenzar el proceso y darte acceso como propietario, necesitamos verificar que gestionas una cancha sintética en funcionamiento.
+              </div>
+              <div style={{
+                background: "#e0f7fa",
+                borderRadius: 10,
+                padding: "1rem 1.2rem",
+                marginBottom: 18,
+                fontSize: 15,
+                color: "#007991"
+              }}>
+                <b>
+                  Requisitos (envíalos al correo:{" "}
+                  <a
+                    href="https://mail.google.com/mail/?view=cm&fs=1&to=futbolupiloto@gmail.com&su=Documentos%20para%20registro%20de%20cancha&body=Adjunto%20los%20documentos%20requeridos%20para%20registrar%20mi%20cancha."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "#388e3c", textDecoration: "underline" }}
+                  >
+                    futbolupiloto@gmail.com
+                  </a>
+                  )
+                </b>
+                <ul style={{ margin: "10px 0 0 18px" }}>
+                  <li>Documento de identidad (cédula de ciudadanía o extranjería).</li>
+                  <li>Uno de los siguientes documentos:
+                    <ul style={{ margin: "6px 0 0 18px" }}>
+                      <li>Certificado de matrícula mercantil vigente.</li>
+                      <li>O contrato de arriendo/administración.</li>
+                      <li>Recibo de servicio público del establecimiento.</li>
+                    </ul>
+                  </li>
+                  <li>Fotos actuales de la cancha (mínimo 2).</li>
+                  <li>Dirección exacta y número de contacto.</li>
+                </ul>
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <button
+                  style={{
+                    background: "#43e97b",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    padding: "8px 18px",
+                    fontWeight: 700,
+                    fontSize: 15,
+                    cursor: "pointer",
+                    marginBottom: 6
+                  }}
+                  onClick={() => setShowInstrucciones(!showInstrucciones)}
+                  type="button"
+                >
+                  ¿Cómo obtener el certificado de matrícula mercantil? (Haz clic aquí)
+                </button>
+                {showInstrucciones && (
+                  <div style={{
+                    background: "#f7fff7",
+                    border: "1.5px solid #43e97b",
+                    borderRadius: 8,
+                    padding: "1rem",
+                    marginTop: 8,
+                    fontSize: 15,
+                    color: "#007991"
+                  }}>
+                    <b>Pasos para obtener el Certificado de Matrícula Mercantil (Colombia)</b>
+                    <ul style={{ margin: "10px 0 0 18px" }}>
+                      <li><b>Bogotá:</b> Ingresa a <a href="https://www.ccb.org.co" target="_blank" rel="noopener noreferrer">ccb.org.co</a> &gt; Servicios en línea &gt; Certificados &gt; Busca tu negocio por nombre o NIT &gt; Selecciona el certificado de matrícula mercantil &gt; Paga (aprox. $5.000) &gt; Descarga el PDF.</li>
+                      <li><b>Medellín:</b> <a href="https://www.camaramed.org.co" target="_blank" rel="noopener noreferrer">camaramed.org.co</a></li>
+                      <li><b>Cali:</b> <a href="https://www.ccc.org.co" target="_blank" rel="noopener noreferrer">ccc.org.co</a></li>
+                      <li>Para otras ciudades, busca “Cámara de Comercio de [tu ciudad]” en Google.</li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+              <div style={{
+                marginTop: 18,
+                color: "#388e3c",
+                fontWeight: 700,
+                fontSize: 16,
+                textAlign: "center"
+              }}>
+                ¿Ya tienes todo listo?<br />
+                Envía los documentos al correo:<br />
+                <a
+                  href="https://mail.google.com/mail/?view=cm&fs=1&to=futbolupiloto@gmail.com&su=Documentos%20para%20registro%20de%20cancha&body=Adjunto%20los%20documentos%20requeridos%20para%20registrar%20mi%20cancha."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#007991", textDecoration: "underline" }}
+                >
+                  futbolupiloto@gmail.com
+                </a>
+                <br />
+                y te daremos acceso como propietario.
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
