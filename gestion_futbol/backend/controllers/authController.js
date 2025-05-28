@@ -241,3 +241,31 @@ exports.deleteUsuario = async (req, res) => {
     res.status(500).json({ error: "Error al eliminar usuario" });
   }
 };
+
+exports.getPropietarios = async (req, res) => {
+  try {
+    const result = await require("../db").query(
+      "SELECT id, nombre FROM usuarios WHERE rol = $1 AND verificado = true ORDER BY nombre",
+      ["propietario"]
+    );
+    res.json(result.rows); // [{ nombre: "Propietario 1" }, ...]
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener propietarios" });
+  }
+};
+
+exports.getUsuarioById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const result = await require("../db").query(
+      "SELECT id, nombre, telefono FROM usuarios WHERE id = $1",
+      [id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener usuario" });
+  }
+};

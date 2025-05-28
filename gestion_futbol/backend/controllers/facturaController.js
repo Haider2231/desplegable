@@ -183,3 +183,24 @@ exports.getFacturasByCancha = async (req, res) => {
     res.status(500).json({ error: "Error al obtener facturas de la cancha" });
   }
 };
+
+
+exports.getFacturaByDisponibilidad = async (req, res) => {
+  try {
+    const disponibilidadId = req.params.id;
+    const result = await pool.query(
+      `SELECT f.abono, f.restante, f.usuario_id AS user_id
+         FROM facturas f
+         JOIN reservas r ON f.reserva_id = r.id
+         WHERE r.disponibilidad_id = $1
+         LIMIT 1`,
+      [disponibilidadId]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "No hay factura para esta disponibilidad" });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: "Error al obtener la factura" });
+  }
+};

@@ -68,5 +68,7 @@ export const createUsuario = (data) =>
 export const getEstablecimientos = () =>
   api.get("/establecimientos").then((res) => res.data);
 
+export const getPropietarios = () =>
+  api.get("/auth/propietarios").then((res) => res.data);
 
 // ...agrega más métodos según tus endpoints...
