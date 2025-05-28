@@ -257,15 +257,15 @@ export default function Estadisticas({ rol: propRol }) {
     return (
       <div
         style={{
-          width: "90vw",
-          maxWidth: "none",
-          position: "relative",
-          left: "-500px",
+          width: "100%",
+          maxWidth: 1200,
+          margin: "0 auto",
           background: "#fff",
           borderRadius: 8,
           boxShadow: "0 2px 16px #1b5e2022",
           padding: 24,
           minHeight: 500,
+          overflowX: "auto"
         }}
       >
         <h3
@@ -300,69 +300,102 @@ export default function Estadisticas({ rol: propRol }) {
         <div
           style={{
             display: "flex",
-            flexDirection: "row",
+            flexDirection: window.innerWidth > 900 ? "row" : "column",
             gap: 32,
-            flexWrap: "nowrap",
+            flexWrap: "wrap",
             justifyContent: "center",
             marginBottom: 32,
             alignItems: "flex-start",
+            width: "100%",
+            maxWidth: "100vw",
           }}
         >
           {/* Gráfica de barras para usuarios, canchas y reservas */}
-          <div style={{ flex: "1 1 420px", minWidth: 320, maxWidth: 600 }}>
+          <div style={{
+            flex: "1 1 420px",
+            minWidth: 320,
+            maxWidth: 600,
+            width: "100%",
+            boxSizing: "border-box",
+            height: 320,
+            minHeight: 260,
+            background: "#f8fffe",
+            borderRadius: 12,
+            padding: 12,
+            marginBottom: 16,
+          }}>
             <h3 style={{ textAlign: "center", marginBottom: 12 }}>
               Estadísticas Generales
             </h3>
-            <Bar
-              data={{
-                labels: ["Usuarios", "Canchas", "Reservas"],
-                datasets: [
-                  {
-                    label: "Totales del sistema",
-                    data: [data.usuarios, data.canchas, data.reservas],
-                    backgroundColor: ["#43a047", "#388e3c", "#00c6fb"],
+            <div style={{ width: "100%", height: 260 }}>
+              <Bar
+                data={{
+                  labels: ["Usuarios", "Canchas", "Reservas"],
+                  datasets: [
+                    {
+                      label: "Totales del sistema",
+                      data: [data.usuarios, data.canchas, data.reservas],
+                      backgroundColor: ["#43a047", "#388e3c", "#00c6fb"],
+                    },
+                  ],
+                }}
+                options={{
+                  plugins: {
+                    legend: { display: false },
                   },
-                ],
-              }}
-              options={{
-                plugins: {
-                  legend: { display: false },
-                },
-                scales: {
-                  y: { beginAtZero: true },
-                },
-              }}
-            />
+                  scales: {
+                    y: { beginAtZero: true },
+                  },
+                  responsive: true,
+                  maintainAspectRatio: false,
+                }}
+                height={260}
+              />
+            </div>
           </div>
           {/* Gráfica de líneas para actividad por día, al lado derecho */}
           <div
             style={{
-              flex: "1 1 600px",
-              minWidth: 400,
+              flex: "1 1 420px",
+              minWidth: 320,
               maxWidth: 700,
-              transform: "translateY(-20px)",
+              width: "100%",
+              boxSizing: "border-box",
+              height: 320,
+              minHeight: 260,
+              background: "#f8fffe",
+              borderRadius: 12,
+              padding: 12,
+              marginBottom: 16,
             }}
           >
             <h3 style={{ textAlign: "center", marginBottom: 12 }}>
-              Estadísticas de reservas por dia
+              Estadísticas de reservas por día
             </h3>
-            {Array.isArray(data.actividad) && data.actividad.length > 0 ? (
-              <Line
-                data={{
-                  labels: data.actividad.map((d) => d.fecha),
-                  datasets: [
-                    {
-                      label: "Reservas por día",
-                      data: data.actividad.map((d) => d.reservas),
-                      borderColor: "#43a047",
-                      backgroundColor: "#b9ffc6",
-                    },
-                  ],
-                }}
-              />
-            ) : (
-              <div>No hay datos de actividad.</div>
-            )}
+            <div style={{ width: "100%", height: 260 }}>
+              {Array.isArray(data.actividad) && data.actividad.length > 0 ? (
+                <Line
+                  data={{
+                    labels: data.actividad.map((d) => d.fecha),
+                    datasets: [
+                      {
+                        label: "Reservas por día",
+                        data: data.actividad.map((d) => d.reservas),
+                        borderColor: "#43a047",
+                        backgroundColor: "#b9ffc6",
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                  }}
+                  height={260}
+                />
+              ) : (
+                <div>No hay datos de actividad.</div>
+              )}
+            </div>
           </div>
         </div>
         <div style={{ marginTop: 16, textAlign: "center" }}>

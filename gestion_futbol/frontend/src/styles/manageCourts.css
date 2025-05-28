@@ -1,104 +1,275 @@
-/* Estilos modernos para la página de reservar cancha */
-.reserve-bg {
+.manage-courts-bg {
   min-height: 100vh;
   background: linear-gradient(120deg, #43e97b 0%, #38f9d7 100%);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 2rem 0;
 }
 
-.reserve-container {
+.manage-courts-panel {
   background: rgba(255,255,255,0.97);
   border-radius: 18px;
   box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
   padding: 2.5rem 2rem 2rem 2rem;
   min-width: 350px;
-  max-width: 700px;
+  max-width: 1200px;
   width: 100%;
 }
 
-.reserve-title {
+.manage-title {
   font-family: 'Anton', sans-serif;
-  font-size: 2rem;
+  font-size: 2.2rem;
   color: #0b8c3a;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   text-align: center;
   letter-spacing: 1px;
 }
 
-.reserve-error {
+.manage-desc {
+  text-align: center;
+  color: #444;
+  margin-bottom: 1.5rem;
+}
+
+.manage-error {
   color: #d32f2f;
   font-weight: 600;
   margin-bottom: 1rem;
   text-align: center;
 }
-.reserve-success {
-  color: #388e3c;
+.manage-loading {
+  color: #0b8c3a;
   font-weight: 600;
   margin-bottom: 1rem;
   text-align: center;
 }
-.reserve-empty {
-  color: #888;
-  font-size: 1.1rem;
-  text-align: center;
-  margin: 2rem 0;
-}
 
-.reserve-cards {
+.manage-flex {
   display: flex;
+  gap: 2rem;
   flex-wrap: wrap;
-  gap: 1.5rem;
-  justify-content: center;
+  justify-content: space-between;
 }
 
-.reserve-card {
-  background: linear-gradient(120deg, #e0ffe8 0%, #e0f7fa 100%);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(44, 62, 80, 0.10);
-  padding: 1.2rem 1.5rem;
+.manage-list {
   min-width: 220px;
-  max-width: 260px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.7rem;
-  border: 2px solid #43e97b;
-  transition: transform 0.15s;
-  position: relative;
-}
-.reserve-card:hover {
-  transform: scale(1.04);
-  border-color: #0b8c3a;
+  background: #e0ffe8;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px #b2f7ef;
+  flex: 1;
+  max-width: 250px;
 }
 
-.reserve-card-label {
-  font-weight: 700;
+.manage-court-btn {
+  width: 100%;
+  background: #fff;
   color: #0b8c3a;
-  margin-right: 4px;
+  border: 2px solid #43e97b;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  margin-bottom: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+.manage-court-btn.selected,
+.manage-court-btn:hover {
+  background: #43e97b;
+  color: #fff;
+  border: 2px solid #0b8c3a;
 }
 
-.reserve-btn {
-  margin-top: 0.5rem;
-  background: linear-gradient(90deg, #43e97b 0%, #0b8c3a 100%);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.5rem 1.5rem;
+.manage-detail {
+  background: #f8fff8;
+  border-radius: 10px;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 2px 8px #b2f7ef;
+  flex: 2;
+  min-width: 320px;
+  max-width: 420px;
+}
+
+.manage-horarios {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+.manage-horarios li {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  background: #e0f7fa;
+  border-radius: 6px;
+  padding: 0.4rem 0.7rem;
   font-size: 1rem;
-  font-family: 'Anton', sans-serif;
+}
+.manage-horario-fecha,
+.manage-horario-hora {
+  font-weight: 600;
+  color: #0b8c3a;
+}
+.manage-horario-estado {
   font-weight: 700;
-  box-shadow: 2px 2px 12px #b2f7ef;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s, transform 0.2s;
+  padding: 2px 10px;
+  border-radius: 8px;
+  font-size: 0.95em;
 }
-.reserve-btn:hover:enabled {
-  background: linear-gradient(90deg, #0b8c3a 0%, #43e97b 100%);
+.manage-horario-estado.disponible {
+  background: #c8ffd6;
+  color: #0b8c3a;
+}
+.manage-horario-estado.reservado {
+  background: #ffd6d6;
+  color: #d32f2f;
+}
+
+.manage-form-horario {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.manage-form-horario input,
+.manage-form-horario button {
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #43e97b;
+  font-size: 1rem;
+}
+.manage-form-horario button {
+  background: #43e97b;
   color: #fff;
-  transform: scale(1.05);
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
 }
-.reserve-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.manage-form-horario button:hover {
+  background: #0b8c3a;
+}
+
+.manage-register {
+  min-width: 350px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px #b2f7ef;
+  padding: 2rem;
+  flex: 1;
+  max-width: 400px;
+}
+.manage-register h3 {
+  margin-top: 0;
+}
+.manage-register form label {
+  font-weight: 600;
+  color: #0b8c3a;
+  margin-top: 0.5rem;
+  display: block;
+}
+.manage-register form input[type="text"],
+.manage-register form input[type="number"],
+.manage-register form input[type="file"] {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #43e97b;
+  font-size: 1rem;
+}
+.manage-register form button {
+  margin-top: 10px;
+  padding: 10px 30px;
+  border-radius: 8px;
+  background: #007991;
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.manage-register form button:hover {
+  background: #43e97b;
+}
+
+/* Responsive styles */
+@media (max-width: 1100px) {
+  .manage-courts-panel {
+    flex-direction: column !important;
+    padding: 1.2rem 0.5rem;
+    min-width: unset;
+    max-width: 99vw;
+  }
+  .manage-flex {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .manage-courts-bg {
+    padding: 0.5rem 0;
+  }
+  .manage-courts-panel {
+    padding: 1rem 0.2rem;
+    border-radius: 10px;
+  }
+  .manage-title {
+    font-size: 1.3rem;
+  }
+  .manage-list,
+  .manage-detail,
+  .manage-register {
+    max-width: 100vw;
+    min-width: unset;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .manage-courts-panel {
+    flex-direction: column !important;
+    padding: 0.2rem 0.1rem;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .manage-list,
+  .manage-detail,
+  .manage-register {
+    padding: 0.7rem;
+    border-radius: 6px;
+    font-size: 0.98rem;
+  }
+  .manage-courts-panel {
+    min-width: unset;
+    max-width: 100vw;
+  }
+}
+
+/* Paneles internos */
+@media (max-width: 900px) {
+  .manage-courts-panel {
+    flex-direction: column !important;
+    gap: 18px !important;
+  }
+  .manage-list,
+  .manage-detail,
+  .manage-register {
+    max-width: 100vw !important;
+    min-width: unset !important;
+    padding: 0.5rem 0.1rem !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .manage-list,
+  .manage-detail,
+  .manage-register {
+    padding: 0.2rem 0.05rem !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
 }
