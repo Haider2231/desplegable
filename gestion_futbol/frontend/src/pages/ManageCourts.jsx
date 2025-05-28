@@ -562,65 +562,67 @@ export default function ManageCourts() {
                                     flexDirection: "column",
                                     gap: "10px"
                                   }}>
-                                    {cancha.horarios && cancha.horarios.length > 0 ? (
-                                      cancha.horarios.map(h => (
-                                        <li key={h.id} style={{
-                                          background: h.disponible ? "#e6fbe6" : "#ffeaea",
-                                          border: `2px solid ${h.disponible ? "#43e97b" : "#d32f2f"}`,
-                                          borderRadius: 10,
-                                          padding: "10px 16px",
-                                          display: "flex",
-                                          alignItems: "center",
-                                          justifyContent: "space-between",
-                                          boxShadow: h.disponible ? "0 1px 4px #43e97b33" : "0 1px 4px #d32f2f22",
-                                          fontWeight: 600,
-                                          color: h.disponible ? "#388e3c" : "#d32f2f"
-                                        }}>
-                                          <span>
-                                            <b>Fecha:</b> <span style={{ color: "#222" }}>{h.fecha?.split("T")[0] || h.fecha}</span>
-                                            {" | "}
-                                            <b>Hora:</b> <span style={{ color: "#222" }}>{h.hora_inicio} - {h.hora_fin}</span>
-                                          </span>
-                                          {h.disponible ? (
-                                            <span style={{
-                                              color: "#388e3c",
-                                              fontWeight: 800,
-                                              fontSize: 15,
-                                              marginLeft: 18
-                                            }}>
-                                              Disponible
+                                    {cancha.horarios && cancha.horarios.filter(isHorarioFuturo).length > 0 ? (
+                                      cancha.horarios
+                                        .filter(isHorarioFuturo)
+                                        .map(h => (
+                                          <li key={h.id} style={{
+                                            background: h.disponible ? "#e6fbe6" : "#ffeaea",
+                                            border: `2px solid ${h.disponible ? "#43e97b" : "#d32f2f"}`,
+                                            borderRadius: 10,
+                                            padding: "10px 16px",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            boxShadow: h.disponible ? "0 1px 4px #43e97b33" : "0 1px 4px #d32f2f22",
+                                            fontWeight: 600,
+                                            color: h.disponible ? "#388e3c" : "#d32f2f"
+                                          }}>
+                                            <span>
+                                              <b>Fecha:</b> <span style={{ color: "#222" }}>{h.fecha?.split("T")[0] || h.fecha}</span>
+                                              {" | "}
+                                              <b>Hora:</b> <span style={{ color: "#222" }}>{h.hora_inicio} - {h.hora_fin}</span>
                                             </span>
-                                          ) : (
-                                            <span style={{
-                                              color: "#d32f2f",
-                                              fontWeight: 800,
-                                              fontSize: 15,
-                                              marginLeft: 18,
-                                              textAlign: "right"
-                                            }}>
-                                              Reservado
-                                              {/* Mostrar abono y restante si existen */}
-                                              {typeof h.abono !== "undefined" && typeof h.restante !== "undefined" ? (
-                                                <span style={{
-                                                  display: "block",
-                                                  color: "#007991",
-                                                  fontWeight: 600,
-                                                  fontSize: 14,
-                                                  marginTop: 2
-                                                }}>
+                                            {h.disponible ? (
+                                              <span style={{
+                                                color: "#388e3c",
+                                                fontWeight: 800,
+                                                fontSize: 15,
+                                                marginLeft: 18
+                                              }}>
+                                                Disponible
+                                              </span>
+                                            ) : (
+                                              <span style={{
+                                                color: "#d32f2f",
+                                                fontWeight: 800,
+                                                fontSize: 15,
+                                                marginLeft: 18,
+                                                textAlign: "right"
+                                              }}>
+                                                Reservado
+                                                {/* Mostrar abono y restante si existen */}
+                                                {typeof h.abono !== "undefined" && typeof h.restante !== "undefined" ? (
+                                                  <span style={{
+                                                    display: "block",
+                                                    color: "#007991",
+                                                    fontWeight: 600,
+                                                    fontSize: 14,
+                                                    marginTop: 2
+                                                  }}>
                                                   <br />
                                                   Abono: <span style={{ color: "#388e3c" }}>${h.abono}</span>
                                                   <br />
                                                   Restante: <span style={{ color: "#d32f2f" }}>${h.restante}</span>
                                                 </span>
-                                              ) : (
-                                                // Si no viene en el objeto, buscarlo de la API de facturas
-                                                <FetchFacturaInfo disponibilidadId={h.id} />
-                                              )}
-                                            </span>
-                                          )}
-                                        </li>
-                                      ))
+                                                ) : (
+                                                  // Si no viene en el objeto, buscarlo de la API de facturas
+                                                  <FetchFacturaInfo disponibilidadId={h.id} />
+                                                )}
+                                              </span>
+                                            )}
+                                          </li>
+                                        ))
                                     ) : (
                                       <li style={{ color: "#888", fontWeight: 500, fontSize: 15, padding: "8px 0" }}>
                                         No hay horarios registrados.
@@ -969,6 +971,15 @@ export default function ManageCourts() {
       </div>
     </div>
   );
+
+  // Función para saber si a horario es futuro (no ha pasado)
+  function isHorarioFuturo(h) {
+    if (!h.fecha || !h.hora_fin) return false;
+    const fechaStr = h.fecha.includes("T") ? h.fecha.split("T")[0] : h.fecha;
+    const fechaHoraFin = new Date(`${fechaStr}T${h.hora_fin}`);
+    const ahora = new Date();
+    return fechaHoraFin > ahora;
+  }
 
   // Agrega esta función dentro del componente
   function getCanchaDisplayName(cancha, idx) {
