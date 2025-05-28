@@ -42,45 +42,79 @@ exports.usuario = async (req, res) => {
 exports.propietario = async (req, res) => {
   try {
     if (!req.user || !req.user.userId) {
-      console.error("No hay usuario autenticado en la petición", req.user);
       return res.status(401).json({ error: "No autenticado" });
     }
     const userId = req.user.userId;
-    console.log("userId:", userId);
 
+    // Trae todas las canchas del propietario
     const canchasRes = await pool.query(
       `SELECT c.id, c.nombre FROM canchas c WHERE c.dueno_id = $1`,
       [userId]
     );
-    console.log("canchasRes.rows:", canchasRes.rows);
-
     const canchaIds = canchasRes.rows.map(c => c.id);
 
-    // Si no tiene canchas, responde con datos vacíos
     if (!canchaIds || canchaIds.length === 0) {
       return res.json({ total_reservas: 0, ingresos: 0, canchas: [] });
     }
 
-    // Reservas por cancha (JOIN reservas -> disponibilidades -> canchas)
-    const reservasPorCancha = await pool.query(
-      `SELECT c.nombre, COUNT(r.id) AS reservas
-         FROM canchas c
-         LEFT JOIN disponibilidades d ON c.id = d.cancha_id
-         LEFT JOIN reservas r ON d.id = r.disponibilidad_id
+    // Trae reservas y abonos (ingresos) por cancha
+    const reservasDetalleRes = await pool.query(
+      `SELECT 
+          c.id AS cancha_id,
+          c.nombre AS cancha_nombre,
+          e.nombre AS establecimiento_nombre,
+          COUNT(r.id) AS reservas,
+          COALESCE(
+            json_agg(
+              json_build_object('abono', f.abono)
+            ) FILTER (WHERE r.id IS NOT NULL AND f.abono IS NOT NULL),
+            '[]'
+          ) AS reservas_detalle
+        FROM canchas c
+        LEFT JOIN establecimientos e ON c.establecimiento_id = e.id
+        LEFT JOIN disponibilidades d ON d.cancha_id = c.id
+        LEFT JOIN reservas r ON d.id = r.disponibilidad_id
+        LEFT JOIN facturas f ON f.reserva_id = r.id
         WHERE c.dueno_id = $1
-        GROUP BY c.nombre`,
+        GROUP BY c.id, c.nombre, e.nombre
+        ORDER BY e.nombre, c.nombre`,
       [userId]
     );
-    // Ingresos estimados (ejemplo: 50.000 por reserva)
-    const totalReservas = reservasPorCancha.rows.reduce((acc, c) => acc + parseInt(c.reservas), 0);
-    const ingresos = totalReservas * 50000;
+
+    // Calcula totales
+    let totalReservas = 0;
+    let totalIngresos = 0;
+    const canchas = reservasDetalleRes.rows.map(row => {
+      const reservas = parseInt(row.reservas) || 0;
+      let ingresos = 0;
+      let reservas_detalle = [];
+      try {
+        reservas_detalle = Array.isArray(row.reservas_detalle)
+          ? row.reservas_detalle
+          : JSON.parse(row.reservas_detalle || "[]");
+      } catch {
+        reservas_detalle = [];
+      }
+      ingresos = reservas_detalle.reduce(
+        (acc, r) => acc + (typeof r.abono === "number" ? r.abono : 0),
+        0
+      );
+      totalReservas += reservas;
+      totalIngresos += ingresos;
+      return {
+        cancha_id: row.cancha_id,
+        nombre: row.cancha_nombre,
+        establecimiento_nombre: row.establecimiento_nombre,
+        reservas,
+        ingresos,
+        reservas_detalle
+      };
+    });
+
     res.json({
       total_reservas: totalReservas,
-      ingresos,
-      canchas: reservasPorCancha.rows.map(r => ({
-        nombre: r.nombre,
-        reservas: parseInt(r.reservas)
-      }))
+      ingresos: totalIngresos,
+      canchas
     });
   } catch (err) {
     console.error("Error en estadisticas propietario:", err);
