@@ -135,6 +135,12 @@ import React, { useEffect, useState, useRef } from "react";
         Swal.fire("Faltan datos", "Completa todos los campos.", "warning");
         return;
       }
+      // Validación: solo horas exactas (minutos "00")
+      const [hInicio, mInicio] = hora_inicio.split(":");
+      if (mInicio !== "00") {
+        Swal.fire("Horario inválido", "Solo puedes seleccionar horas exactas (por ejemplo, 09:00, 10:00, etc).", "warning");
+        return;
+      }
       // Validación extra para horario fuera de rango
       if (hora_inicio < "09:00" || hora_inicio > "22:00" || hora_fin > "23:00") {
         Swal.fire("Horario inválido", "Solo se permiten horarios entre 9:00 am y 10:00 pm (fin máximo 11:00 pm).", "warning");

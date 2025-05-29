@@ -4,6 +4,13 @@ const pool = require("../db");
 exports.addDisponibilidad = async (req, res) => {
   const { cancha_id, fecha, hora_inicio, hora_fin } = req.body;
   try {
+    // Validar que la hora_inicio y hora_fin sean en horas exactas (minutos "00")
+    const [hInicio, mInicio] = (hora_inicio || "").split(":");
+    const [hFin, mFin] = (hora_fin || "").split(":");
+    if (mInicio !== "00" || mFin !== "00") {
+      return res.status(400).json({ error: "Solo se permiten horarios en horas exactas (por ejemplo, 09:00, 10:00, etc)." });
+    }
+
     // Validar que no exista ya un horario igual para la misma cancha
     const existe = await pool.query(
       `SELECT 1 FROM disponibilidades 
