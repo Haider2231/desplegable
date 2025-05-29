@@ -19,6 +19,7 @@ import Estadisticas from "./pages/Estadisticas";
 import AdminUsersPanel from "./components/admin/AdminUsersPanel";
 import Pagos from "./pages/Pagos";
 import ReservaExitosa from "./pages/ReservaExitosa";
+import AdminCrearEstablecimiento from "./pages/AdminCrearEstablecimiento";
 
 function App() {
   return (
