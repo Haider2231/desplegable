@@ -186,7 +186,7 @@ exports.checkEmailExists = async (req, res) => {
 exports.getUsuarios = async (req, res) => {
   try {
     const result = await require("../db").query(
-      "SELECT id, nombre, email, rol FROM usuarios WHERE verificado = true ORDER BY id"
+      "SELECT id, nombre, email, rol, telefono FROM usuarios WHERE verificado = true ORDER BY id"
     );
     res.json(result.rows);
   } catch (err) {
@@ -220,7 +220,7 @@ exports.createUsuario = async (req, res) => {
 exports.updateUsuario = async (req, res) => {
   const { nombre, email, rol, telefono } = req.body;
   const { id } = req.params;
-  if (!nombre || !email || !rol || !telefono) {
+  if (!nombre || !email || !rol || !telex|fono) {
     return res.status(400).json({ error: "Faltan datos requeridos" });
   }
   try {
