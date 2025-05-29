@@ -220,7 +220,7 @@ exports.createUsuario = async (req, res) => {
 exports.updateUsuario = async (req, res) => {
   const { nombre, email, rol, telefono } = req.body;
   const { id } = req.params;
-  if (!nombre || !email || !rol || !telex|fono) {
+  if (!nombre || !email || !rol || !telefono) {
     return res.status(400).json({ error: "Faltan datos requeridos" });
   }
   try {
