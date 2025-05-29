@@ -39,6 +39,7 @@ router.delete(
 );
 router.get(
   "/usuarios/propietarios",
+  verificarToken,
   verificarRol(["admin"]),
   authController.getPropietarios
 );

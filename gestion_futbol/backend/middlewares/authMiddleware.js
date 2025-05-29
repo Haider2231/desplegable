@@ -14,10 +14,13 @@ function verificarToken(req, res, next) {
   });
 }
 
-function verificarRol(roles) {
+function verificarRol(rolesPermitidos) {
   return (req, res, next) => {
-    if (!roles.includes(req.user.rol)) {
-      return res.status(403).json({ error: "No tienes permiso para acceder a esta ruta" });
+    if (!req.user || !req.user.rol) {
+      return res.status(401).json({ error: "No autenticado o sin rol" });
+    }
+    if (!rolesPermitidos.includes(req.user.rol)) {
+      return res.status(403).json({ error: "No autorizado" });
     }
     next();
   };
