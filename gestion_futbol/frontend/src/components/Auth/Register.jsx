@@ -8,6 +8,7 @@ export default function Register({ onRegister }) {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [telefono, setTelefono] = useState(""); // Nuevo estado para teléfono
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
@@ -24,14 +25,18 @@ export default function Register({ onRegister }) {
       setError("La contraseña debe tener al menos 7 caracteres, una letra y un signo de puntuación.");
       return;
     }
+    if (!telefono.trim()) {
+      setError("El teléfono es obligatorio.");
+      return;
+    }
     setLoading(true);
     try {
-      // Cambia el endpoint a /auth/register
       const res = await axios.post("/auth/usuarios", {
         nombre,
         email,
         password,
         rol: "usuario",
+        telefono, // Envía el teléfono al backend
       });
       if (res.data && !res.data.error) {
         setSuccess("¡Registro exitoso! Revisa tu correo para verificar tu cuenta.");
@@ -94,7 +99,7 @@ export default function Register({ onRegister }) {
             placeholder="Name"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
-              style={{ marginLeft: "-18px" }} 
+            style={{ marginLeft: "-18px" }} 
           />
           <input
             required
@@ -104,7 +109,17 @@ export default function Register({ onRegister }) {
             placeholder="E-mail"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-              style={{ marginLeft: "-18px" }} 
+            style={{ marginLeft: "-18px" }} 
+          />
+          <input
+            required
+            className="input"
+            type="text"
+            name="telefono"
+            placeholder="Teléfono"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
+            style={{ marginLeft: "-18px" }} 
           />
           <input
             required
@@ -114,7 +129,7 @@ export default function Register({ onRegister }) {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-              style={{ marginLeft: "-18px" }} 
+            style={{ marginLeft: "-18px" }} 
           />
           <input
             className="login-button"

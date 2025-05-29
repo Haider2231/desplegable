@@ -18,8 +18,8 @@ api.interceptors.request.use((config) => {
 export const login = (email, password) =>
   api.post("/auth/login", { email, password }).then((res) => res.data);
 
-export const register = ({ nombre, email, password, rol = "usuario" }) =>
-  api.post("/auth/register", { nombre, email, password, rol }).then((res) => res.data);
+export const register = ({ nombre, email, password, rol = "usuario", telefono }) =>
+  api.post("/auth/usuarios", { nombre, email, password, rol, telefono }).then((res) => res.data);
 
 export const verify = (email, codigo) =>
   api.post("/auth/verificar", { email, codigo }).then((res) => res.data);
