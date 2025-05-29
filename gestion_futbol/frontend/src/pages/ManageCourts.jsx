@@ -1,4 +1,4 @@
-  import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
   import { getCanchasConHorarios, getCanchas } from "../api/api";
   import Swal from "sweetalert2";
   import "../styles/manageCourts.css";
@@ -480,25 +480,6 @@
               }}
             >
               ⏰ Agregar horarios
-            </button>
-            <button
-              className="manage-menu-btn"
-              // Elimina la apertura del panel de agregar establecimiento
-              // onClick={() => setShowEstFormPanel(true)}
-              disabled
-              style={{
-                background: "#fff",
-                color: "#007991",
-                border: "none",
-                borderRadius: 8,
-                padding: "12px 18px",
-                fontWeight: 700,
-                fontSize: 16,
-                marginBottom: 8,
-                cursor: "not-allowed"
-              }}
-            >
-              ➕ Agregar nuevo establecimiento
             </button>
           </div>
           {/* Panel central dinámico */}
