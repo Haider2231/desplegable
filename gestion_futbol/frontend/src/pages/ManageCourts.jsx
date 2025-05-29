@@ -545,26 +545,24 @@ import React, { useEffect, useState, useRef } from "react";
                                       flexDirection: "column",
                                       gap: "10px"
                                     }}>
-                                      {/* Filtra horarios para mostrar solo los futuros o de hoy */}
-                                      {(cancha.horarios || [])
-                                        .filter(h => {
-                                          if (!h.fecha) return false;
-                                          // Si la fecha viene como string tipo "2025-05-27T00:00:00.000Z" o "2025-05-27"
-                                          const hoy = new Date();
-                                          hoy.setHours(0,0,0,0);
-                                          const fechaHorario = new Date(h.fecha.split("T")[0]);
-                                          return fechaHorario >= hoy;
-                                        })
-                                        .length > 0 ? (
-                                        cancha.horarios
+                                      {/* Filtra horarios futuros y elimina duplicados */}
+                                      {(() => {
+                                        const hoy = new Date();
+                                        hoy.setHours(0,0,0,0);
+                                        const vistos = new Set();
+                                        const horariosFiltrados = (cancha.horarios || [])
                                           .filter(h => {
                                             if (!h.fecha) return false;
-                                            const hoy = new Date();
-                                            hoy.setHours(0,0,0,0);
                                             const fechaHorario = new Date(h.fecha.split("T")[0]);
-                                            return fechaHorario >= hoy;
-                                          })
-                                          .map(h => (
+                                            if (fechaHorario < hoy) return false;
+                                            // Genera una clave única por fecha, hora_inicio y hora_fin
+                                            const clave = `${h.fecha?.split("T")[0]}_${h.hora_inicio}_${h.hora_fin}`;
+                                            if (vistos.has(clave)) return false;
+                                            vistos.add(clave);
+                                            return true;
+                                          });
+                                        return horariosFiltrados.length > 0 ? (
+                                          horariosFiltrados.map(h => (
                                             <li key={h.id} style={{
                                               background: h.disponible ? "#e6fbe6" : "#ffeaea",
                                               border: `2px solid ${h.disponible ? "#43e97b" : "#d32f2f"}`,
@@ -606,11 +604,12 @@ import React, { useEffect, useState, useRef } from "react";
                                               )}
                                             </li>
                                           ))
-                                      ) : (
-                                        <li style={{ color: "#888", fontWeight: 500, fontSize: 15, padding: "8px 0" }}>
-                                          No hay horarios registrados.
-                                        </li>
-                                      )}
+                                        ) : (
+                                          <li style={{ color: "#888", fontWeight: 500, fontSize: 15, padding: "8px 0" }}>
+                                            No hay horarios registrados.
+                                          </li>
+                                        );
+                                      })()}
                                     </ul>
                                   </div>
                                 </li>

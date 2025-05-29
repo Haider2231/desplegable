@@ -4,6 +4,16 @@ const pool = require("../db");
 exports.addDisponibilidad = async (req, res) => {
   const { cancha_id, fecha, hora_inicio, hora_fin } = req.body;
   try {
+    // Validar que no exista ya un horario igual para la misma cancha
+    const existe = await pool.query(
+      `SELECT 1 FROM disponibilidades 
+       WHERE cancha_id = $1 AND fecha = $2 AND hora_inicio = $3 AND hora_fin = $4`,
+      [cancha_id, fecha, hora_inicio, hora_fin]
+    );
+    if (existe.rowCount > 0) {
+      return res.status(400).json({ error: "Ya existe un horario para esa cancha en esa fecha y hora." });
+    }
+
     const result = await pool.query(
       "INSERT INTO disponibilidades (cancha_id, fecha, hora_inicio, hora_fin) VALUES ($1, $2, $3, $4) RETURNING *",
       [cancha_id, fecha, hora_inicio, hora_fin]
