@@ -12,21 +12,33 @@ export default function ReservaExitosa() {
     return null;
   }
 
-  // Guardar factura en localStorage hasta la hora de fin o por 30 minutos si no hay fecha/hora
+  // Guardar factura en localStorage hasta la hora de fin o por 1 hora si no hay fecha/hora
   React.useEffect(() => {
     if (factura_url) {
       let finReserva;
       if (fecha && hora_fin) {
         finReserva = new Date(`${fecha}T${hora_fin}`).getTime();
       } else {
-        // Si no hay fecha/hora, expira en 1h hora
         finReserva = Date.now() + 1000 * 60 * 60;
       }
+      // Obtener userId del token
+      let userId = null;
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const base64Url = token.split(".")[1];
+          let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+          while (base64.length % 4) base64 += "=";
+          const payload = JSON.parse(atob(base64));
+          userId = payload.userId;
+        }
+      } catch {}
       localStorage.setItem(
         "facturaPendiente",
         JSON.stringify({
           factura_url,
-          finReserva
+          finReserva,
+          userId
         })
       );
     }

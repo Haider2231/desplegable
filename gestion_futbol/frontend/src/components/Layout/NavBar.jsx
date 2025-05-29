@@ -7,9 +7,11 @@ export default function NavBar() {
   const location = useLocation();
 
   const [rol, setRol] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
     let currentRol = null;
+    let currentUserId = null;
     try {
       const token = localStorage.getItem("token");
       if (token) {
@@ -18,14 +20,18 @@ export default function NavBar() {
         while (base64.length % 4) base64 += "=";
         const payload = JSON.parse(atob(base64));
         currentRol = payload.rol;
+        currentUserId = payload.userId;
         if (!payload.userId) {
           currentRol = null;
+          currentUserId = null;
         }
       }
     } catch {
       currentRol = null;
+      currentUserId = null;
     }
     setRol(currentRol);
+    setUserId(currentUserId);
   }, []);
 
   // Solo redirige si el pathname es "/" y el rol es admin o propietario
@@ -49,13 +55,19 @@ export default function NavBar() {
       if (data) {
         try {
           const obj = JSON.parse(data);
-          if (obj.factura_url && obj.finReserva) {
+          // Solo mostrar si el userId coincide
+          if (
+            obj.factura_url &&
+            obj.finReserva &&
+            obj.userId &&
+            userId &&
+            String(obj.userId) === String(userId)
+          ) {
             const ahora = Date.now();
             if (ahora < obj.finReserva) {
               setFacturaPendiente(obj.factura_url);
               return;
             } else {
-              // Expiró, eliminar
               localStorage.removeItem("facturaPendiente");
             }
           }
@@ -67,7 +79,7 @@ export default function NavBar() {
     // Opcional: revisa cada minuto si expiró
     const interval = setInterval(checkFactura, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userId]);
 
   return (
     <nav className="navbar-futbol">
@@ -124,7 +136,7 @@ export default function NavBar() {
           </NavLink>
         </>
       )}
-      {facturaPendiente && (
+      {rol === "usuario" && facturaPendiente && (
         <a
           href={facturaPendiente}
           target="_blank"
