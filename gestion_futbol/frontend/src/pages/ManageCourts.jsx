@@ -555,6 +555,10 @@ import React, { useEffect, useState, useRef } from "react";
                                             if (!h.fecha) return false;
                                             const fechaHorario = new Date(h.fecha.split("T")[0]);
                                             if (fechaHorario < hoy) return false;
+                                            // Solo mostrar horarios con minutos en 00
+                                            const [hInicio, mInicio] = h.hora_inicio.split(":");
+                                            const [hFin, mFin] = h.hora_fin.split(":");
+                                            if (mInicio !== "00" || mFin !== "00") return false;
                                             // Genera una clave única por fecha, hora_inicio y hora_fin
                                             const clave = `${h.fecha?.split("T")[0]}_${h.hora_inicio}_${h.hora_fin}`;
                                             if (vistos.has(clave)) return false;
@@ -723,23 +727,9 @@ import React, { useEffect, useState, useRef } from "react";
                     }}
                   />
                   <label style={{ fontWeight: 600, color: "#007991" }}>Hora inicio:</label>
-                  <input
-                    type="time"
+                  <select
                     value={horarioForm.hora_inicio}
-                    min="09:00"
-                    max="22:00"
-                    onChange={e => {
-                      const value = e.target.value;
-                      if (value < "09:00") {
-                        Swal.fire("Horario inválido", "No se puede poner un horario antes de las 9:00 am.", "warning");
-                        return;
-                      }
-                      if (value > "22:00") {
-                        Swal.fire("Horario inválido", "No se puede poner un horario después de las 10:00 pm.", "warning");
-                        return;
-                      }
-                      setHorarioForm({ ...horarioForm, hora_inicio: value });
-                    }}
+                    onChange={e => setHorarioForm({ ...horarioForm, hora_inicio: e.target.value })}
                     required
                     style={{
                       border: "1.5px solid #43e97b",
@@ -748,7 +738,17 @@ import React, { useEffect, useState, useRef } from "react";
                       fontSize: 16,
                       outline: "none"
                     }}
-                  />
+                  >
+                    <option value="">Selecciona la hora de inicio</option>
+                    {Array.from({ length: 14 }).map((_, i) => {
+                      // Horas de 09:00 a 22:00
+                      const hour = 9 + i;
+                      const value = `${hour.toString().padStart(2, "0")}:00`;
+                      return (
+                        <option key={value} value={value}>{value}</option>
+                      );
+                    })}
+                  </select>
                   <label style={{ fontWeight: 600, color: "#007991" }}>Hora fin :</label>
                   <input
                     type="time"
