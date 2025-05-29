@@ -4,13 +4,33 @@ import { useLocation, useNavigate } from "react-router-dom";
 export default function ReservaExitosa() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { monto, abono, restante, factura_url } = location.state || {};
+  const { monto, abono, restante, factura_url, fecha, hora_fin } = location.state || {};
 
   if (!monto || !abono || !factura_url) {
     // Si no hay datos, redirige al inicio
     navigate("/");
     return null;
   }
+
+  // Guardar factura en localStorage hasta la hora de fin o por 30 minutos si no hay fecha/hora
+  React.useEffect(() => {
+    if (factura_url) {
+      let finReserva;
+      if (fecha && hora_fin) {
+        finReserva = new Date(`${fecha}T${hora_fin}`).getTime();
+      } else {
+        // Si no hay fecha/hora, expira en 1h hora
+        finReserva = Date.now() + 1000 * 60 * 60;
+      }
+      localStorage.setItem(
+        "facturaPendiente",
+        JSON.stringify({
+          factura_url,
+          finReserva
+        })
+      );
+    }
+  }, [factura_url, fecha, hora_fin]);
 
   return (
     <div style={{

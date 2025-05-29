@@ -698,12 +698,22 @@ export default function Estadisticas({ rol: propRol }) {
               <div style={{ width: "100%", height: 260 }}>
                 <Bar
                   data={{
-                    labels: ["Usuarios", "Canchas", "Reservas"],
+                    labels: ["Usuarios", "Canchas", "Establecimientos", "Reservas"],
                     datasets: [
                       {
                         label: "Totales del sistema",
-                        data: [data.usuarios, data.canchas, data.reservas],
-                        backgroundColor: ["#43a047", "#388e3c", "#00c6fb"],
+                        data: [
+                          data.usuarios,
+                          data.canchas,
+                          data.establecimientos || 0,
+                          data.reservas,
+                        ],
+                        backgroundColor: [
+                          "#43a047",
+                          "#388e3c",
+                          "#007991",
+                          "#00c6fb",
+                        ],
                       },
                     ],
                   }}
@@ -769,6 +779,7 @@ export default function Estadisticas({ rol: propRol }) {
           <div style={{ marginTop: 16, textAlign: "center" }}>
             <strong>Usuarios registrados:</strong> {data.usuarios} <br />
             <strong>Canchas:</strong> {data.canchas} <br />
+            <strong>Establecimientos:</strong> {data.establecimientos || 0} <br />
             <strong>Reservas totales:</strong> {data.reservas}
           </div>
         </div>

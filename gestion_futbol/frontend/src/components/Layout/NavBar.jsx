@@ -40,6 +40,35 @@ export default function NavBar() {
 
   const isGuest = !rol;
 
+  // Estado para mostrar el enlace de factura pendiente
+  const [facturaPendiente, setFacturaPendiente] = useState(null);
+
+  useEffect(() => {
+    const checkFactura = () => {
+      const data = localStorage.getItem("facturaPendiente");
+      if (data) {
+        try {
+          const obj = JSON.parse(data);
+          if (obj.factura_url && obj.finReserva) {
+            const ahora = Date.now();
+            if (ahora < obj.finReserva) {
+              setFacturaPendiente(obj.factura_url);
+              return;
+            } else {
+              // Expiró, eliminar
+              localStorage.removeItem("facturaPendiente");
+            }
+          }
+        } catch {}
+      }
+      setFacturaPendiente(null);
+    };
+    checkFactura();
+    // Opcional: revisa cada minuto si expiró
+    const interval = setInterval(checkFactura, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <nav className="navbar-futbol">
       {(rol === "usuario" || isGuest) && (
@@ -94,6 +123,18 @@ export default function NavBar() {
             Estadísticas
           </NavLink>
         </>
+      )}
+      {facturaPendiente && (
+        <a
+          href={facturaPendiente}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="nav-btn"
+          style={{ background: "#43e97b", color: "#fff", fontWeight: 700 }}
+        >
+          <span role="img" aria-label="pdf" style={{ marginRight: 6 }}>📄</span>
+          Descargar factura
+        </a>
       )}
     </nav>
   );

@@ -129,10 +129,11 @@ exports.admin = async (req, res) => {
     const usuariosRes = await pool.query(`SELECT COUNT(*) FROM usuarios WHERE verificado = true`);
     // Canchas
     const canchasRes = await pool.query(`SELECT COUNT(*) FROM canchas`);
+    // Establecimientos
+    const establecimientosRes = await pool.query(`SELECT COUNT(*) FROM establecimientos`);
     // Reservas totales
     const reservasRes = await pool.query(`SELECT COUNT(*) FROM reservas`);
     // Actividad por día (últimos 7 días)
-    // Cambia 'fecha' por el campo correcto, por ejemplo 'created_at' o 'fecha_reserva'
     const actividadRes = await pool.query(
       `SELECT TO_CHAR(r.fecha_reserva, 'YYYY-MM-DD') AS fecha, COUNT(*) AS reservas
          FROM reservas r
@@ -143,6 +144,7 @@ exports.admin = async (req, res) => {
     res.json({
       usuarios: parseInt(usuariosRes.rows[0].count),
       canchas: parseInt(canchasRes.rows[0].count),
+      establecimientos: parseInt(establecimientosRes.rows[0].count),
       reservas: parseInt(reservasRes.rows[0].count),
       actividad: actividadRes.rows.map(r => ({
         fecha: r.fecha,
