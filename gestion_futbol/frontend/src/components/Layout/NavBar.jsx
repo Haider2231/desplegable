@@ -79,6 +79,9 @@ export default function NavBar() {
           <NavLink to="/admin-users" className="nav-btn">
             Panel usuarios
           </NavLink>
+          <NavLink to="/admin/crear-establecimiento" className="nav-btn">
+            Crear Establecimiento
+          </NavLink>
         </>
       )}
 

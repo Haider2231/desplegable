@@ -83,6 +83,7 @@ function App() {
                   <Route path="/admin-users" element={<AdminUsersPanel />} />
                   <Route path="/pagos" element={<Pagos />} />
                   <Route path="/reserva-exitosa" element={<ReservaExitosa />} />
+                  <Route path="/admin/crear-establecimiento" element={<AdminCrearEstablecimiento />} />
                 </Routes>
               </div>
               <Footer />

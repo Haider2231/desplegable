@@ -7,10 +7,10 @@ export default function AdminUsersPanel() {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
-  const [editData, setEditData] = useState({ nombre: "", email: "", rol: "" });
+  const [editData, setEditData] = useState({ nombre: "", email: "", rol: "", telefono: "" });
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 20;
+  const usersPerPage = 10;
 
   // Obtener todos los usuarios
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function AdminUsersPanel() {
   // Editar usuario
   const handleEdit = (user) => {
     setEditingUser(user.id);
-    setEditData({ nombre: user.nombre, email: user.email, rol: user.rol });
+    setEditData({ nombre: user.nombre, email: user.email, rol: user.rol, telefono: user.telefono || "" });
   };
 
   const handleEditChange = (e) => {
@@ -78,6 +78,7 @@ export default function AdminUsersPanel() {
       html:
         '<input id="swal-nombre" class="swal2-input" placeholder="Nombre">' +
         '<input id="swal-email" class="swal2-input" placeholder="Email">' +
+        '<input id="swal-telefono" class="swal2-input" placeholder="Teléfono">' +
         '<input id="swal-password" class="swal2-input" placeholder="Contraseña" type="password">' +
         '<select id="swal-rol" class="swal2-input"><option value="usuario">Usuario</option><option value="propietario">Propietario</option><option value="admin">Admin</option></select>',
       focusConfirm: false,
@@ -85,6 +86,7 @@ export default function AdminUsersPanel() {
         return {
           nombre: document.getElementById("swal-nombre").value,
           email: document.getElementById("swal-email").value,
+          telefono: document.getElementById("swal-telefono").value,
           password: document.getElementById("swal-password").value,
           rol: document.getElementById("swal-rol").value,
         };
@@ -99,7 +101,8 @@ export default function AdminUsersPanel() {
       !formValues.nombre ||
       !formValues.email ||
       !formValues.password ||
-      !formValues.rol
+      !formValues.rol ||
+      !formValues.telefono
     ) {
       Swal.fire("Error", "Todos los campos son obligatorios", "error");
       return;
@@ -251,6 +254,7 @@ export default function AdminUsersPanel() {
               <tr>
                 <th>Nombre</th>
                 <th>Email</th>
+                <th>Teléfono</th>
                 <th>Rol</th>
                 <th>Acciones</th>
               </tr>
@@ -287,6 +291,18 @@ export default function AdminUsersPanel() {
                       />
                     ) : (
                       <span style={{ color: "#388e3c" }}>{u.email}</span>
+                    )}
+                  </td>
+                  <td>
+                    {editingUser === u.id ? (
+                      <input
+                        name="telefono"
+                        value={editData.telefono}
+                        onChange={handleEditChange}
+                        className="admin-users-input"
+                      />
+                    ) : (
+                      <span style={{ color: "#007991" }}>{u.telefono}</span>
                     )}
                   </td>
                   <td>

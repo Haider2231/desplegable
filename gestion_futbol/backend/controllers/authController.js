@@ -194,18 +194,19 @@ exports.getUsuarios = async (req, res) => {
   }
 };
 
+
 // Crear usuario (solo admin)
 exports.createUsuario = async (req, res) => {
-  const { nombre, email, password, rol } = req.body;
-  if (!nombre || !email || !password || !rol) {
+  const { nombre, email, password, rol, telefono } = req.body;
+  if (!nombre || !email || !password || !rol || !telefono) {
     return res.status(400).json({ error: "Faltan datos requeridos" });
   }
   try {
     const bcrypt = require("bcryptjs");
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await require("../db").query(
-      "INSERT INTO usuarios (nombre, email, password, rol, verificado) VALUES ($1, $2, $3, $4, true) RETURNING id, nombre, email, rol",
-      [nombre, email, hashedPassword, rol]
+      "INSERT INTO usuarios (nombre, email, password, rol, telefono, verificado) VALUES ($1, $2, $3, $4, $5, true) RETURNING id, nombre, email, rol, telefono",
+      [nombre, email, hashedPassword, rol, telefono]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -213,17 +214,19 @@ exports.createUsuario = async (req, res) => {
   }
 };
 
+
+
 // Actualizar usuario (solo admin)
 exports.updateUsuario = async (req, res) => {
-  const { nombre, email, rol } = req.body;
+  const { nombre, email, rol, telefono } = req.body;
   const { id } = req.params;
-  if (!nombre || !email || !rol) {
+  if (!nombre || !email || !rol || !telefono) {
     return res.status(400).json({ error: "Faltan datos requeridos" });
   }
   try {
     const result = await require("../db").query(
-      "UPDATE usuarios SET nombre=$1, email=$2, rol=$3 WHERE id=$4 RETURNING id, nombre, email, rol",
-      [nombre, email, rol, id]
+      "UPDATE usuarios SET nombre=$1, email=$2, rol=$3, telefono=$4 WHERE id=$5 RETURNING id, nombre, email, rol, telefono",
+      [nombre, email, rol, telefono, id]
     );
     res.json(result.rows[0]);
   } catch (err) {
