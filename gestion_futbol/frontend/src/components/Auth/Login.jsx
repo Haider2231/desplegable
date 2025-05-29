@@ -8,6 +8,7 @@ export default function Login({ onLogin }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -71,7 +72,7 @@ export default function Login({ onLogin }) {
           <input
             required
             className="input"
-            type="password"
+            type={showPassword ? "text" : "password"}
             name="password"
             id="password"
             placeholder="Password"
@@ -79,6 +80,22 @@ export default function Login({ onLogin }) {
             onChange={(e) => setPassword(e.target.value)}
             style={{ marginLeft: "-18px" }} // mueve el input más a la izquierda
           />
+          <button
+            type="button"
+            style={{
+              margin: "0 0 12px 0",
+              background: "#eee",
+              border: "none",
+              borderRadius: 6,
+              padding: "6px 12px",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+            onClick={() => setShowPassword((v) => !v)}
+            tabIndex={-1}
+          >
+            {showPassword ? "Ocultar" : "Ver"} contraseña
+          </button>
           <span className="forgot-password">
             <a href="/forgot-password">Forgot Password ?</a>
           </span>
