@@ -78,24 +78,46 @@ export default function Login({ onLogin }) {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ marginLeft: "-18px" }} // mueve el input más a la izquierda
+            style={{ marginLeft: "-18px", paddingRight: "38px" }} // espacio para el ojito
           />
-          <button
-            type="button"
-            style={{
-              margin: "0 0 12px 0",
-              background: "#eee",
-              border: "none",
-              borderRadius: 6,
-              padding: "6px 12px",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
+          <span
             onClick={() => setShowPassword((v) => !v)}
+            style={{
+              position: "relative",
+              left: "calc(100% - 38px)",
+              top: "-34px",
+              cursor: "pointer",
+              fontSize: 20,
+              color: "#007991",
+              userSelect: "none",
+              zIndex: 2,
+              width: 0,
+              display: "inline-block",
+            }}
             tabIndex={-1}
+            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
           >
-            {showPassword ? "Ocultar" : "Ver"} contraseña
-          </button>
+            {showPassword ? (
+              // Ojito abierto
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path
+                  d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"
+                  stroke="#007991"
+                  strokeWidth="2"
+                />
+                <circle cx="12" cy="12" r="3.5" stroke="#007991" strokeWidth="2" />
+              </svg>
+            ) : (
+              // Ojito tachado
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path
+                  d="M17.94 17.94C16.13 19.25 14.13 20 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.53 9.53A3.5 3.5 0 0 1 12 8.5c1.93 0 3.5 1.57 3.5 3.5 0 .87-.32 1.67-.85 2.29M1 1l22 22"
+                  stroke="#007991"
+                  strokeWidth="2"
+                />
+              </svg>
+            )}
+          </span>
           <span className="forgot-password">
             <a href="/forgot-password">Forgot Password ?</a>
           </span>
