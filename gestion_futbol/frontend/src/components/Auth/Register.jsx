@@ -172,7 +172,7 @@ export default function Register({ onRegister }) {
           {/* Captcha */}
           <div style={{ margin: "18px 0" }}>
             <ReCAPTCHA
-              sitekey="6Lez21ArAAAAAPptiPZS6oQVeu8F7xgXRH1KRlpO" // <-- Tu clave de sitio
+              sitekey="6Lez21ArAAAAAPPtiPZS6oQVeu8F7kgXRH1KRIpO" // <-- Tu clave de sitio
               onChange={token => setCaptchaToken(token)}
             />
           </div>
