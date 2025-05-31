@@ -317,11 +317,9 @@ exports.createReservaConFactura = async (req, res) => {
     if (userEmail) {
       // Extrae el id de la factura del URL de forma segura
       let facturaId = null;
-      // Asegúrate de que factura.factura_url sea un string y tenga el formato correcto
       if (factura && typeof factura.factura_url === "string") {
-        // Si la URL empieza con "/", quítalo para evitar problemas
-        const url = factura.factura_url.startsWith("/") ? factura.factura_url.slice(1) : factura.factura_url;
-        const match = url.match(/factura_(\d+)\.pdf$/);
+        // Busca el patrón correcto en la URL (ej: /facturas/63/pdf)
+        const match = factura.factura_url.match(/\/facturas\/(\d+)\/pdf/);
         if (match && match[1]) {
           facturaId = match[1];
           try {
