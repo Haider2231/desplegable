@@ -20,36 +20,42 @@ const resetTokens = {};
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
+  console.log("[LOGIN][INICIO]", { email });
   if (!email || !password) {
     return res.status(400).json({ error: "Email y contraseña son requeridos" });
   }
   try {
     const result = await pool.query("SELECT * FROM usuarios WHERE email = $1", [email]);
     if (result.rowCount === 0) {
+      console.error("[LOGIN] Usuario no encontrado:", email);
       return res.status(400).json({ error: "Correo o contraseña incorrectos" });
     }
     const user = result.rows[0];
     if (!user.verificado) {
+      console.error("[LOGIN] Usuario no verificado:", email);
       return res.status(401).json({ error: "Debes verificar tu cuenta antes de iniciar sesión" });
     }
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
+      console.error("[LOGIN] Contraseña incorrecta:", email);
       return res.status(400).json({ error: "Correo o contraseña incorrectos" });
     }
-    // Incluye nombre y email en el payload
     const token = jwt.sign(
       { userId: user.id, nombre: user.nombre, email: user.email, rol: user.rol },
       "miclaveultrasecreta",
       { expiresIn: "1h" }
     );
+    console.log("[LOGIN] Usuario autenticado:", email);
     res.json({ token });
   } catch (error) {
-    res.status(500).json({ error: "Error al iniciar sesión" });
+    console.error("[LOGIN] Error al iniciar sesión:", error, error.stack);
+    res.status(500).json({ error: "Error al iniciar sesión", detalle: error.message, stack: error.stack });
   }
 };
 
 exports.registerUser = async (req, res) => {
   const { nombre, email, password, rol, captcha, telefono } = req.body;
+  console.log("[REGISTER][INICIO]", { nombre, email, rol, telefono, captcha: !!captcha });
   // Validación robusta de campos requeridos
   if (!nombre || !email || !password || !rol || !telefono) {
     console.error("[REGISTER] Faltan datos requeridos", { nombre, email, password, rol, telefono });
@@ -64,7 +70,7 @@ exports.registerUser = async (req, res) => {
 
   // --- Validación de correo realista ---
   const allowedDomains = [
-    "gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "icloud.com", "live.com", "upc.edu.co", "edu.co"
+    "gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "icloud.com", "live.com", "upc.edu.co", "edu.co","unipiloto.edu.co","upiloto.edu.co"
   ];
   const emailParts = email.split("@");
   if (
@@ -74,12 +80,12 @@ exports.registerUser = async (req, res) => {
     console.error("[REGISTER] Dominio de correo no permitido:", email);
     return res.status(400).json({ error: "Debes registrar un correo válido y real (gmail, hotmail, outlook, yahoo, icloud, live, institucional, etc)." });
   }
-
   try {
     const secret = "6Lez21ArAAAAADY_nTN924-sB4CpIh_Ic92MIxIK";
     const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${captcha}`;
     const captchaRes = await fetch(verifyUrl, { method: "POST" });
     const captchaData = await captchaRes.json();
+    console.log("[REGISTER][CAPTCHA]", captchaData);
     if (!captchaData.success) {
       console.error("[REGISTER] Captcha inválido:", captchaData);
       return res.status(400).json({ error: "Captcha inválido, inténtalo de nuevo." });
@@ -119,17 +125,17 @@ exports.registerUser = async (req, res) => {
     console.log("[REGISTER] Usuario pendiente creado y correo enviado:", email);
     res.status(200).json({ message: "Código reenviado. Verifica tu cuenta para activarla." });
   } catch (error) {
-    // Log detallado para depuración
     console.error("[REGISTER] Error en registerUser:", error, error.stack);
-    res.status(500).json({ error: "Error al registrar el usuario", detalle: error.message });
+    res.status(500).json({ error: "Error al registrar el usuario", detalle: error.message, stack: error.stack });
   }
 };
 
 exports.verifyUser = async (req, res) => {
   const { email, codigo } = req.body;
+  console.log("[VERIFY][INICIO]", { email, codigo });
   try {
     const datosPendientes = usuariosPendientes[email];
-    console.log("Verificando:", { email, codigo, esperado: datosPendientes?.codigoVerificacion });
+    console.log("[VERIFY][PENDIENTE]", datosPendientes);
     if (!datosPendientes || datosPendientes.codigoVerificacion !== parseInt(codigo)) {
       return res.status(400).json({ error: "Código incorrecto o usuario no encontrado" });
     }
@@ -155,9 +161,11 @@ exports.verifyUser = async (req, res) => {
       { expiresIn: "1h" }
     );
 
+    console.log("[VERIFY] Usuario verificado y creado:", email);
     res.status(200).json({ mensaje: "Cuenta verificada correctamente", token });
   } catch (error) {
-    res.status(500).json({ error: "Error al verificar el usuario" });
+    console.error("[VERIFY] Error al verificar usuario:", error, error.stack);
+    res.status(500).json({ error: "Error al verificar el usuario", detalle: error.message, stack: error.stack });
   }
 };
 
