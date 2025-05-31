@@ -34,9 +34,6 @@ export default function ManualUsuario() {
           <b>Iniciar sesión:</b> Ingresa tu correo y contraseña en la página de inicio de sesión. Si olvidaste tu contraseña, usa la opción "¿Olvidaste tu contraseña?" para recuperarla.
         </li>
         <li>
-          <b>Buscar canchas:</b> Desde la página principal, puedes buscar y filtrar canchas sintéticas disponibles en tu ciudad.
-        </li>
-        <li>
           <b>Reservar una cancha:</b> Selecciona la cancha y el horario que desees. Puedes abonar una parte del valor o pagar el total. Confirma tu reserva y descarga tu factura.
         </li>
         <li>
@@ -46,7 +43,7 @@ export default function ManualUsuario() {
           <b>Ver estadísticas:</b> En la sección "Estadísticas" puedes consultar tus canchas más reservadas y tus horas jugadas.
         </li>
         <li>
-          <b>Comunidad y soporte:</b> Usa la sección "Comunidad" para interactuar con otros usuarios y la sección "Información" para resolver dudas o contactar soporte.
+          <b>soporte:</b> Usa la sección "Información" para resolver dudas o contactar soporte.
         </li>
         <li>
           <b>Cerrar sesión:</b> Haz clic en el botón de cerrar sesión en el menú para salir de tu cuenta de forma segura.
