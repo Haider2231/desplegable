@@ -51,6 +51,32 @@ export default function Info() {
           más sencillo, con información actualizada y opciones en tiempo real.
         </p>
       </div>
+
+       <div style={{ textAlign: "center", marginTop: 36 }}>
+        <span style={{ fontSize: 18, color: "#007991", fontWeight: 600 }}>
+          ¿Quieres ver el manual de usuario?
+        </span>
+        <br />
+        <a
+          href="/manual-usuario"
+          style={{
+            display: "inline-block",
+            marginTop: 12,
+            padding: "12px 28px",
+            background: "linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)",
+            color: "#fff",
+            fontWeight: 700,
+            borderRadius: 8,
+            textDecoration: "none",
+            fontSize: 17,
+            boxShadow: "0 2px 8px #43e97b44",
+            transition: "background 0.2s, color 0.2s",
+            letterSpacing: 1,
+          }}
+        >
+          📖 Ver Manual de Usuario
+        </a>
+      </div>
       <p style={{ fontSize: 18, lineHeight: 1.7 }}>
         ¿Tienes alguna pregunta, sugerencia o deseas obtener más información?{" "}
         <br />
@@ -94,6 +120,9 @@ export default function Info() {
           </a>
         </p>
       </div>
+
+
+
       <div style={{ textAlign: "center", marginTop: 32 }}>
         <span
           style={{
@@ -107,31 +136,7 @@ export default function Info() {
           #ReservaTuCancha #FútbolPiloto
         </span>
       </div>
-      <div style={{ textAlign: "center", marginTop: 36 }}>
-        <span style={{ fontSize: 18, color: "#007991", fontWeight: 600 }}>
-          ¿Quieres ver el manual de usuario?
-        </span>
-        <br />
-        <a
-          href="/manual-usuario"
-          style={{
-            display: "inline-block",
-            marginTop: 12,
-            padding: "12px 28px",
-            background: "linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)",
-            color: "#fff",
-            fontWeight: 700,
-            borderRadius: 8,
-            textDecoration: "none",
-            fontSize: 17,
-            boxShadow: "0 2px 8px #43e97b44",
-            transition: "background 0.2s, color 0.2s",
-            letterSpacing: 1,
-          }}
-        >
-          📖 Ver Manual de Usuario
-        </a>
-      </div>
+     
     </StyledSection>
   );
 }
