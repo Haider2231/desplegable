@@ -315,10 +315,16 @@ exports.createReservaConFactura = async (req, res) => {
 
     // 3. Envía la factura por correo automáticamente
     if (userEmail) {
-      await facturaController.enviarFacturaPorCorreo(
-        factura.factura_url.match(/factura_(\d+)\.pdf/)[1],
-        userEmail
-      );
+      // Extrae el id de la factura del URL de forma segura
+      let facturaId = null;
+      const match = factura.factura_url && factura.factura_url.match(/factura_(\d+)\.pdf/);
+      if (match && match[1]) {
+        facturaId = match[1];
+        await facturaController.enviarFacturaPorCorreo(
+          facturaId,
+          userEmail
+        );
+      }
     }
 
     res.json({
