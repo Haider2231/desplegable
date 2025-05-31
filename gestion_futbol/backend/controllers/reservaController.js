@@ -320,11 +320,19 @@ exports.createReservaConFactura = async (req, res) => {
       const match = factura.factura_url && factura.factura_url.match(/factura_(\d+)\.pdf/);
       if (match && match[1]) {
         facturaId = match[1];
-        await facturaController.enviarFacturaPorCorreo(
-          facturaId,
-          userEmail
-        );
+        try {
+          await facturaController.enviarFacturaPorCorreo(
+            facturaId,
+            userEmail
+          );
+        } catch (correoFacturaErr) {
+          console.error("Error enviando la factura por correo al usuario:", correoFacturaErr);
+        }
+      } else {
+        console.error("No se pudo extraer el id de la factura para enviar por correo al usuario.");
       }
+    } else {
+      console.error("No se encontró el email del usuario para enviar la factura.");
     }
 
     res.json({
