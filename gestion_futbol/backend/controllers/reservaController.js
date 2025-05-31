@@ -215,7 +215,6 @@ exports.createReservaConFactura = async (req, res) => {
     );
     if (disponibilidadCheck.rowCount === 0) {
       await client.query("ROLLBACK");
-      // Devuelve un error especial para el frontend (SweetAlert)
       return res.status(409).json({ error: "¡Este horario ya fue reservado por otro usuario! Por favor selecciona otro horario disponible." });
     }
     const disp = disponibilidadCheck.rows[0];
@@ -248,8 +247,8 @@ exports.createReservaConFactura = async (req, res) => {
       const factura = await facturaController.crearFacturaYGenerarPDF({
         reservaId: reserva.id,
         usuarioId: reserva.usuario_id,
-        precio: parseInt(disp.precio, 10),
-        abono: abono || parseInt(disp.precio, 10),
+        precio,
+        abono: abonoReal || parseInt(disp.precio, 10),
         fecha_reserva: reserva.fecha_reserva,
         cancha_nombre: disp.cancha_nombre,
         direccion: disp.direccion,
@@ -308,15 +307,17 @@ exports.createReservaConFactura = async (req, res) => {
       res.json({
         ...reserva,
         factura_url: factura.factura_url,
-        abono: abono || parseInt(disp.precio, 10),
-        monto: parseInt(disp.precio, 10),
-        restante: parseInt(disp.precio, 10) - (abono || parseInt(disp.precio, 10))
+        abono: abonoReal || parseInt(disp.precio, 10),
+        monto: precio,
+        restante: parseInt(disp.precio, 10) - (abonoReal || parseInt(disp.precio, 10)),
       });
     } catch (err) {
+      console.error("Error al generar la factura PDF:", err);
       res.status(500).json({ error: "No se pudo generar la factura PDF" });
     }
   } catch (error) {
     await client.query("ROLLBACK");
+    console.error("Error al crear la reserva:", error, error.stack);
     res.status(500).json({ error: "Error al crear la reserva", detalle: error.message });
   } finally {
     client.release();
