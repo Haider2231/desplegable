@@ -21,6 +21,9 @@ const transporter = nodemailer.createTransport({
 // Guardar tokens de recuperación temporalmente (en producción usar DB)
 const resetTokens = {};
 
+// Asegúrate de definir usuariosPendientes ANTES de usarlo en cualquier función
+const usuariosPendientes = {};
+
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   console.log("[LOGIN][INICIO]", { email });
@@ -59,19 +62,14 @@ exports.login = async (req, res) => {
 exports.registerUser = async (req, res) => {
   const { nombre, email, password, rol, captcha, telefono } = req.body;
   console.log("[REGISTER][INICIO]", { nombre, email, rol, telefono, captcha: !!captcha });
-  // Validación robusta de campos requeridos
   if (!nombre || !email || !password || !rol || !telefono) {
     console.error("[REGISTER] Faltan datos requeridos", { nombre, email, password, rol, telefono });
     return res.status(400).json({ error: "Faltan datos requeridos" });
   }
-
-  // --- Validación de captcha ---
   if (!captcha) {
     console.error("[REGISTER] Captcha requerido");
     return res.status(400).json({ error: "Captcha requerido" });
   }
-
-  // --- Validación de correo realista ---
   const allowedDomains = [
     "gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "icloud.com", "live.com", "upc.edu.co", "edu.co","unipiloto.edu.co","upiloto.edu.co"
   ];
@@ -94,7 +92,6 @@ exports.registerUser = async (req, res) => {
       console.error("[REGISTER] Captcha inválido:", captchaData);
       return res.status(400).json({ error: "Captcha inválido, inténtalo de nuevo." });
     }
-    // Verifica si el usuario ya existe y está verificado
     const userExist = await pool.query(
       "SELECT * FROM usuarios WHERE email = $1 AND verificado = true",
       [email]
@@ -103,7 +100,6 @@ exports.registerUser = async (req, res) => {
       console.error("[REGISTER] Usuario ya existe y está verificado:", email);
       return res.status(400).json({ error: "El usuario con ese correo ya existe y está verificado" });
     }
-    // Si ya se había intentado registrar pero no se verificó, reenvía el código
     const codigoVerificacion = Math.floor(100000 + Math.random() * 900000);
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -129,7 +125,9 @@ exports.registerUser = async (req, res) => {
     console.log("[REGISTER] Usuario pendiente creado y correo enviado:", email);
     res.status(200).json({ message: "Código reenviado. Verifica tu cuenta para activarla." });
   } catch (error) {
+    // Log detallado para depuración
     console.error("[REGISTER] Error en registerUser:", error, error.stack);
+    // Devuelve el stack y el mensaje real al frontend para depuración
     res.status(500).json({ error: "Error al registrar el usuario", detalle: error.message, stack: error.stack });
   }
 };
