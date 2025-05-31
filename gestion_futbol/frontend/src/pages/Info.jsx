@@ -52,7 +52,16 @@ export default function Info() {
         </p>
       </div>
 
-       <div style={{ textAlign: "center", marginTop: 36 }}>
+      
+      <p style={{ fontSize: 18, lineHeight: 1.7 }}>
+        ¿Tienes alguna pregunta, sugerencia o deseas obtener más información?{" "}
+        <br />
+        <span style={{ color: "#388e3c", fontWeight: 700 }}>
+          ¡Estamos aquí para ayudarte!
+        </span>
+      </p>
+
+         <div style={{ textAlign: "center", marginTop: 36 }}>
         <span style={{ fontSize: 18, color: "#007991", fontWeight: 600 }}>
           ¿Quieres ver el manual de usuario?
         </span>
@@ -77,13 +86,6 @@ export default function Info() {
           📖 Ver Manual de Usuario
         </a>
       </div>
-      <p style={{ fontSize: 18, lineHeight: 1.7 }}>
-        ¿Tienes alguna pregunta, sugerencia o deseas obtener más información?{" "}
-        <br />
-        <span style={{ color: "#388e3c", fontWeight: 700 }}>
-          ¡Estamos aquí para ayudarte!
-        </span>
-      </p>
       <div
         style={{
           background: "#f7fff7",
