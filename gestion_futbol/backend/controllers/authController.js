@@ -52,16 +52,17 @@ exports.registerUser = async (req, res) => {
   const { nombre, email, password, rol, captcha, telefono } = req.body;
   // Validación robusta de campos requeridos
   if (!nombre || !email || !password || !rol || !telefono) {
+    console.error("[REGISTER] Faltan datos requeridos", { nombre, email, password, rol, telefono });
     return res.status(400).json({ error: "Faltan datos requeridos" });
   }
 
   // --- Validación de captcha ---
   if (!captcha) {
+    console.error("[REGISTER] Captcha requerido");
     return res.status(400).json({ error: "Captcha requerido" });
   }
 
   // --- Validación de correo realista ---
-  // Solo permite dominios de correo comunes y bloquea dominios falsos como @u.com, @x.com, etc.
   const allowedDomains = [
     "gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "icloud.com", "live.com", "upc.edu.co", "edu.co"
   ];
@@ -70,6 +71,7 @@ exports.registerUser = async (req, res) => {
     emailParts.length !== 2 ||
     !allowedDomains.some(domain => emailParts[1].toLowerCase().endsWith(domain))
   ) {
+    console.error("[REGISTER] Dominio de correo no permitido:", email);
     return res.status(400).json({ error: "Debes registrar un correo válido y real (gmail, hotmail, outlook, yahoo, icloud, live, institucional, etc)." });
   }
 
@@ -79,6 +81,7 @@ exports.registerUser = async (req, res) => {
     const captchaRes = await fetch(verifyUrl, { method: "POST" });
     const captchaData = await captchaRes.json();
     if (!captchaData.success) {
+      console.error("[REGISTER] Captcha inválido:", captchaData);
       return res.status(400).json({ error: "Captcha inválido, inténtalo de nuevo." });
     }
     // Verifica si el usuario ya existe y está verificado
@@ -87,6 +90,7 @@ exports.registerUser = async (req, res) => {
       [email]
     );
     if (userExist.rowCount > 0) {
+      console.error("[REGISTER] Usuario ya existe y está verificado:", email);
       return res.status(400).json({ error: "El usuario con ese correo ya existe y está verificado" });
     }
     // Si ya se había intentado registrar pero no se verificó, reenvía el código
@@ -112,10 +116,11 @@ exports.registerUser = async (req, res) => {
       text: `Tu nuevo código de verificación es: ${codigoVerificacion}`,
     });
 
+    console.log("[REGISTER] Usuario pendiente creado y correo enviado:", email);
     res.status(200).json({ message: "Código reenviado. Verifica tu cuenta para activarla." });
   } catch (error) {
     // Log detallado para depuración
-    console.error("Error en registerUser:", error, error.stack);
+    console.error("[REGISTER] Error en registerUser:", error, error.stack);
     res.status(500).json({ error: "Error al registrar el usuario", detalle: error.message });
   }
 };
