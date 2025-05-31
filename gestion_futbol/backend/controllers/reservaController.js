@@ -317,19 +317,26 @@ exports.createReservaConFactura = async (req, res) => {
     if (userEmail) {
       // Extrae el id de la factura del URL de forma segura
       let facturaId = null;
-      const match = factura.factura_url && factura.factura_url.match(/factura_(\d+)\.pdf/);
-      if (match && match[1]) {
-        facturaId = match[1];
-        try {
-          await facturaController.enviarFacturaPorCorreo(
-            facturaId,
-            userEmail
-          );
-        } catch (correoFacturaErr) {
-          console.error("Error enviando la factura por correo al usuario:", correoFacturaErr);
+      // Asegúrate de que factura.factura_url sea un string y tenga el formato correcto
+      if (factura && typeof factura.factura_url === "string") {
+        // Si la URL empieza con "/", quítalo para evitar problemas
+        const url = factura.factura_url.startsWith("/") ? factura.factura_url.slice(1) : factura.factura_url;
+        const match = url.match(/factura_(\d+)\.pdf$/);
+        if (match && match[1]) {
+          facturaId = match[1];
+          try {
+            await facturaController.enviarFacturaPorCorreo(
+              facturaId,
+              userEmail
+            );
+          } catch (correoFacturaErr) {
+            console.error("Error enviando la factura por correo al usuario:", correoFacturaErr);
+          }
+        } else {
+          console.error("No se pudo extraer el id de la factura para enviar por correo al usuario. URL:", factura.factura_url);
         }
       } else {
-        console.error("No se pudo extraer el id de la factura para enviar por correo al usuario.");
+        console.error("No se pudo extraer el id de la factura porque factura_url es inválido:", factura && factura.factura_url);
       }
     } else {
       console.error("No se encontró el email del usuario para enviar la factura.");
