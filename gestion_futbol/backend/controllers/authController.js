@@ -73,7 +73,7 @@ exports.registerUser = async (req, res) => {
   }
 
   try {
-    const secret = "6Lez21ArAAAAAELg5Q2QwQw7n8Qw7n8Qw7n8Qw7n8";
+    const secret = "6Lez21ArAAAAAPPtiPZS6oQVeu8F7kgXRH1KRIpO";
     const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${captcha}`;
     const captchaRes = await fetch(verifyUrl, { method: "POST" });
     const captchaData = await captchaRes.json();
