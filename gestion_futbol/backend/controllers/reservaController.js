@@ -238,8 +238,6 @@ exports.createReservaConFactura = async (req, res) => {
     // Lógica para crear la factura y generar el PDF
     let factura;
     try {
-      // IMPORTANTE: la factura debe crearse usando el MISMO CLIENTE de la transacción
-      // para que la reserva sea visible dentro de la transacción.
       factura = await facturaController.crearFacturaYGenerarPDF({
         reservaId: reserva.id,
         usuarioId: reserva.usuario_id,
@@ -259,7 +257,7 @@ exports.createReservaConFactura = async (req, res) => {
       await client.query("UPDATE disponibilidades SET disponible = true WHERE id = $1", [disponibilidad_id]);
       await client.query("ROLLBACK");
       console.error("Error al generar la factura PDF:", err);
-      return res.status(500).json({ error: "No se pudo generar la factura PDF" });
+      return res.status(500).json({ error: "No se pudo generar la factura PDF", detalle: err.message });
     }
 
     // Marcar la disponibilidad como no disponible SOLO después de que la factura se haya creado correctamente
@@ -320,7 +318,7 @@ exports.createReservaConFactura = async (req, res) => {
     });
   } catch (error) {
     await client.query("ROLLBACK");
-    console.error("Error al crear la reserva:", error, error.stack);
+    // Devuelve el mensaje real del error al frontend para depuración
     res.status(500).json({ error: "Error al crear la reserva", detalle: error.message });
   } finally {
     client.release();
