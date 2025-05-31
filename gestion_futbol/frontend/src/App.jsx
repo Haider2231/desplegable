@@ -21,6 +21,7 @@ import Pagos from "./pages/Pagos";
 import ReservaExitosa from "./pages/ReservaExitosa";
 import AdminCrearEstablecimiento from "./pages/AdminCrearEstablecimiento";
 import MisReservas from "./pages/MisReservas";
+import ManualUsuario from "./pages/ManualUsuario";
 
 function App() {
   return (
@@ -74,6 +75,7 @@ function App() {
                   <Route path="/community" element={<Community />} />
                   <Route path="/info" element={<Info />} />
                   <Route path="/about" element={<About />} />
+                  <Route path="/manual-usuario" element={<ManualUsuario />} />
                   <Route path="/verify" element={<Verify />} />
                   <Route path="/reservar" element={<ReserveCourt />} />
                   <Route path="/manage-courts" element={<ManageCourts />} />
