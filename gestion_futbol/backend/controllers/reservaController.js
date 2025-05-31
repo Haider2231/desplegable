@@ -133,7 +133,7 @@ exports.getReservasByUsuario = async (req, res) => {
        JOIN disponibilidades d ON r.disponibilidad_id = d.id
        JOIN canchas c ON d.cancha_id = c.id
        JOIN establecimientos e ON c.establecimiento_id = e.id
-       LEFT JOIN facturas f ON f.reserva_id = r.id
+       JOIN facturas f ON f.reserva_id = r.id -- solo reservas con factura
        WHERE r.usuario_id = $1
        ORDER BY d.fecha DESC, d.hora_inicio DESC`,
       [usuario_id]
@@ -240,15 +240,15 @@ exports.createReservaConFactura = async (req, res) => {
       "UPDATE disponibilidades SET disponible = false WHERE id = $1",
       [disponibilidad_id]
     );
-    await client.query("COMMIT");
 
     // Lógica para crear la factura y generar el PDF
+    let factura;
     try {
-      const factura = await facturaController.crearFacturaYGenerarPDF({
+      factura = await facturaController.crearFacturaYGenerarPDF({
         reservaId: reserva.id,
         usuarioId: reserva.usuario_id,
         precio,
-        abono: abonoReal || parseInt(disp.precio, 10),
+        abono: abonoReal,
         fecha_reserva: reserva.fecha_reserva,
         cancha_nombre: disp.cancha_nombre,
         direccion: disp.direccion,
@@ -257,64 +257,65 @@ exports.createReservaConFactura = async (req, res) => {
         hora_fin: disp.hora_fin,
         cancha_id: disp.cancha_id
       });
-
-      // --- Enviar correo al propietario ---
-      try {
-        // Obtener email y nombre del propietario
-        const propietario = await pool.query(
-          `SELECT email, nombre FROM usuarios WHERE id = $1`,
-          [disp.dueno_id]
-        );
-        const propietarioEmail = propietario.rows[0]?.email;
-
-        // Obtener datos del usuario que reservó
-        const usuario = await pool.query(
-          `SELECT nombre, email FROM usuarios WHERE id = $1`,
-          [usuario_id]
-        );
-
-        if (propietarioEmail) {
-          await enviarCorreoPropietario({
-            propietarioEmail,
-            establecimiento: { nombre: disp.establecimiento_nombre },
-            cancha: { nombre: disp.cancha_nombre },
-            fecha: disp.fecha,
-            hora_inicio: disp.hora_inicio,
-            hora_fin: disp.hora_fin,
-            abono: abonoReal,
-            restante,
-            usuario: usuario.rows[0]
-          });
-        }
-      } catch (correoErr) {
-        // No detiene la reserva si falla el correo, solo loguea
-        console.error("Error enviando correo al propietario:", correoErr);
-      }
-      // --- Fin correo propietario ---
-
-      // 2. Obtén el email del usuario
-      const userResult = await pool.query("SELECT email FROM usuarios WHERE id = $1", [usuario_id]);
-      const userEmail = userResult.rows[0]?.email;
-
-      // 3. Envía la factura por correo automáticamente
-      if (userEmail) {
-        await facturaController.enviarFacturaPorCorreo(
-          factura.factura_url.match(/factura_(\d+)\.pdf/)[1], // facturaId extraído del URL
-          userEmail
-        );
-      }
-
-      res.json({
-        ...reserva,
-        factura_url: factura.factura_url,
-        abono: abonoReal || parseInt(disp.precio, 10),
-        monto: precio,
-        restante: parseInt(disp.precio, 10) - (abonoReal || parseInt(disp.precio, 10)),
-      });
     } catch (err) {
+      // Si falla la factura, elimina la reserva y libera la disponibilidad
+      await client.query("DELETE FROM reservas WHERE id = $1", [reserva.id]);
+      await client.query("UPDATE disponibilidades SET disponible = true WHERE id = $1", [disponibilidad_id]);
+      await client.query("ROLLBACK");
       console.error("Error al generar la factura PDF:", err);
-      res.status(500).json({ error: "No se pudo generar la factura PDF" });
+      return res.status(500).json({ error: "No se pudo generar la factura PDF" });
     }
+
+    await client.query("COMMIT");
+
+    // --- Enviar correo al propietario ---
+    try {
+      const propietario = await pool.query(
+        `SELECT email, nombre FROM usuarios WHERE id = $1`,
+        [disp.dueno_id]
+      );
+      const propietarioEmail = propietario.rows[0]?.email;
+      const usuario = await pool.query(
+        `SELECT nombre, email FROM usuarios WHERE id = $1`,
+        [usuario_id]
+      );
+      if (propietarioEmail) {
+        await enviarCorreoPropietario({
+          propietarioEmail,
+          establecimiento: { nombre: disp.establecimiento_nombre },
+          cancha: { nombre: disp.cancha_nombre },
+          fecha: disp.fecha,
+          hora_inicio: disp.hora_inicio,
+          hora_fin: disp.hora_fin,
+          abono: abonoReal,
+          restante,
+          usuario: usuario.rows[0]
+        });
+      }
+    } catch (correoErr) {
+      console.error("Error enviando correo al propietario:", correoErr);
+    }
+    // --- Fin correo propietario ---
+
+    // 2. Obtén el email del usuario
+    const userResult = await pool.query("SELECT email FROM usuarios WHERE id = $1", [usuario_id]);
+    const userEmail = userResult.rows[0]?.email;
+
+    // 3. Envía la factura por correo automáticamente
+    if (userEmail) {
+      await facturaController.enviarFacturaPorCorreo(
+        factura.factura_url.match(/factura_(\d+)\.pdf/)[1],
+        userEmail
+      );
+    }
+
+    res.json({
+      ...reserva,
+      factura_url: factura.factura_url,
+      abono: abonoReal,
+      monto: precio,
+      restante
+    });
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error al crear la reserva:", error, error.stack);
