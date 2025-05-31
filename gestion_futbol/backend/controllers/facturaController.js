@@ -35,8 +35,24 @@ exports.crearFacturaYGenerarPDF = async ({
   fecha,
   hora_inicio,
   hora_fin,
-  cancha_id // <-- asegúrate de pasar cancha_id al llamar a este método
+  cancha_id
 }) => {
+  // Validaciones estrictas para evitar errores de PDF
+  if (
+    !reservaId ||
+    !usuarioId ||
+    !precio ||
+    abono === undefined ||
+    !cancha_nombre ||
+    !direccion ||
+    !fecha ||
+    !hora_inicio ||
+    !hora_fin ||
+    !cancha_id
+  ) {
+    throw new Error("Faltan datos requeridos para generar la factura PDF");
+  }
+
   // Calcula el restante correctamente
   const restante = precio - abono;
 
@@ -64,103 +80,109 @@ exports.crearFacturaYGenerarPDF = async ({
 
   // 2. Genera el PDF con los campos personalizados y mejor diseño
   const pdfPath = path.join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
-  const doc = new PDFDocument({ margin: 40 });
-  doc.pipe(fs.createWriteStream(pdfPath));
+  try {
+    const doc = new PDFDocument({ margin: 40 });
+    doc.pipe(fs.createWriteStream(pdfPath));
 
-  // Encabezado con fondo de color y título centrado
-  doc
-    .rect(0, 0, doc.page.width, 60)
-    .fill("#007991")
-    .fillColor("#fff")
-    .fontSize(24)
-    .font("Helvetica-Bold")
-    .text("Factura de Reserva de Cancha", 0, 20, { align: "center" })
-    .fillColor("black");
+    // Encabezado con fondo de color y título centrado
+    doc
+      .rect(0, 0, doc.page.width, 60)
+      .fill("#007991")
+      .fillColor("#fff")
+      .fontSize(24)
+      .font("Helvetica-Bold")
+      .text("Factura de Reserva de Cancha", 0, 20, { align: "center" })
+      .fillColor("black");
 
-  // Datos de la factura y fecha
-  doc
-    .fontSize(12)
-    .font("Helvetica")
-    .text(`Factura N°: ${facturaId}`, 40, 75)
-    .text(`Fecha de emisión: ${fechaFactura}`, 40, 95);
+    // Datos de la factura y fecha
+    doc
+      .fontSize(12)
+      .font("Helvetica")
+      .text(`Factura N°: ${facturaId}`, 40, 75)
+      .text(`Fecha de emisión: ${fechaFactura}`, 40, 95);
 
-  // Línea separadora
-  doc.moveTo(40, 115).lineTo(555, 115).strokeColor("#007991").stroke();
+    // Línea separadora
+    doc.moveTo(40, 115).lineTo(555, 115).strokeColor("#007991").stroke();
 
-  // Datos del cliente (recuadro)
-  doc
-    .rect(40, 125, 515, 40)
-    .strokeColor("#b2f7ef")
-    .lineWidth(1)
-    .stroke()
-    .font("Helvetica-Bold")
-    .fontSize(13)
-    .fillColor("#007991")
-    .text("Datos del Cliente:", 50, 132)
-    .font("Helvetica")
-    .fontSize(12)
-    .fillColor("black")
-    .text(`Nombre: ${nombreUsuario}`, 200, 132);
+    // Datos del cliente (recuadro)
+    doc
+      .rect(40, 125, 515, 40)
+      .strokeColor("#b2f7ef")
+      .lineWidth(1)
+      .stroke()
+      .font("Helvetica-Bold")
+      .fontSize(13)
+      .fillColor("#007991")
+      .text("Datos del Cliente:", 50, 132)
+      .font("Helvetica")
+      .fontSize(12)
+      .fillColor("black")
+      .text(`Nombre: ${nombreUsuario}`, 200, 132);
 
-  // Datos de la reserva (recuadro)
-  doc
-    .rect(40, 175, 515, 90)
-    .strokeColor("#b2f7ef")
-    .lineWidth(1)
-    .stroke()
-    .font("Helvetica-Bold")
-    .fontSize(13)
-    .fillColor("#007991")
-    .text("Detalles de la Reserva:", 50, 182)
-    .font("Helvetica")
-    .fontSize(12)
-    .fillColor("black")
-    .text(`Establecimiento: ${establecimiento_nombre}`, 50, 200)
-    .text(`Cancha: ${cancha_nombre}`, 50, 215)
-    .text(`Dirección: ${direccion}`, 50, 230);
+    // Datos de la reserva (recuadro)
+    doc
+      .rect(40, 175, 515, 90)
+      .strokeColor("#b2f7ef")
+      .lineWidth(1)
+      .stroke()
+      .font("Helvetica-Bold")
+      .fontSize(13)
+      .fillColor("#007991")
+      .text("Detalles de la Reserva:", 50, 182)
+      .font("Helvetica")
+      .fontSize(12)
+      .fillColor("black")
+      .text(`Establecimiento: ${establecimiento_nombre}`, 50, 200)
+      .text(`Cancha: ${cancha_nombre}`, 50, 215)
+      .text(`Dirección: ${direccion}`, 50, 230);
 
-  // Fecha y horario en una línea separada abajo para evitar sobreposición
-  doc
-    .text(`Fecha de juego: ${fecha ? new Date(fecha).toLocaleDateString("es-CO") : ""}`, 50, 250)
-    .text(`Horario: ${hora_inicio} - ${hora_fin}`, 320, 250);
+    // Fecha y horario en una línea separada abajo para evitar sobreposición
+    doc
+      .text(`Fecha de juego: ${fecha ? new Date(fecha).toLocaleDateString("es-CO") : ""}`, 50, 250)
+      .text(`Horario: ${hora_inicio} - ${hora_fin}`, 320, 250);
 
-  // Línea separadora más abajo para evitar sobreposición
-  doc.moveTo(40, 285).lineTo(555, 285).strokeColor("#007991").stroke();
+    // Línea separadora más abajo para evitar sobreposición
+    doc.moveTo(40, 285).lineTo(555, 285).strokeColor("#007991").stroke();
 
-  // Detalles de pago (recuadro) - baja el cuadro para que no se sobreponga
-  doc
-    .rect(40, 295, 515, 90)
-    .strokeColor("#b2f7ef")
-    .lineWidth(1)
-    .stroke()
-    .font("Helvetica-Bold")
-    .fontSize(13)
-    .fillColor("#007991")
-    .text("Resumen de Pago:", 50, 302)
-    .font("Helvetica")
-    .fontSize(12)
-    .fillColor("black")
-    .text("Valor total:", 50, 322)
-    .text("Abono realizado:", 50, 342)
-    .text("Restante por pagar:", 50, 362)
-    .font("Helvetica-Bold")
-    .fillColor("#388e3c")
-    .text(`$${precio}`, 200, 322)
-    .fillColor("#007991")
-    .text(`$${abono}`, 200, 342)
-    .fillColor("#d32f2f")
-    .text(`$${precio - abono}`, 200, 362)
-    .fillColor("black");
+    // Detalles de pago (recuadro) - baja el cuadro para que no se sobreponga
+    doc
+      .rect(40, 295, 515, 90)
+      .strokeColor("#b2f7ef")
+      .lineWidth(1)
+      .stroke()
+      .font("Helvetica-Bold")
+      .fontSize(13)
+      .fillColor("#007991")
+      .text("Resumen de Pago:", 50, 302)
+      .font("Helvetica")
+      .fontSize(12)
+      .fillColor("black")
+      .text("Valor total:", 50, 322)
+      .text("Abono realizado:", 50, 342)
+      .text("Restante por pagar:", 50, 362)
+      .font("Helvetica-Bold")
+      .fillColor("#388e3c")
+      .text(`$${precio}`, 200, 322)
+      .fillColor("#007991")
+      .text(`$${abono}`, 200, 342)
+      .fillColor("#d32f2f")
+      .text(`$${precio - abono}`, 200, 362)
+      .fillColor("black");
 
-  // Mensaje final centrado
-  doc
-    .fontSize(15)
-    .font("Helvetica-Bold")
-    .fillColor("#007991")
-    .text("¡Gracias por su reserva!", 0, 400, { align: "center" })
-    .fillColor("black");
+    // Mensaje final centrado
+    doc
+      .fontSize(15)
+      .font("Helvetica-Bold")
+      .fillColor("#007991")
+      .text("¡Gracias por su reserva!", 0, 400, { align: "center" })
+      .fillColor("black");
 
-  doc.end();
+    doc.end();
+  } catch (err) {
+    // Si falla la generación del PDF, elimina la factura de la base de datos
+    await pool.query("DELETE FROM facturas WHERE id = $1", [facturaId]);
+    throw new Error("Error al generar el archivo PDF de la factura");
+  }
 
   // 3. Devuelve la URL del PDF
   return {
