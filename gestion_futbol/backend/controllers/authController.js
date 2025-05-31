@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const fetch = require("node-fetch");
 
 // Puedes usar una variable global temporal para usuarios pendientes
 const usuariosPendientes = {};
@@ -48,11 +49,37 @@ exports.login = async (req, res) => {
 };
 
 exports.registerUser = async (req, res) => {
-  const { nombre, email, password, rol } = req.body;
+  const { nombre, email, password, rol, captcha } = req.body;
   if (!nombre || !email || !password || !rol) {
     return res.status(400).json({ error: "Faltan datos requeridos" });
   }
+
+  // --- Validación de captcha ---
+  if (!captcha) {
+    return res.status(400).json({ error: "Captcha requerido" });
+  }
+
+  // --- Validación de correo realista ---
+  // Solo permite dominios de correo comunes y bloquea dominios falsos como @u.com, @x.com, etc.
+  const allowedDomains = [
+    "gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "icloud.com", "live.com", "upc.edu.co", "edu.co"
+  ];
+  const emailParts = email.split("@");
+  if (
+    emailParts.length !== 2 ||
+    !allowedDomains.some(domain => emailParts[1].toLowerCase().endsWith(domain))
+  ) {
+    return res.status(400).json({ error: "Debes registrar un correo válido y real (gmail, hotmail, outlook, yahoo, icloud, live, institucional, etc)." });
+  }
+
   try {
+    const secret = "6Lez21ArAAAAAELg5Q2QwQw7n8Qw7n8Qw7n8Qw7n8";
+    const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${captcha}`;
+    const captchaRes = await fetch(verifyUrl, { method: "POST" });
+    const captchaData = await captchaRes.json();
+    if (!captchaData.success) {
+      return res.status(400).json({ error: "Captcha inválido, inténtalo de nuevo." });
+    }
     // Verifica si el usuario ya existe y está verificado
     const userExist = await pool.query(
       "SELECT * FROM usuarios WHERE email = $1 AND verificado = true",

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import ReCAPTCHA from "react-google-recaptcha"; // <-- Agrega esto
 import "../../styles/loginModern.css";
 import Verify from "./Verify";
 
@@ -14,6 +15,7 @@ export default function Register({ onRegister }) {
   const [success, setSuccess] = useState("");
   const [showVerify, setShowVerify] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -30,6 +32,10 @@ export default function Register({ onRegister }) {
       setError("El teléfono es obligatorio.");
       return;
     }
+    if (!captchaToken) {
+      setError("Por favor, completa el captcha.");
+      return;
+    }
     setLoading(true);
     try {
       const res = await axios.post("/auth/usuarios", {
@@ -37,7 +43,8 @@ export default function Register({ onRegister }) {
         email,
         password,
         rol: "usuario",
-        telefono, // Envía el teléfono al backend
+        telefono,
+        captcha: captchaToken // <-- Envía el token al backend
       });
       if (res.data && !res.data.error) {
         setSuccess("¡Registro exitoso! Revisa tu correo para verificar tu cuenta.");
@@ -162,6 +169,13 @@ export default function Register({ onRegister }) {
               </svg>
             )}
           </span>
+          {/* Captcha */}
+          <div style={{ margin: "18px 0" }}>
+            <ReCAPTCHA
+              sitekey="6Lez21ArAAAAAPptiPZS6oQVeu8F7xgXRH1KRlpO" // <-- Tu clave de sitio
+              onChange={token => setCaptchaToken(token)}
+            />
+          </div>
           <input
             className="login-button"
             type="submit"
