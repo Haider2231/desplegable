@@ -238,6 +238,7 @@ exports.createReservaConFactura = async (req, res) => {
     // Lógica para crear la factura y generar el PDF
     let factura;
     try {
+      // Asegúrate de pasar el client a la función de factura
       factura = await facturaController.crearFacturaYGenerarPDF({
         reservaId: reserva.id,
         usuarioId: reserva.usuario_id,
@@ -250,7 +251,7 @@ exports.createReservaConFactura = async (req, res) => {
         hora_inicio: disp.hora_inicio,
         hora_fin: disp.hora_fin,
         cancha_id: disp.cancha_id,
-        client // <-- pasa el cliente de la transacción
+        client // <-- importante para la transacción
       });
     } catch (err) {
       await client.query("DELETE FROM reservas WHERE id = $1", [reserva.id]);
@@ -312,13 +313,13 @@ exports.createReservaConFactura = async (req, res) => {
     res.json({
       ...reserva,
       factura_url: factura.factura_url,
-      abono: abonoReal,
+      abono,
       monto: precio,
       restante
     });
   } catch (error) {
     await client.query("ROLLBACK");
-    // Devuelve el mensaje real del error al frontend para depuración
+    console.error("Error al crear la reserva:", error, error.stack);
     res.status(500).json({ error: "Error al crear la reserva", detalle: error.message });
   } finally {
     client.release();
