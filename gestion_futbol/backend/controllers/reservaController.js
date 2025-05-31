@@ -223,6 +223,18 @@ exports.createReservaConFactura = async (req, res) => {
       await client.query("ROLLBACK");
       return res.status(400).json({ error: "La cancha no tiene un precio válido configurado." });
     }
+    // Validar que existan todos los datos requeridos para la factura
+    if (
+      !disp.cancha_nombre ||
+      !disp.direccion ||
+      !disp.fecha ||
+      !disp.hora_inicio ||
+      !disp.hora_fin ||
+      !disp.cancha_id
+    ) {
+      await client.query("ROLLBACK");
+      return res.status(500).json({ error: "Faltan datos requeridos para la factura. Contacta al administrador." });
+    }
     const precio = parseInt(disp.precio, 10);
     const abonoReal = abono || precio;
     const restante = precio - abonoReal;
@@ -238,7 +250,6 @@ exports.createReservaConFactura = async (req, res) => {
     // Lógica para crear la factura y generar el PDF
     let factura;
     try {
-      // Asegúrate de pasar el client a la función de factura
       factura = await facturaController.crearFacturaYGenerarPDF({
         reservaId: reserva.id,
         usuarioId: reserva.usuario_id,
@@ -258,7 +269,6 @@ exports.createReservaConFactura = async (req, res) => {
       await client.query("UPDATE disponibilidades SET disponible = true WHERE id = $1", [disponibilidad_id]);
       await client.query("ROLLBACK");
       console.error("Error al generar la factura PDF:", err);
-      // Devuelve el error real al frontend para depuración
       return res.status(500).json({ error: "No se pudo generar la factura PDF", detalle: err.message });
     }
 
@@ -316,12 +326,13 @@ exports.createReservaConFactura = async (req, res) => {
       factura_url: factura.factura_url,
       abono: abonoReal,
       monto: precio,
-      restante
+      restante,
+      fecha: disp.fecha, // <-- para mostrar en la página de éxito
+      hora_fin: disp.hora_fin
     });
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error al crear la reserva:", error, error.stack);
-    // Devuelve el error real al frontend para depuración
     res.status(500).json({ error: "Error al crear la reserva", detalle: error.message, stack: error.stack });
   } finally {
     client.release();

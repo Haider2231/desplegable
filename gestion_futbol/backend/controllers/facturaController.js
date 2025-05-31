@@ -138,12 +138,9 @@ exports.crearFacturaYGenerarPDF = async ({
       .fillColor("black")
       .text(`Establecimiento: ${establecimiento_nombre}`, 50, 200)
       .text(`Cancha: ${cancha_nombre}`, 50, 215)
-      .text(`Dirección: ${direccion}`, 50, 230);
-
-    // Fecha y horario en una línea separada abajo para evitar sobreposición
-    doc
-      .text(`Fecha de juego: ${fecha ? new Date(fecha).toLocaleDateString("es-CO") : ""}`, 50, 250)
-      .text(`Horario: ${hora_inicio} - ${hora_fin}`, 320, 250);
+      .text(`Dirección: ${direccion}`, 50, 230)
+      .text(`Fecha de juego: ${fecha ? new Date(fecha).toLocaleDateString("es-CO") : ""}`, 50, 245)
+      .text(`Horario: ${hora_inicio} - ${hora_fin}`, 320, 245);
 
     // Línea separadora más abajo para evitar sobreposición
     doc.moveTo(40, 285).lineTo(555, 285).strokeColor("#007991").stroke();
