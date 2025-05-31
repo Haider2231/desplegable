@@ -258,6 +258,7 @@ exports.createReservaConFactura = async (req, res) => {
       await client.query("UPDATE disponibilidades SET disponible = true WHERE id = $1", [disponibilidad_id]);
       await client.query("ROLLBACK");
       console.error("Error al generar la factura PDF:", err);
+      // Devuelve el error real al frontend para depuración
       return res.status(500).json({ error: "No se pudo generar la factura PDF", detalle: err.message });
     }
 
@@ -313,14 +314,15 @@ exports.createReservaConFactura = async (req, res) => {
     res.json({
       ...reserva,
       factura_url: factura.factura_url,
-      abono,
+      abono: abonoReal,
       monto: precio,
       restante
     });
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error al crear la reserva:", error, error.stack);
-    res.status(500).json({ error: "Error al crear la reserva", detalle: error.message });
+    // Devuelve el error real al frontend para depuración
+    res.status(500).json({ error: "Error al crear la reserva", detalle: error.message, stack: error.stack });
   } finally {
     client.release();
   }
