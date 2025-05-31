@@ -35,7 +35,8 @@ exports.crearFacturaYGenerarPDF = async ({
   fecha,
   hora_inicio,
   hora_fin,
-  cancha_id
+  cancha_id,
+  client // <-- recibe el cliente de la transacción si se pasa
 }) => {
   // Validaciones estrictas para evitar errores de PDF
   if (
@@ -56,8 +57,11 @@ exports.crearFacturaYGenerarPDF = async ({
   // Calcula el restante correctamente
   const restante = precio - abono;
 
+  // Usa el cliente de la transacción si se pasa, si no usa pool
+  const db = client || pool;
+
   // 1. Guarda la factura en la base de datos
-  const result = await pool.query(
+  const result = await db.query(
     `INSERT INTO facturas (reserva_id, usuario_id, monto, abono, restante, fecha)
      VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id, fecha`,
     [reservaId, usuarioId, precio, abono, precio - abono]

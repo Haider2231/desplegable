@@ -238,8 +238,8 @@ exports.createReservaConFactura = async (req, res) => {
     // Lógica para crear la factura y generar el PDF
     let factura;
     try {
-      // IMPORTANTE: la factura debe crearse ANTES de hacer COMMIT,
-      // para que la reserva exista en la transacción y la FK no falle.
+      // IMPORTANTE: la factura debe crearse usando el MISMO CLIENTE de la transacción
+      // para que la reserva sea visible dentro de la transacción.
       factura = await facturaController.crearFacturaYGenerarPDF({
         reservaId: reserva.id,
         usuarioId: reserva.usuario_id,
@@ -251,10 +251,10 @@ exports.createReservaConFactura = async (req, res) => {
         fecha: disp.fecha,
         hora_inicio: disp.hora_inicio,
         hora_fin: disp.hora_fin,
-        cancha_id: disp.cancha_id
+        cancha_id: disp.cancha_id,
+        client // <-- pasa el cliente de la transacción
       });
     } catch (err) {
-      // Si falla la factura, elimina la reserva y libera la disponibilidad
       await client.query("DELETE FROM reservas WHERE id = $1", [reserva.id]);
       await client.query("UPDATE disponibilidades SET disponible = true WHERE id = $1", [disponibilidad_id]);
       await client.query("ROLLBACK");
