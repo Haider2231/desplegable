@@ -3,10 +3,13 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
-const fetch = require("node-fetch");
 
-// Puedes usar una variable global temporal para usuarios pendientes
-const usuariosPendientes = {};
+// Usa node-fetch solo si fetch no existe globalmente
+let fetchFn = global.fetch;
+if (!fetchFn) {
+  fetchFn = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+}
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -83,7 +86,8 @@ exports.registerUser = async (req, res) => {
   try {
     const secret = "6Lez21ArAAAAADY_nTN924-sB4CpIh_Ic92MIxIK";
     const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${captcha}`;
-    const captchaRes = await fetch(verifyUrl, { method: "POST" });
+    // Usa fetchFn en vez de fetch
+    const captchaRes = await fetchFn(verifyUrl, { method: "POST" });
     const captchaData = await captchaRes.json();
     console.log("[REGISTER][CAPTCHA]", captchaData);
     if (!captchaData.success) {
