@@ -1,5 +1,6 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 export default function ReservaExitosa() {
   const location = useLocation();
@@ -91,6 +92,7 @@ export default function ReservaExitosa() {
             }}
             onMouseOver={e => e.currentTarget.style.background = "linear-gradient(90deg, #38f9d7 0%, #43e97b 100%)"}
             onMouseOut={e => e.currentTarget.style.background = "linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)"}
+            download
           >
             <span role="img" aria-label="pdf" style={{ marginRight: 8 }}>📄</span>
             Descargar factura PDF

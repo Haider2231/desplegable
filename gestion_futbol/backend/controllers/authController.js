@@ -49,8 +49,8 @@ exports.login = async (req, res) => {
 };
 
 exports.registerUser = async (req, res) => {
-  const { nombre, email, password, rol, captcha } = req.body;
-  if (!nombre || !email || !password || !rol) {
+  const { nombre, email, password, rol, captcha, telefono } = req.body;
+  if (!nombre || !email || !password || !rol || !telefono) {
     return res.status(400).json({ error: "Faltan datos requeridos" });
   }
 
@@ -97,6 +97,7 @@ exports.registerUser = async (req, res) => {
       email,
       password: hashedPassword,
       rol,
+      telefono, // <-- guarda el teléfono en el objeto pendiente
       codigoVerificacion,
     };
 
@@ -123,9 +124,9 @@ exports.verifyUser = async (req, res) => {
     }
     // Guardar usuario ahora sí en la base de datos
     const insertResult = await pool.query(
-      `INSERT INTO usuarios (nombre, email, password, rol, verificado, codigo_verificacion)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [datosPendientes.nombre, datosPendientes.email, datosPendientes.password, datosPendientes.rol, true, datosPendientes.codigoVerificacion]
+      `INSERT INTO usuarios (nombre, email, password, rol, verificado, codigo_verificacion, telefono)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [datosPendientes.nombre, datosPendientes.email, datosPendientes.password, datosPendientes.rol, true, datosPendientes.codigoVerificacion, datosPendientes.telefono]
     );
     // Eliminar de pendientes
     delete usuariosPendientes[email];
@@ -265,6 +266,15 @@ exports.updateUsuario = async (req, res) => {
 exports.deleteUsuario = async (req, res) => {
   const { id } = req.params;
   try {
+    // Obtiene el email del usuario a borrar
+    const userRes = await require("../db").query("SELECT email FROM usuarios WHERE id=$1", [id]);
+    if (userRes.rowCount === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+    const email = userRes.rows[0].email;
+    if (email === "haidermessi1369@gmail.com") {
+      return res.status(403).json({ error: "No puedes borrar el administrador general." });
+    }
     await require("../db").query("DELETE FROM usuarios WHERE id=$1", [id]);
     res.json({ message: "Usuario eliminado" });
   } catch (err) {

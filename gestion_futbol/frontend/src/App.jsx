@@ -20,6 +20,7 @@ import AdminUsersPanel from "./components/admin/AdminUsersPanel";
 import Pagos from "./pages/Pagos";
 import ReservaExitosa from "./pages/ReservaExitosa";
 import AdminCrearEstablecimiento from "./pages/AdminCrearEstablecimiento";
+import MisReservas from "./pages/MisReservas";
 
 function App() {
   return (
@@ -85,6 +86,7 @@ function App() {
                   <Route path="/pagos" element={<Pagos />} />
                   <Route path="/reserva-exitosa" element={<ReservaExitosa />} />
                   <Route path="/admin/crear-establecimiento" element={<AdminCrearEstablecimiento />} />
+                  <Route path="/mis-reservas" element={<MisReservas />} />
                 </Routes>
               </div>
               <Footer />

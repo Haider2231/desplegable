@@ -126,12 +126,16 @@ exports.getReservasByUsuario = async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT r.id AS reserva_id, r.fecha_reserva, 
-              d.fecha, d.hora_inicio, d.hora_fin, c.nombre AS cancha_nombre, 
-              c.direccion, c.lat, c.lng
+              d.fecha, d.hora_inicio, d.hora_fin, 
+              e.nombre AS establecimiento_nombre, c.nombre AS cancha_nombre, 
+              f.abono, f.restante
        FROM reservas r
        JOIN disponibilidades d ON r.disponibilidad_id = d.id
        JOIN canchas c ON d.cancha_id = c.id
-       WHERE r.usuario_id = $1`,
+       JOIN establecimientos e ON c.establecimiento_id = e.id
+       LEFT JOIN facturas f ON f.reserva_id = r.id
+       WHERE r.usuario_id = $1
+       ORDER BY d.fecha DESC, d.hora_inicio DESC`,
       [usuario_id]
     );
     if (result.rowCount === 0) {
@@ -139,7 +143,6 @@ exports.getReservasByUsuario = async (req, res) => {
     }
     res.json(result.rows);
   } catch (error) {
-    console.error("Error al obtener las reservas:", error);
     res.status(500).json({ error: "Error al obtener las reservas" });
   }
 };
@@ -197,25 +200,28 @@ exports.getReservasByCancha = async (req, res) => {
 exports.createReservaConFactura = async (req, res) => {
   const { disponibilidad_id, abono } = req.body;
   const usuario_id = req.user?.userId || null;
+  const client = await pool.connect();
   try {
-    await pool.query("BEGIN");
-    // Trae también el establecimiento_id para la factura
-    const disponibilidadCheck = await pool.query(
+    await client.query("BEGIN");
+    // Bloquea la fila de la disponibilidad para evitar doble reserva
+    const disponibilidadCheck = await client.query(
       `SELECT d.*, e.precio, c.nombre AS cancha_nombre, e.direccion, c.id AS cancha_id, c.establecimiento_id, e.nombre AS establecimiento_nombre, e.dueno_id
        FROM disponibilidades d
        JOIN canchas c ON d.cancha_id = c.id
        JOIN establecimientos e ON c.establecimiento_id = e.id
-       WHERE d.id = $1 AND d.disponible = true`,
+       WHERE d.id = $1 AND d.disponible = true
+       FOR UPDATE`,
       [disponibilidad_id]
     );
     if (disponibilidadCheck.rowCount === 0) {
-      await pool.query("ROLLBACK");
-      return res.status(400).json({ error: "La disponibilidad no existe o ya fue reservada." });
+      await client.query("ROLLBACK");
+      // Devuelve un error especial para el frontend (SweetAlert)
+      return res.status(409).json({ error: "¡Este horario ya fue reservado por otro usuario! Por favor selecciona otro horario disponible." });
     }
     const disp = disponibilidadCheck.rows[0];
     // Validar que el precio exista y sea un número válido
     if (!disp.precio || isNaN(disp.precio)) {
-      await pool.query("ROLLBACK");
+      await client.query("ROLLBACK");
       return res.status(400).json({ error: "La cancha no tiene un precio válido configurado." });
     }
     const precio = parseInt(disp.precio, 10);
@@ -223,7 +229,7 @@ exports.createReservaConFactura = async (req, res) => {
     const restante = precio - abonoReal;
 
     // Crear la reserva
-    const reservaResult = await pool.query(
+    const reservaResult = await client.query(
       `INSERT INTO reservas (usuario_id, disponibilidad_id, fecha_reserva)
        VALUES ($1, $2, NOW()) RETURNING id, usuario_id, disponibilidad_id, fecha_reserva`,
       [usuario_id, disponibilidad_id]
@@ -231,26 +237,26 @@ exports.createReservaConFactura = async (req, res) => {
     const reserva = reservaResult.rows[0];
 
     // Marcar la disponibilidad como no disponible
-    await pool.query(
+    await client.query(
       "UPDATE disponibilidades SET disponible = false WHERE id = $1",
       [disponibilidad_id]
     );
-    await pool.query("COMMIT");
+    await client.query("COMMIT");
 
     // Lógica para crear la factura y generar el PDF
     try {
       const factura = await facturaController.crearFacturaYGenerarPDF({
         reservaId: reserva.id,
         usuarioId: reserva.usuario_id,
-        precio,
-        abono: abonoReal,
+        precio: parseInt(disp.precio, 10),
+        abono: abono || parseInt(disp.precio, 10),
         fecha_reserva: reserva.fecha_reserva,
         cancha_nombre: disp.cancha_nombre,
         direccion: disp.direccion,
         fecha: disp.fecha,
         hora_inicio: disp.hora_inicio,
         hora_fin: disp.hora_fin,
-        cancha_id: disp.cancha_id // <-- asegúrate de pasar cancha_id aquí
+        cancha_id: disp.cancha_id
       });
 
       // --- Enviar correo al propietario ---
@@ -287,19 +293,32 @@ exports.createReservaConFactura = async (req, res) => {
       }
       // --- Fin correo propietario ---
 
+      // 2. Obtén el email del usuario
+      const userResult = await pool.query("SELECT email FROM usuarios WHERE id = $1", [usuario_id]);
+      const userEmail = userResult.rows[0]?.email;
+
+      // 3. Envía la factura por correo automáticamente
+      if (userEmail) {
+        await facturaController.enviarFacturaPorCorreo(
+          factura.factura_url.match(/factura_(\d+)\.pdf/)[1], // facturaId extraído del URL
+          userEmail
+        );
+      }
+
       res.json({
         ...reserva,
         factura_url: factura.factura_url,
-        abono: abonoReal,
-        monto: precio,
-        restante
+        abono: abono || parseInt(disp.precio, 10),
+        monto: parseInt(disp.precio, 10),
+        restante: parseInt(disp.precio, 10) - (abono || parseInt(disp.precio, 10))
       });
     } catch (err) {
       res.status(500).json({ error: "No se pudo generar la factura PDF" });
     }
   } catch (error) {
-    await pool.query("ROLLBACK");
-    console.error("Error al crear la reserva:", error, error.stack);
+    await client.query("ROLLBACK");
     res.status(500).json({ error: "Error al crear la reserva", detalle: error.message });
+  } finally {
+    client.release();
   }
 };

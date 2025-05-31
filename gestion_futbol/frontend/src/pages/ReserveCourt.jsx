@@ -112,8 +112,28 @@ export default function ReserveCourt() {
       } else {
         Swal.fire("Error", data.error || "No se pudo crear la reserva", "error");
       }
-    } catch {
-      Swal.fire("Error", "No se pudo conectar con el servidor", "error");
+    } catch (err) {
+      // Manejo de error de reserva ya tomada
+      if (
+        err.response &&
+        (err.response.status === 409 ||
+          (err.response.data && err.response.data.error && err.response.data.error.includes("ya fue reservado")))
+      ) {
+        Swal.fire({
+          icon: "error",
+          title: "Horario no disponible",
+          text: err.response.data.error || "¡Este horario ya fue reservado por otro usuario! Por favor selecciona otro horario disponible.",
+          confirmButtonColor: "#d32f2f"
+        });
+      } else {
+        // Otros errores
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: err.response?.data?.error || "Ocurrió un error al reservar.",
+          confirmButtonColor: "#d32f2f"
+        });
+      }
     }
     setLoading(false);
   };

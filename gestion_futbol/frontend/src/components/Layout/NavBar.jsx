@@ -102,9 +102,14 @@ export default function NavBar() {
           </NavLink>
           {/* Solo usuario puede ver estadísticas */}
           {rol === "usuario" && (
-            <NavLink to="/estadisticas" className="nav-btn">
-              Estadísticas
-            </NavLink>
+            <>
+              <NavLink to="/mis-reservas" className="nav-btn">
+                Mis reservas
+              </NavLink>
+              <NavLink to="/estadisticas" className="nav-btn">
+                Estadísticas
+              </NavLink>
+            </>
           )}
         </>
       )}

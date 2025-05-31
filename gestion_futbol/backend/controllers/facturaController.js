@@ -1,7 +1,8 @@
-const pool = require("../db");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
+const nodemailer = require("nodemailer");
+const pool = require("../db");
 
 // Nuevo método para obtener el nombre del establecimiento por establecimiento_id
 async function getEstablecimientoNombreByEstId(establecimiento_id) {
@@ -203,4 +204,39 @@ exports.getFacturaByDisponibilidad = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: "Error al obtener la factura" });
   }
+};
+
+exports.enviarFacturaPorCorreo = async (facturaId, userEmail) => {
+  const pdfPath = path.join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
+  if (!fs.existsSync(pdfPath)) return false;
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "diazmontejodiegoalejandro@gmail.com",
+      pass: "mpcnakbsmmhalwak",
+    },
+  });
+
+  await transporter.sendMail({
+    from: "diazmontejodiegoalejandro@gmail.com",
+    to: userEmail,
+    subject: "Factura de tu reserva - Fútbol Piloto",
+    text: "Adjuntamos la factura PDF de tu reserva. ¡Gracias por reservar!",
+    attachments: [
+      {
+        filename: `factura_${facturaId}.pdf`,
+        path: pdfPath,
+      },
+    ],
+  });
+  return true;
+};
+
+// Llama a esta función automáticamente al generar la factura
+exports.generarYEnviarFactura = async (facturaId, userEmail) => {
+  // ...genera el PDF como siempre...
+  // Después de generar el PDF:
+  await exports.enviarFacturaPorCorreo(facturaId, userEmail);
+  // ...devuelve la URL o lo que necesites...
 };
