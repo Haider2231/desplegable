@@ -50,6 +50,7 @@ exports.login = async (req, res) => {
 
 exports.registerUser = async (req, res) => {
   const { nombre, email, password, rol, captcha, telefono } = req.body;
+  // Validación robusta de campos requeridos
   if (!nombre || !email || !password || !rol || !telefono) {
     return res.status(400).json({ error: "Faltan datos requeridos" });
   }
@@ -92,12 +93,15 @@ exports.registerUser = async (req, res) => {
     const codigoVerificacion = Math.floor(100000 + Math.random() * 900000);
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // --- VALIDACIÓN: Elimina usuarios pendientes con el mismo correo para evitar conflicto de clave única ---
+    await pool.query("DELETE FROM usuarios WHERE email = $1 AND verificado = false", [email]);
+
     usuariosPendientes[email] = {
       nombre,
       email,
       password: hashedPassword,
       rol,
-      telefono, // <-- guarda el teléfono en el objeto pendiente
+      telefono,
       codigoVerificacion,
     };
 
@@ -110,7 +114,9 @@ exports.registerUser = async (req, res) => {
 
     res.status(200).json({ message: "Código reenviado. Verifica tu cuenta para activarla." });
   } catch (error) {
-    res.status(500).json({ error: "Error al registrar el usuario" });
+    // Log detallado para depuración
+    console.error("Error en registerUser:", error, error.stack);
+    res.status(500).json({ error: "Error al registrar el usuario", detalle: error.message });
   }
 };
 
