@@ -9,7 +9,9 @@ function markerPopupHtml(cancha) {
 
   // Mostrar imagen del establecimiento si existe
   if (cancha.imagen_url) {
-    content += `<img src="${cancha.imagen_url}" alt="Imagen del establecimiento" style="width:100%; height:auto; max-height:150px; margin-bottom:10px; border-radius:8px;">`;
+    // Quita doble slash si existe
+    let imgUrl = cancha.imagen_url.replace('https://canchassinteticas.site//', 'https://canchassinteticas.site/');
+    content += `<img src="${imgUrl}" alt="Imagen del establecimiento" style="width:100%; height:auto; max-height:150px; margin-bottom:10px; border-radius:8px;" onerror="this.onerror=null;this.src='https://via.placeholder.com/300x150?text=Sin+imagen';">`;
   }
 
   // Mostrar imágenes de la cancha si existen

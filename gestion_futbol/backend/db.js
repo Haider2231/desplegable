@@ -2,6 +2,8 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+console.log("DATABASE_URL:", process.env.DATABASE_URL); // <-- agrega esto
+
 let pool;
 
 if (process.env.DATABASE_URL) {
