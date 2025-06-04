@@ -205,7 +205,7 @@ exports.crearFacturaYGenerarPDF = async ({
       .text("Factura generada por Fútbol Piloto - Tu plataforma de reservas", 0, footerY + 10, { align: "center", width: pageWidth })
       .font("Helvetica")
       .fontSize(14)
-      .text("Contacto: futbolupiloto@gmail.com",0, footerY + 24, { align: "center", width: pageWidth })
+      .text("Contacto: futbolupiloto@gmail.com",0, footerY + 22, { align: "center", width: pageWidth })
       .font("Helvetica-Bold")
       doc.end();
   } catch (err) {
