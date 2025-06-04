@@ -85,27 +85,24 @@ exports.crearFacturaYGenerarPDF = async ({
   // 2. Genera el PDF personalizado y coherente con la web
   const pdfPath = path.join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
   try {
-    // Calcula la altura total del contenido antes de crear el documento
-    let y = 70 + 60 + 42 + 66 + 70 + 36; // header + datos + cliente + reserva + pago + mensaje
-    const footerHeight = 70;
-    const totalHeight = y + footerHeight + 40; // margen inferior
+    // Ajusta el tamaño de página para que el footer quede pegado al contenido
+    const doc = new PDFDocument({ margin: 40, size: [595.28, 0] }); // width A4, height dinámico
+    let y = 0;
 
-    // Crea el documento con altura exacta para que el footer quede pegado y no haya espacio blanco
-    const doc = new PDFDocument({ margin: 40, size: [595.28, totalHeight] });
     // Encabezado con fondo verde y branding de la web
-    doc.rect(0, 0, doc.page.width, 70).fill("#43e97b");
+    doc.rect(0, 0, 595.28, 70).fill("#43e97b");
     const logoPath = path.join(__dirname, "..", "uploads", "logo.png");
     if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, doc.page.width - 90, 15, { width: 40 });
+      doc.image(logoPath, 495, 12, { width: 40 });
     }
     doc
       .fillColor("#fff")
-      .fontSize(28)
+      .fontSize(24)
       .font("Helvetica-Bold")
       .text("Fútbol Piloto", 40, 18, { align: "left" })
-      .fontSize(16)
+      .fontSize(14)
       .font("Helvetica-Bold")
-      .text("Factura de Reserva", 0, 28, { align: "center" })
+      .text("Factura de Reserva", 0, 22, { align: "center" })
       .fillColor("black");
     y = 70;
 
@@ -122,14 +119,14 @@ exports.crearFacturaYGenerarPDF = async ({
     doc
       .rect(40, y, 515, 32)
       .strokeColor("#43e97b")
-      .lineWidth(1.5)
+      .lineWidth(1.2)
       .stroke()
       .font("Helvetica-Bold")
-      .fontSize(13)
+      .fontSize(12)
       .fillColor("#388e3c")
       .text("Datos del Cliente:", 50, y + 7)
       .font("Helvetica")
-      .fontSize(12)
+      .fontSize(11)
       .fillColor("#222")
       .text(`Nombre: ${nombreUsuario}`, 200, y + 7);
     y += 42;
@@ -138,19 +135,19 @@ exports.crearFacturaYGenerarPDF = async ({
     doc
       .rect(40, y, 515, 54)
       .strokeColor("#43e97b")
-      .lineWidth(1.5)
+      .lineWidth(1.2)
       .stroke()
       .font("Helvetica-Bold")
-      .fontSize(13)
+      .fontSize(12)
       .fillColor("#388e3c")
       .text("Detalles de la Reserva:", 50, y + 7)
       .font("Helvetica")
-      .fontSize(12)
+      .fontSize(11)
       .fillColor("#222")
       .text(`Establecimiento: ${establecimiento_nombre}`, 50, y + 22)
       .text(`Cancha: ${cancha_nombre}`, 50, y + 34)
       .text(`Dirección: ${direccion}`, 50, y + 46)
-      .text(`Fecha de juego: ${fecha ? new Date(fecha).toLocaleDateString("es-CO") : ""}`, 320, y + 22)
+      .text(`Fecha: ${fecha ? new Date(fecha).toLocaleDateString("es-CO") : ""}`, 320, y + 22)
       .text(`Horario: ${hora_inicio} - ${hora_fin}`, 320, y + 34);
     y += 66;
 
@@ -158,51 +155,58 @@ exports.crearFacturaYGenerarPDF = async ({
     doc
       .rect(40, y, 515, 54)
       .strokeColor("#43e97b")
-      .lineWidth(1.5)
+      .lineWidth(1.2)
       .stroke()
       .font("Helvetica-Bold")
-      .fontSize(13)
+      .fontSize(12)
       .fillColor("#388e3c")
       .text("Resumen de Pago:", 50, y + 7)
       .font("Helvetica")
-      .fontSize(12)
+      .fontSize(11)
       .fillColor("#222")
       .text("Valor total:", 50, y + 22)
       .text("Abono realizado:", 50, y + 34)
       .text("Restante por pagar:", 50, y + 46)
       .font("Helvetica-Bold")
       .fillColor("#388e3c")
-      .text(`$${precio}`, 200, y + 22)
+      .text(`$${precio}`, 180, y + 22)
       .fillColor("#43e97b")
-      .text(`$${abono}`, 200, y + 34)
+      .text(`$${abono}`, 180, y + 34)
       .fillColor("#d32f2f")
-      .text(`$${precio - abono}`, 200, y + 46)
+      .text(`$${precio - abono}`, 180, y + 46)
       .fillColor("black");
     y += 70;
 
-    // Mensaje final centrado y datos de contacto
+    // Mensaje final centrado y datos de contacto, más cerca del contenido
     doc
-      .fontSize(15)
+      .fontSize(13)
       .font("Helvetica-Bold")
       .fillColor("#388e3c")
       .text("¡Gracias por reservar en Fútbol Piloto!", 0, y, { align: "center" });
+    y += 36;
 
-    // Footer pegado al final, sin espacio extra
+    // Calcula la altura total y ajusta la página para que el footer quede pegado
+    const footerHeight = 60;
+    const totalHeight = y + footerHeight + 20;
+    doc.addPage({ margin: 0, size: [595.28, totalHeight] });
+    doc.switchToPage(0);
+
+    // Dibuja el footer en la posición correcta
     const footerY = totalHeight - footerHeight;
     doc
-      .rect(0, footerY, doc.page.width, footerHeight)
+      .rect(0, footerY, 595.28, footerHeight)
       .fill("#43e97b");
     doc
       .fillColor("#fff")
       .font("Helvetica-Bold")
-      .fontSize(13)
-      .text("Sitio web: https://canchassinteticas.site", 0, footerY + 10, { align: "center" })
-      .font("Helvetica")
       .fontSize(12)
-      .text("Contacto: futbolupiloto@gmail.com", 0, footerY + 28, { align: "center" })
-      .font("Helvetica-Bold")
+      .text("Sitio web: https://canchassinteticas.site", 0, footerY + 12, { align: "center", width: 595.28 })
+      .font("Helvetica")
       .fontSize(11)
-      .text("Factura generada por Fútbol Piloto - Tu plataforma de reservas de canchas sintéticas", 0, footerY + 44, { align: "center" });
+      .text("Contacto: futbolupiloto@gmail.com", 0, footerY + 28, { align: "center", width: 595.28 })
+      .font("Helvetica-Bold")
+      .fontSize(10)
+      .text("Factura generada por Fútbol Piloto - Tu plataforma de reservas de canchas sintéticas", 0, footerY + 44, { align: "center", width: 595.28 });
 
     doc.end();
   } catch (err) {
