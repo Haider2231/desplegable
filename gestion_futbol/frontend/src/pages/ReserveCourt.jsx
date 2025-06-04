@@ -237,7 +237,7 @@ export default function ReserveCourt() {
             marginBottom: 18,
             letterSpacing: 2
           }}>
-            Horarios
+            Horarios disponibles
           </h2>
           {error && <div className="reserve-error" style={{
             background: "#ffd6d6",
@@ -260,8 +260,19 @@ export default function ReserveCourt() {
             (() => {
               const cancha = canchas.find(c => c.cancha_id === expandedCanchaId);
               if (!cancha) return <div style={{ color: "#888", fontSize: 15 }}>Selecciona una cancha.</div>;
-              // Filtra solo los horarios disponibles
-              const horariosDisponibles = (cancha.horarios || []).filter(h => h.disponible);
+              // Filtra solo los horarios disponibles y futuros
+              const now = new Date();
+              const horariosDisponibles = (cancha.horarios || []).filter(h => {
+                if (!h.disponible) return false;
+                // Fecha y hora de inicio
+                const fechaStr = h.fecha?.split("T")[0] || h.fecha;
+                const horaInicio = h.hora_inicio;
+                if (!fechaStr || !horaInicio) return false;
+                const [year, month, day] = fechaStr.split("-").map(Number);
+                const [hour, minute] = horaInicio.split(":").map(Number);
+                const fechaHora = new Date(year, month - 1, day, hour, minute, 0, 0);
+                return fechaHora >= now;
+              });
               return (
                 <div style={{ marginBottom: 8, marginTop: 6 }}>
                   {horariosDisponibles.length > 0 ? (
