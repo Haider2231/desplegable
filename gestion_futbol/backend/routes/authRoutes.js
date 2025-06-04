@@ -10,37 +10,40 @@ router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 router.post("/check-email", authController.checkEmailExists);
 // ENDPOINTS ADMIN USUARIOS
+
+// ENDPOINTS ADMIN USUARIOS
 router.get(
   "/usuarios",
   verificarToken,
-  verificarRol(["admin"]),
+  verificarRol(["admin", "validador"]),
   authController.getUsuarios
 );
 
 router.post(
-  "/usuarios/admin",
+  "/usuarios",
   verificarToken,
-  verificarRol(["admin"]),
+  verificarRol(["admin", "validador"]),
   authController.createUsuario
 );
 
 router.put(
   "/usuarios/:id",
   verificarToken,
-  verificarRol(["admin"]),
+  verificarRol(["admin", "validador"]),
   authController.updateUsuario
 );
 
 router.delete(
   "/usuarios/:id",
   verificarToken,
-  verificarRol(["admin"]),
+  verificarRol(["admin", "validador"]),
   authController.deleteUsuario
 );
+
 router.get(
   "/usuarios/propietarios",
   verificarToken,
-  verificarRol(["admin"]),
+  verificarRol(["admin", "validador"]),
   authController.getPropietarios
 );
 

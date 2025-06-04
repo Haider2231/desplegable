@@ -40,36 +40,38 @@ exports.getCanchas = async (req, res) => {
   }
 };
 
-// Registrar una nueva cancha asociada a un establecimiento
 exports.createCancha = async (req, res) => {
-  const { establecimiento_id, nombre } = req.body;
+  const { establecimiento_id, nombre, precio } = req.body;
   try {
-    // Usa el nombre recibido o uno por defecto
     const nombreCancha = nombre && nombre.trim() ? nombre : "Cancha";
     const result = await pool.query(
-      `INSERT INTO canchas (establecimiento_id, nombre) VALUES ($1, $2) RETURNING *`,
+      `INSERT INTO canchas (establecimiento_id, nombre, estado) VALUES ($1, $2, 'pendiente') RETURNING *`,
       [establecimiento_id, nombreCancha]
     );
     const cancha = result.rows[0];
 
     // Guardar imágenes si existen
     if (req.files && req.files.length > 0) {
-      const canchaId = cancha.cancha_id || cancha.id;
       for (let i = 0; i < req.files.length; i++) {
         const archivo = req.files[i];
         const url = `/uploads/${archivo.filename}`;
-        try {
+        // Si es imagen, guarda en cancha_imagenes, si es documento, en documentos_cancha
+        if (archivo.mimetype.startsWith("image/")) {
           await pool.query(
             `INSERT INTO cancha_imagenes (cancha_id, url, orden) VALUES ($1, $2, $3)`,
-            [canchaId, url, i]
+            [cancha.cancha_id || cancha.id, url, i]
           );
-        } catch (imgErr) {
-          console.error("Error al guardar imagen de cancha:", imgErr);
+        } else {
+          await pool.query(
+            `INSERT INTO documentos_cancha (cancha_id, url, tipo) VALUES ($1, $2, $3)`,
+            [cancha.cancha_id || cancha.id, url, archivo.mimetype]
+          );
         }
       }
     }
+    // Si usas campos separados (imagenes/documentos), también procesa req.body.documentos si es necesario
 
-    res.status(201).json({ mensaje: "Cancha registrada con éxito", cancha });
+    res.status(201).json({ mensaje: "Cancha registrada, pendiente de validación", cancha });
   } catch (error) {
     console.error("Error al registrar la cancha:", error);
     if (!res.headersSent) {
@@ -77,6 +79,47 @@ exports.createCancha = async (req, res) => {
     }
   }
 };
+
+// Endpoint para que el validador vea canchas pendientes
+exports.getCanchasPendientes = async (req, res) => {
+  try {
+    // Solo mostrar canchas pendientes de establecimientos que estén activos
+    const result = await pool.query(
+      `SELECT c.*
+         FROM canchas c
+         JOIN establecimientos e ON c.establecimiento_id = e.id
+        WHERE c.estado = 'pendiente' AND e.estado = 'activo'`
+    );
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener canchas pendientes" });
+  }
+};
+
+// Endpoint para aprobar/rechazar cancha
+exports.validarCancha = async (req, res) => {
+  const { cancha_id } = req.params;
+  const { aprobar, motivo } = req.body;
+  try {
+    if (aprobar) {
+      await pool.query(
+        `UPDATE canchas SET estado = 'activa' WHERE id = $1`,
+        [cancha_id]
+      );
+      // Obtener email del propietario y enviar correo (ver siguiente archivo)
+    } else {
+      await pool.query(
+        `UPDATE canchas SET estado = 'rechazada' WHERE id = $1`,
+        [cancha_id]
+      );
+      // Opcional: guardar motivo de rechazo
+    }
+    res.json({ message: "Validación realizada" });
+  } catch (error) {
+    res.status(500).json({ error: "Error al validar la cancha" });
+  }
+};
+
 
 // GET /establecimientos/:id/canchas
 exports.getCanchasByEstablecimiento = async (req, res) => {

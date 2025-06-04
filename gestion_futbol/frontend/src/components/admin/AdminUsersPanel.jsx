@@ -10,7 +10,7 @@ export default function AdminUsersPanel() {
   const [editData, setEditData] = useState({ nombre: "", email: "", rol: "", telefono: "" });
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const usersPerPage = 20;
+  const usersPerPage = 10;
 
   // Obtener todos los usuarios
   useEffect(() => {
@@ -62,6 +62,7 @@ export default function AdminUsersPanel() {
 
   const handleEditSave = async (id) => {
     try {
+      // Permite actualizar el rol a validador también
       await updateUsuario(id, editData);
       setUsuarios(usuarios.map(u => u.id === id ? { ...u, ...editData } : u));
       setEditingUser(null);
@@ -80,7 +81,12 @@ export default function AdminUsersPanel() {
         '<input id="swal-email" class="swal2-input" placeholder="Email">' +
         '<input id="swal-telefono" class="swal2-input" placeholder="Teléfono">' +
         '<input id="swal-password" class="swal2-input" placeholder="Contraseña" type="password">' +
-        '<select id="swal-rol" class="swal2-input"><option value="usuario">Usuario</option><option value="propietario">Propietario</option><option value="admin">Admin</option></select>',
+        '<select id="swal-rol" class="swal2-input">' +
+        '<option value="usuario">Usuario</option>' +
+        '<option value="propietario">Propietario</option>' +
+        '<option value="validador">Validador</option>' +
+        '<option value="admin">Admin</option>' +
+        '</select>',
       focusConfirm: false,
       preConfirm: () => {
         return {
@@ -109,12 +115,10 @@ export default function AdminUsersPanel() {
     }
     try {
       const data = await createUsuario(formValues);
-      // Si el backend retorna el usuario creado, agrégalo a la lista
       if (data && data.id) {
         setUsuarios([...usuarios, data]);
         Swal.fire("Creado", "Usuario creado correctamente", "success");
       } else {
-        // Si el backend retorna error o no retorna el usuario
         Swal.fire("Error", data?.error || "No se pudo crear el usuario", "error");
       }
     } catch (err) {
@@ -315,6 +319,7 @@ export default function AdminUsersPanel() {
                       >
                         <option value="usuario">Usuario</option>
                         <option value="propietario">Propietario</option>
+                        <option value="validador">Validador</option>
                         <option value="admin">Admin</option>
                       </select>
                     ) : (
@@ -325,6 +330,8 @@ export default function AdminUsersPanel() {
                               ? "#d32f2f"
                               : u.rol === "propietario"
                               ? "#007991"
+                              : u.rol === "validador"
+                              ? "#ff9800"
                               : "#388e3c",
                           fontWeight: 700,
                           textTransform: "capitalize"

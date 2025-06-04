@@ -1,6 +1,5 @@
 const pool = require("../db");
 const path = require("path");
-
 // Crear un establecimiento (soporta multipart/form-data)
 exports.createEstablecimiento = async (req, res) => {
   try {
@@ -14,8 +13,9 @@ exports.createEstablecimiento = async (req, res) => {
     const lng = req.body.lng;
     const cantidad_canchas = parseInt(req.body.cantidad_canchas, 10) || 0;
     let imagen_url = null;
-    if (req.file) {
-      imagen_url = `/uploads/${req.file.filename}`;
+    // Cambia req.file a req.files?.imagen[0] para multer.fields
+    if (req.files && req.files.imagen && req.files.imagen[0]) {
+      imagen_url = `/uploads/${req.files.imagen[0].filename}`;
     }
     // Validación robusta (acepta 0 como precio válido)
     if (
@@ -30,20 +30,41 @@ exports.createEstablecimiento = async (req, res) => {
       return res.status(400).json({ error: "Faltan datos obligatorios" });
     }
     const result = await pool.query(
-      `INSERT INTO establecimientos (nombre, direccion, lat, lng, telefono, precio, dueno_id, cantidad_canchas, imagen_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      `INSERT INTO establecimientos (nombre, direccion, lat, lng, telefono, precio, dueno_id, cantidad_canchas, imagen_url, estado)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pendiente') RETURNING *`,
       [nombre, direccion, lat, lng, telefono, precio, dueno_id, cantidad_canchas, imagen_url]
     );
     const establecimiento = result.rows[0];
 
     // SOLO crear canchas aquí, NO en el frontend
     for (let i = 0; i < cantidad_canchas; i++) {
+      // Al crear la cancha, asigna la imagen_url del establecimiento como imagen principal de la cancha
       await pool.query(
-        `INSERT INTO canchas (establecimiento_id, nombre, dueno_id) VALUES ($1, $2, $3)`,
+        `INSERT INTO canchas (establecimiento_id, nombre, dueno_id) VALUES ($1, $2, $3) RETURNING id`,
         [establecimiento.id, `Cancha ${i + 1}`, dueno_id]
-      );
+      ).then(async (canchaRes) => {
+        const canchaId = canchaRes.rows[0].id;
+        if (imagen_url) {
+          // Guarda la imagen en cancha_imagenes para que se muestre en el mapa
+          await pool.query(
+            `INSERT INTO cancha_imagenes (cancha_id, url, orden) VALUES ($1, $2, 0)`,
+            [canchaId, imagen_url]
+          );
+        }
+      });
     }
 
+    // Guardar documentos si existen (req.files.documentos)
+    if (req.files && req.files.documentos) {
+      for (let i = 0; i < req.files.documentos.length; i++) {
+        const archivo = req.files.documentos[i];
+        const url = `/uploads/${archivo.filename}`;
+        await pool.query(
+          `INSERT INTO documentos_establecimiento (establecimiento_id, url, tipo) VALUES ($1, $2, $3)`,
+          [establecimiento.id, url, archivo.mimetype]
+        );
+      }
+    }
     res.status(201).json(establecimiento);
   } catch (error) {
     console.error("Error al crear establecimiento:", error);

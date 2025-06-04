@@ -26,6 +26,11 @@ export default function Header() {
     window.location.href = "/"; // Redirige y recarga como invitado (sin token)
   };
 
+  // Cambia el handler para mostrar el mensaje informativo
+  const handleRegistrarCancha = () => {
+    navigate("/quiero-registrar-cancha");
+  };
+
   return (
     <header
       className="football-footer-bg"
@@ -150,9 +155,9 @@ export default function Header() {
                   cursor: "pointer",
                   transition: "all 0.22s cubic-bezier(.4,2,.6,1)",
                 }}
-                onClick={() => setShowRegistroModal(true)}
+                onClick={handleRegistrarCancha}
               >
-                Registra tu cancha
+                REGISTRA TU CANCHA
               </button>
             </>
           ) : (

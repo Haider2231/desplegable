@@ -16,12 +16,14 @@ import ManageCourts from "./pages/ManageCourts";
 import ForgotPassword from "./components/Auth/ForgotPassword";
 import ResetPassword from "./components/Auth/ResetPassword";
 import Estadisticas from "./pages/Estadisticas";
-import AdminUsersPanel from "./components/admin/AdminUsersPanel";
+import AdminUsersPanel from "./components/Admin/AdminUsersPanel";
 import Pagos from "./pages/Pagos";
 import ReservaExitosa from "./pages/ReservaExitosa";
 import AdminCrearEstablecimiento from "./pages/AdminCrearEstablecimiento";
-import MisReservas from "./pages/MisReservas";
-import ManualUsuario from "./pages/ManualUsuario";
+import ValidadorCanchas from "./pages/ValidadorCanchas";
+import RegistrarEstablecimiento from "./pages/RegistrarEstablecimiento";
+import MisEstablecimientos from "./pages/MisEstablecimientos";
+import { useLocation } from "react-router-dom";
 
 function App() {
   return (
@@ -75,7 +77,6 @@ function App() {
                   <Route path="/community" element={<Community />} />
                   <Route path="/info" element={<Info />} />
                   <Route path="/about" element={<About />} />
-                  <Route path="/manual-usuario" element={<ManualUsuario />} />
                   <Route path="/verify" element={<Verify />} />
                   <Route path="/reservar" element={<ReserveCourt />} />
                   <Route path="/manage-courts" element={<ManageCourts />} />
@@ -88,7 +89,10 @@ function App() {
                   <Route path="/pagos" element={<Pagos />} />
                   <Route path="/reserva-exitosa" element={<ReservaExitosa />} />
                   <Route path="/admin/crear-establecimiento" element={<AdminCrearEstablecimiento />} />
-                  <Route path="/mis-reservas" element={<MisReservas />} />
+                  <Route path="/validador/canchas" element={<ValidadorCanchas />} />
+                  <Route path="/quiero-registrar-cancha" element={<QuieroRegistrarCancha />} />
+                  <Route path="/registrar-establecimiento" element={<RegistrarEstablecimiento />} />
+                  <Route path="/mis-establecimientos" element={<MisEstablecimientos />} />
                 </Routes>
               </div>
               <Footer />
@@ -97,6 +101,81 @@ function App() {
         />
       </Routes>
     </Router>
+  );
+}
+
+function QuieroRegistrarCancha() {
+  const [tieneEstablecimiento, setTieneEstablecimiento] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+  let user = null;
+  try {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const base64Url = token.split(".")[1];
+      let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      while (base64.length % 4) base64 += "=";
+      const payload = JSON.parse(atob(base64));
+      user = payload;
+    }
+  } catch {}
+
+  React.useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    // Consulta si el usuario ya tiene establecimientos
+    fetch(`/establecimientos/dueno/${user.userId}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+    })
+      .then(res => res.json())
+      .then(data => setTieneEstablecimiento(Array.isArray(data) && data.length > 0))
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 600, margin: "2rem auto", background: "#fff", borderRadius: 12, boxShadow: "0 4px 16px #b2f7ef", padding: "2rem", textAlign: "center" }}>
+        Cargando...
+      </div>
+    );
+  }
+
+  if (user && tieneEstablecimiento) {
+    // Muestra el panel de estado de establecimientos
+    return <MisEstablecimientos />;
+  }
+
+  return (
+    <div style={{ maxWidth: 600, margin: "2rem auto", background: "#fff", borderRadius: 12, boxShadow: "0 4px 16px #b2f7ef", padding: "2rem" }}>
+      <h2>¿Quieres registrar tu cancha?</h2>
+      <p>
+        Para registrar tu cancha debes primero crear una cuenta e iniciar sesión.<br />
+        Luego podrás acceder al formulario para registrar tu establecimiento y subir los documentos requeridos.<br /><br />
+        <b>Pasos:</b>
+        <ol>
+          <li>Regístrate o inicia sesión.</li>
+          <li>Accede a este apartado y haz clic en el botón de abajo.</li>
+          <li>Llena el formulario y sube los documentos.</li>
+          <li>Un validador revisará tu solicitud y te notificaremos cuando esté aprobada.</li>
+        </ol>
+      </p>
+      {!user ? (
+        <button
+          onClick={() => window.location.href = "/login"}
+          style={{ background: "#43a047", color: "#fff", border: "none", borderRadius: 8, padding: "12px 28px", fontWeight: 700, fontSize: 16, marginTop: 18 }}
+        >
+          Iniciar sesión / Registrarse
+        </button>
+      ) : (
+        <button
+          onClick={() => window.location.href = "/registrar-establecimiento"}
+          style={{ background: "#388e3c", color: "#fff", border: "none", borderRadius: 8, padding: "12px 28px", fontWeight: 700, fontSize: 16, marginTop: 18 }}
+        >
+          Ir al formulario de registro
+        </button>
+      )}
+    </div>
   );
 }
 

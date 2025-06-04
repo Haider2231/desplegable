@@ -11,6 +11,7 @@ export default function RegisterCourt() {
   const cantidadRef = useRef();
   const imagenesRef = useRef();
   const valorRef = useRef();
+  const documentosRef = useRef();
 
   // Inicializar Google Maps Autocomplete una sola vez
   React.useEffect(() => {
@@ -69,6 +70,13 @@ export default function RegisterCourt() {
     for (let i = 0; i < files.length; i++) {
       formData.append("imagenes", files[i]);
     }
+    // Añadir documentos
+    if (documentosRef.current && documentosRef.current.files.length > 0) {
+      const docs = documentosRef.current.files;
+      for (let i = 0; i < docs.length; i++) {
+        formData.append("documentos", docs[i]);
+      }
+    }
 
     try {
       const token = localStorage.getItem("token");
@@ -121,6 +129,8 @@ export default function RegisterCourt() {
 
         <label>Subir Imagen:</label>
         <input type="file" ref={imagenesRef} accept="image/*" multiple required style={{ width: "100%", marginBottom: 12 }} />
+        <label>Subir documentos (PDF, imágenes, etc):</label>
+        <input type="file" ref={documentosRef} accept="application/pdf,image/*" multiple required style={{ width: "100%", marginBottom: 12 }} />
 
         <button type="submit" disabled={loading} style={{ marginTop: 10, padding: "10px 30px", borderRadius: 8, background: "#007991", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer" }}>
           {loading ? "Registrando..." : "Registrar Cancha"}
