@@ -94,7 +94,9 @@ export default function ReserveCourt() {
               ? {
                   ...c,
                   horarios: c.horarios.map(h =>
-                    h.id === horario.id ? { ...h, disponible: false, abono: data.abono, restante: data.restante } : h
+                    h.id === horario.id
+                      ? { ...h, disponible: false, abono: data.abono, restante: data.restante }
+                      : h
                   )
                 }
               : c
@@ -106,7 +108,9 @@ export default function ReserveCourt() {
             monto: data.monto,
             abono: data.abono,
             restante: data.restante,
-            factura_url: data.factura_url
+            factura_url: data.factura_url,
+            fecha: data.fecha,
+            hora_fin: data.hora_fin
           }
         });
       } else {
@@ -272,7 +276,7 @@ export default function ReserveCourt() {
                         {horariosDisponibles.slice(0, 100).map((horario, idx) => (
                           <li key={horario.id} style={{
                             marginBottom: 14,
-                            background: "#e0ffe8",
+                            background: horario.disponible ? "#e0ffe8" : "#ffeaea",
                             borderRadius: 10,
                             padding: "14px 16px",
                             display: "flex",
@@ -291,21 +295,23 @@ export default function ReserveCourt() {
                             <button
                               className="reserve-btn"
                               onClick={() => handleReservarYPagar(cancha, horario)}
-                              disabled={loading}
+                              disabled={loading || !horario.disponible}
                               style={{
                                 marginLeft: 12,
-                                background: "linear-gradient(90deg, #388e3c 0%, #43a047 100%)",
+                                background: horario.disponible
+                                  ? "linear-gradient(90deg, #388e3c 0%, #43a047 100%)"
+                                  : "#ccc",
                                 color: "#fff",
                                 border: "none",
                                 borderRadius: 8,
                                 padding: "8px 18px",
                                 fontWeight: 700,
                                 fontSize: 15,
-                                cursor: "pointer",
+                                cursor: horario.disponible ? "pointer" : "not-allowed",
                                 boxShadow: "0 2px 8px #43e97b33"
                               }}
                             >
-                              Reservar y pagar
+                              {horario.disponible ? "Reservar y pagar" : "Reservado"}
                             </button>
                           </li>
                         ))}
