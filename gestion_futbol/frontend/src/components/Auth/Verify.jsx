@@ -10,7 +10,7 @@ export default function Verify({ email }) {
   const [correo, setCorreo] = useState(email || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [countdown, setCountdown] = useState(30);
+  const [countdown, setCountdown] = useState(1800); // 30 minutos en segundos
   const inputsRef = useRef([]);
   const navigate = useNavigate();
 
@@ -169,11 +169,11 @@ export default function Verify({ email }) {
           >
             Reenviar código
           </span>
-          {/* Cronómetro justo debajo, color verde */}
+          {/* Cronómetro justo debajo, color verde fuerte */}
           <div style={{
-            color: "#007991",
+            color: "#43a047",
             marginTop: 8,
-            fontWeight: 600,
+            fontWeight: 700,
             fontSize: "1em"
           }}>
             {countdown > 0
