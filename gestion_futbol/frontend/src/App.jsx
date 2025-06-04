@@ -16,14 +16,12 @@ import ManageCourts from "./pages/ManageCourts";
 import ForgotPassword from "./components/Auth/ForgotPassword";
 import ResetPassword from "./components/Auth/ResetPassword";
 import Estadisticas from "./pages/Estadisticas";
-import AdminUsersPanel from "./components/Admin/AdminUsersPanel";
+import AdminUsersPanel from "./components/admin/AdminUsersPanel";
 import Pagos from "./pages/Pagos";
 import ReservaExitosa from "./pages/ReservaExitosa";
 import AdminCrearEstablecimiento from "./pages/AdminCrearEstablecimiento";
-import ValidadorCanchas from "./pages/ValidadorCanchas";
-import RegistrarEstablecimiento from "./pages/RegistrarEstablecimiento";
-import MisEstablecimientos from "./pages/MisEstablecimientos";
-import { useLocation } from "react-router-dom";
+import MisReservas from "./pages/MisReservas";
+import ManualUsuario from "./pages/ManualUsuario";
 
 function App() {
   return (
