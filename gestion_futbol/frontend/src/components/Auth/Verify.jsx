@@ -10,6 +10,7 @@ export default function Verify({ email }) {
   const [correo, setCorreo] = useState(email || "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState(30);
   const inputsRef = useRef([]);
   const navigate = useNavigate();
 
@@ -89,11 +90,30 @@ export default function Verify({ email }) {
     const data = await apiRegister({ nombre: "Usuario", email: correo, password: "temporal123" });
     if (!data.error) {
       alert("Código reenviado al correo.");
+      setCountdown(30); // Reinicia el contador
     } else {
       setError(data.error || "No se pudo reenviar el código.");
     }
     setLoading(false);
   };
+
+  // Formatea el tiempo del contador en minutos y segundos
+  const formatCountdown = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins > 0 ? `${mins} min ` : ""}${secs} seg`;
+  };
+
+  // Efecto para manejar el conteo regresivo
+  React.useEffect(() => {
+    let timer;
+    if (countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   return (
     <form className="otp-form" onSubmit={handleSubmit}>
@@ -125,12 +145,42 @@ export default function Verify({ email }) {
             />
           ))}
         </div>
-        <button className="otp-btn" type="submit" disabled={loading}>
-          {loading ? "Verificando..." : "Verificar"}
+        <button
+          className="otp-btn"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? "Verificando..." : "VERIFICAR"}
         </button>
-        <button className="otp-btn-resend" type="button" onClick={handleResend} disabled={loading}>
-          Reenviar código
-        </button>
+        <div
+          style={{
+            marginTop: 10,
+            textAlign: "center",
+          }}
+        >
+          <span
+            style={{
+              color: "#007991",
+              cursor: "pointer",
+              textDecoration: "underline",
+              fontWeight: 500,
+            }}
+            onClick={handleResend}
+          >
+            Reenviar código
+          </span>
+          {/* Cronómetro justo debajo, color verde */}
+          <div style={{
+            color: "#007991",
+            marginTop: 8,
+            fontWeight: 600,
+            fontSize: "1em"
+          }}>
+            {countdown > 0
+              ? `Tiempo restante para usar el código: ${formatCountdown(countdown)}`
+              : "El código ha expirado. Puedes solicitar uno nuevo."}
+          </div>
+        </div>
         {error && <div style={{ color: "#d32f2f", marginTop: 8, textAlign: "center" }}>{error}</div>}
         <svg className="otp-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <path fill="#43a047" d="M56.8,-23.9C61.7,-3.2,45.7,18.8,26.5,31.7C7.2,44.6,-15.2,48.2,-35.5,36.5C-55.8,24.7,-73.9,-2.6,-67.6,-25.2C-61.3,-47.7,-30.6,-65.6,-2.4,-64.8C25.9,-64.1,51.8,-44.7,56.8,-23.9Z" transform="translate(100 100)" className="otp-path"></path>

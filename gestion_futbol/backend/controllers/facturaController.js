@@ -96,7 +96,6 @@ exports.crearFacturaYGenerarPDF = async ({
     // Logo de la web (opcional, si tienes un logo PNG en /uploads/logo.png)
     const logoPath = path.join(__dirname, "..", "uploads", "logo.png");
     if (fs.existsSync(logoPath)) {
-      // Logo más arriba y centrado
       doc.image(logoPath, doc.page.width - 120, 10, { width: 50, align: "center" });
     }
 
@@ -185,16 +184,21 @@ exports.crearFacturaYGenerarPDF = async ({
       .fillColor("black");
 
     // Mensaje final centrado y datos de contacto
+    let y = 400;
     doc
       .fontSize(15)
       .font("Helvetica-Bold")
       .fillColor("#388e3c")
-      .text("¡Gracias por reservar en Fútbol Piloto!", 0, 400, { align: "center" });
+      .text("¡Gracias por reservar en Fútbol Piloto!", 0, y, { align: "center" });
+
+    // Calcula la posición del footer dinámicamente para que quede pegado abajo
+    const pageHeight = doc.page.height;
+    const footerHeight = 60;
+    const footerY = pageHeight - footerHeight;
 
     // Franja inferior personalizada con branding y contacto
-    const footerY = 440;
     doc
-      .rect(0, footerY, doc.page.width, 50)
+      .rect(0, footerY, doc.page.width, footerHeight)
       .fill("#43e97b");
     doc
       .fillColor("#fff")
@@ -210,7 +214,7 @@ exports.crearFacturaYGenerarPDF = async ({
       .font("Helvetica-Bold")
       .fontSize(11)
       .fillColor("#fff")
-      .text("Factura generada por Fútbol Piloto - Tu plataforma de reservas de canchas sintéticas", 0, footerY + 42, { align: "center" });
+      .text("Factura generada por Fútbol Piloto - Tu plataforma de reservas de canchas sintéticas", 0, footerY + 44, { align: "center" });
 
     doc.end();
   } catch (err) {

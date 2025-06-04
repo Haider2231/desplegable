@@ -21,29 +21,6 @@ export default function Register({ onRegister }) {
   const [verifyCountdown, setVerifyCountdown] = useState(1800); // 30 minutos en segundos
   const navigate = useNavigate();
 
-  useEffect(() => {
-    let interval;
-    if (showVerify) {
-      setVerifyCountdown(1800); // reinicia a 30 minutos
-      interval = setInterval(() => {
-        setVerifyCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [showVerify]);
-
-  const formatCountdown = (secs) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -111,11 +88,7 @@ export default function Register({ onRegister }) {
       >
         <div>
           <Verify email={email} />
-          <div style={{ color: "#007991", marginTop: 16, textAlign: "center", fontWeight: "bold" }}>
-            {verifyCountdown > 0
-              ? `Tiempo restante para usar el código: ${formatCountdown(verifyCountdown)}`
-              : "El código ha expirado. Solicita uno nuevo si es necesario."}
-          </div>
+          {/* Elimina el cronómetro aquí */}
         </div>
       </div>
     );
