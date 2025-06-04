@@ -36,7 +36,7 @@ exports.crearFacturaYGenerarPDF = async ({
   hora_inicio,
   hora_fin,
   cancha_id,
-  client // <-- recibe el cliente de la transacción si se pasa
+  client
 }) => {
   // Validaciones estrictas para evitar errores de PDF
   if (
@@ -85,133 +85,134 @@ exports.crearFacturaYGenerarPDF = async ({
   // 2. Genera el PDF personalizado y coherente con la web
   const pdfPath = path.join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
   try {
-    // Ajusta el tamaño de página y los márgenes para mejor distribución y espacio
-    const doc = new PDFDocument({ margin: 50, size: [595.28, 700] }); // A4 width, altura personalizada
+    // El problema es que los textos del footer son muy largos y PDFKit los "empuja" fuera de la página, creando páginas nuevas.
+    // Solución: Usa un footer más alto y reduce el tamaño de fuente, o divide el texto largo en dos líneas.
+
+    const pageWidth = 595.28;
+    const pageHeight = 480;
+    const footerHeight = 80; // Footer más alto
+    const footerY = pageHeight - footerHeight;
+
+    const doc = new PDFDocument({ margin: 40, size: [pageWidth, pageHeight] });
     doc.pipe(fs.createWriteStream(pdfPath));
 
-    // Encabezado con fondo verde y branding de la web
-    doc.rect(0, 0, doc.page.width, 70).fill("#43e97b");
+    // Encabezado
+    doc.rect(0, 0, pageWidth, 70).fill("#43e97b");
     const logoPath = path.join(__dirname, "..", "uploads", "logo.png");
     if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, doc.page.width - 90, 15, { width: 40 });
+      doc.image(logoPath, pageWidth - 120, 10, { width: 50 });
     }
     doc
       .fillColor("#fff")
       .fontSize(28)
       .font("Helvetica-Bold")
-      .text("Fútbol Piloto", 50, 18, { align: "left" })
+      .text("Fútbol Piloto", 40, 18, { align: "left" })
       .fontSize(16)
       .font("Helvetica-Bold")
-      .text("Factura de Reserva", 0, 28, { align: "center" })
+      .text("Factura de Reserva", 0, 28, { align: "center", width: pageWidth })
       .fillColor("black");
-
-    let y = 90;
 
     // Datos de la factura y fecha
     doc
       .fontSize(12)
       .font("Helvetica")
       .fillColor("#222")
-      .text(`Factura N°: ${facturaId}`, 50, y)
-      .text(`Fecha de emisión: ${fechaFactura}`, 50, y + 18);
-    y += 45;
+      .text(`Factura N°: ${facturaId}`, 40, 85)
+      .text(`Fecha de emisión: ${fechaFactura}`, 40, 105);
+
+    // Línea separadora
+    doc.moveTo(40, 120).lineTo(555, 120).strokeColor("#43e97b").stroke();
 
     // Datos del cliente (recuadro, borde verde)
     doc
-      .rect(50, y, 495, 32)
+      .rect(40, 130, 515, 40)
       .strokeColor("#43e97b")
       .lineWidth(1.5)
       .stroke()
       .font("Helvetica-Bold")
       .fontSize(13)
       .fillColor("#388e3c")
-      .text("Datos del Cliente:", 60, y + 7)
+      .text("Datos del Cliente:", 50, 137)
       .font("Helvetica")
       .fontSize(12)
       .fillColor("#222")
-      .text(`Nombre: ${nombreUsuario}`, 210, y + 7);
-    y += 45;
+      .text(`Nombre: ${nombreUsuario}`, 200, 137);
 
     // Datos de la reserva (recuadro, borde verde)
     doc
-      .rect(50, y, 495, 54)
+      .rect(40, 180, 515, 70) // Reduce el alto del bloque
       .strokeColor("#43e97b")
       .lineWidth(1.5)
       .stroke()
       .font("Helvetica-Bold")
       .fontSize(13)
       .fillColor("#388e3c")
-      .text("Detalles de la Reserva:", 60, y + 7)
+      .text("Detalles de la Reserva:", 50, 187)
       .font("Helvetica")
       .fontSize(12)
       .fillColor("#222")
-      .text(`Establecimiento: ${establecimiento_nombre}`, 60, y + 22)
-      .text(`Cancha: ${cancha_nombre}`, 60, y + 34)
-      .text(`Dirección: ${direccion}`, 60, y + 46)
-      .text(`Fecha de juego: ${fecha ? new Date(fecha).toLocaleDateString("es-CO") : ""}`, 320, y + 22)
-      .text(`Horario: ${hora_inicio} - ${hora_fin}`, 320, y + 34);
-    y += 66;
+      .text(`Establecimiento: ${establecimiento_nombre}`, 50, 205)
+      .text(`Cancha: ${cancha_nombre}`, 50, 220)
+      .text(`Dirección: ${direccion}`, 50, 235)
+      .text(`Fecha de juego: ${fecha ? new Date(fecha).toLocaleDateString("es-CO") : ""}`, 320, 205)
+      .text(`Horario: ${hora_inicio} - ${hora_fin}`, 320, 220);
+
+    // Línea separadora más abajo para evitar sobreposición
+    doc.moveTo(40, 260).lineTo(555, 260).strokeColor("#43e97b").stroke();
 
     // Detalles de pago (recuadro, borde verde)
     doc
-      .rect(50, y, 495, 54)
+      .rect(40, 270, 515, 70) // Reduce el alto del bloque
       .strokeColor("#43e97b")
       .lineWidth(1.5)
       .stroke()
       .font("Helvetica-Bold")
       .fontSize(13)
       .fillColor("#388e3c")
-      .text("Resumen de Pago:", 60, y + 7)
+      .text("Resumen de Pago:", 50, 277)
       .font("Helvetica")
       .fontSize(12)
       .fillColor("#222")
-      .text("Valor total:", 60, y + 22)
-      .text("Abono realizado:", 60, y + 34)
-      .text("Restante por pagar:", 60, y + 46)
+      .text("Valor total:", 50, 297)
+      .text("Abono realizado:", 50, 312)
+      .text("Restante por pagar:", 50, 327)
       .font("Helvetica-Bold")
       .fillColor("#388e3c")
-      .text(`$${precio}`, 210, y + 22)
+      .text(`$${precio}`, 200, 297)
       .fillColor("#43e97b")
-      .text(`$${abono}`, 210, y + 34)
+      .text(`$${abono}`, 200, 312)
       .fillColor("#d32f2f")
-      .text(`$${precio - abono}`, 210, y + 46)
+      .text(`$${precio - abono}`, 200, 327)
       .fillColor("black");
-    y += 70;
 
-    // Mensaje final centrado y datos de contacto
+    // Mensaje final centrado (ajusta la posición Y para que no se salga)
     doc
       .fontSize(15)
       .font("Helvetica-Bold")
       .fillColor("#388e3c")
-      .text("¡Gracias por reservar en Fútbol Piloto!", 0, y, { align: "center" });
-    y += 40;
+      .text("¡Gracias por reservar en Fútbol Piloto!", 0, 355, { align: "center", width: pageWidth });
 
-    // Footer pegado al final, bien visible y con sello y contacto
-    const footerHeight = 80;
-    const footerY = doc.page.height - footerHeight;
-    doc
-      .rect(0, footerY, doc.page.width, footerHeight)
-      .fill("#43e97b");
+    // --- FOOTER AL FINAL DE LA HOJA ---
+    doc.save();
+    doc.rect(0, footerY, pageWidth, footerHeight).fill("#43e97b");
+    doc.restore();
+
+    // Footer ajustado para evitar desbordamiento y nueva página
     doc
       .fillColor("#fff")
       .font("Helvetica-Bold")
-      .fontSize(13)
-      .text("Sitio web: https://canchassinteticas.site", 0, footerY + 12, { align: "center", width: doc.page.width })
+      .fontSize(14)
+      .text("Factura generada por Fútbol Piloto - Tu plataforma de reservas", 0, footerY + 10, { align: "center", width: pageWidth })
       .font("Helvetica")
-      .fontSize(12)
-      .text("Contacto: futbolupiloto@gmail.com", 0, footerY + 30, { align: "center", width: doc.page.width })
+      .fontSize(14)
+      .text("Contacto: futbolupiloto@gmail.com",0, footerY + 24, { align: "center", width: pageWidth })
       .font("Helvetica-Bold")
-      .fontSize(11)
-      .text("Factura generada por Fútbol Piloto - Tu plataforma de reservas de canchas sintéticas", 0, footerY + 52, { align: "center", width: doc.page.width });
-
-    doc.end();
+      doc.end();
   } catch (err) {
-    // Si falla la generación del PDF, elimina la factura de la base de datos
     await pool.query("DELETE FROM facturas WHERE id = $1", [facturaId]);
     throw new Error("Error al generar el archivo PDF de la factura");
   }
 
-  // 3. Devuelve la URL del PDF (ya no se usará, pero se mantiene para compatibilidad)
   return {
     factura_url: `/facturas/${facturaId}/pdf`
   };
