@@ -141,18 +141,6 @@ export default function NavBar() {
           </NavLink>
         </>
       )}
-      {rol === "usuario" && facturaPendiente && (
-        <a
-          href={facturaPendiente}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="nav-btn"
-          style={{ background: "#43e97b", color: "#fff", fontWeight: 700 }}
-        >
-          <span role="img" aria-label="pdf" style={{ marginRight: 6 }}>📄</span>
-          Descargar factura
-        </a>
-      )}
     </nav>
   );
 }

@@ -67,6 +67,7 @@ export default function ReservaExitosa() {
           <div><b>Abono pagado:</b> ${abono}</div>
           <div><b>Restante por pagar:</b> ${restante}</div>
         </div>
+        {/* Quitar enlace de descarga de factura, solo mostrar mensaje */}
         <div style={{
           margin: "18px 0",
           color: "#007991",
