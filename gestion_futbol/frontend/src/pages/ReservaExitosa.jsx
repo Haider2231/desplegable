@@ -69,41 +69,11 @@ export default function ReservaExitosa() {
         </div>
         <div style={{
           margin: "18px 0",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center"
+          color: "#007991",
+          fontWeight: 700,
+          fontSize: 17
         }}>
-          <a
-            href={factura_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "inline-block",
-              background: "linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)",
-              color: "#fff",
-              fontWeight: "bold",
-              textDecoration: "none",
-              fontSize: "1.1rem",
-              padding: "12px 28px",
-              borderRadius: 8,
-              boxShadow: "0 2px 8px #43e97b44",
-              transition: "background 0.2s, color 0.2s",
-              marginBottom: 8
-            }}
-            onMouseOver={e => e.currentTarget.style.background = "linear-gradient(90deg, #38f9d7 0%, #43e97b 100%)"}
-            onMouseOut={e => e.currentTarget.style.background = "linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)"}
-            download
-          >
-            <span role="img" aria-label="pdf" style={{ marginRight: 8 }}>📄</span>
-            Descargar factura PDF
-          </a>
-          <span style={{
-            color: "#888",
-            fontSize: 13,
-            marginTop: 2
-          }}>
-            (Haz clic para abrir o guardar tu comprobante)
-          </span>
+          Puedes verificar tu factura en el correo electrónico registrado.
         </div>
         <button
           style={{

@@ -22,6 +22,7 @@ const transporter = nodemailer.createTransport({
 const resetTokens = {};
 
 // Asegúrate de definir usuariosPendientes ANTES de usarlo en cualquier función
+// Guardamos también la expiración del código de verificación (30 minutos)
 const usuariosPendientes = {};
 
 exports.login = async (req, res) => {
@@ -113,6 +114,8 @@ exports.registerUser = async (req, res) => {
       rol,
       telefono,
       codigoVerificacion,
+      // Guardar expiración: 30 minutos desde ahora
+      expires: Date.now() + 1000 * 60 * 30
     };
 
     await transporter.sendMail({
@@ -138,8 +141,9 @@ exports.verifyUser = async (req, res) => {
   try {
     const datosPendientes = usuariosPendientes[email];
     console.log("[VERIFY][PENDIENTE]", datosPendientes);
-    if (!datosPendientes || datosPendientes.codigoVerificacion !== parseInt(codigo)) {
-      return res.status(400).json({ error: "Código incorrecto o usuario no encontrado" });
+    // Verifica expiración del código (30 minutos)
+    if (!datosPendientes || datosPendientes.codigoVerificacion !== parseInt(codigo) || !datosPendientes.expires || datosPendientes.expires < Date.now()) {
+      return res.status(400).json({ error: "Código incorrecto, usuario no encontrado o código expirado (válido por 30 minutos)" });
     }
     // Guardar usuario ahora sí en la base de datos
     const insertResult = await pool.query(

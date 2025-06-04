@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import ReCAPTCHA from "react-google-recaptcha"; // <-- Agrega esto
@@ -15,8 +15,34 @@ export default function Register({ onRegister }) {
   const [success, setSuccess] = useState("");
   const [showVerify, setShowVerify] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [repeatPassword, setRepeatPassword] = useState(""); // Nuevo estado para repetir contraseña
+  const [showRepeatPassword, setShowRepeatPassword] = useState(false); // Mostrar/ocultar repetir contraseña
   const [captchaToken, setCaptchaToken] = useState(null);
+  const [verifyCountdown, setVerifyCountdown] = useState(1800); // 30 minutos en segundos
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let interval;
+    if (showVerify) {
+      setVerifyCountdown(1800); // reinicia a 30 minutos
+      interval = setInterval(() => {
+        setVerifyCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [showVerify]);
+
+  const formatCountdown = (secs) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,6 +52,10 @@ export default function Register({ onRegister }) {
     const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[!@#$%^&*(),.?":{}|<>_\-+=;'/\\[\]`~]).{7,}$/;
     if (!passwordRegex.test(password)) {
       setError("La contraseña debe tener al menos 7 caracteres, una letra y un signo de puntuación.");
+      return;
+    }
+    if (password !== repeatPassword) {
+      setError("Las contraseñas no coinciden.");
       return;
     }
     if (!telefono.trim()) {
@@ -79,7 +109,14 @@ export default function Register({ onRegister }) {
           justifyContent: "center",
         }}
       >
-        <Verify email={email} />
+        <div>
+          <Verify email={email} />
+          <div style={{ color: "#007991", marginTop: 16, textAlign: "center", fontWeight: "bold" }}>
+            {verifyCountdown > 0
+              ? `Tiempo restante para usar el código: ${formatCountdown(verifyCountdown)}`
+              : "El código ha expirado. Solicita uno nuevo si es necesario."}
+          </div>
+        </div>
       </div>
     );
   }
@@ -137,7 +174,11 @@ export default function Register({ onRegister }) {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ marginLeft: "-18px", paddingRight: "38px" }} // espacio para el ojito
+            style={{ marginLeft: "-18px", paddingRight: "38px" }}
+            autoComplete="new-password"
+            onCopy={e => e.preventDefault()}
+            onPaste={e => e.preventDefault()}
+            onCut={e => e.preventDefault()}
           />
           <span
             onClick={() => setShowPassword((v) => !v)}
@@ -157,6 +198,51 @@ export default function Register({ onRegister }) {
             aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
           >
             {showPassword ? (
+              // Ojito abierto
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" stroke="#007991" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="3.5" stroke="#007991" strokeWidth="2"/>
+              </svg>
+            ) : (
+              // Ojito tachado
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path d="M17.94 17.94C16.13 19.25 14.13 20 12 20c-7 0-11-8-11-8a21.8 21.8 0 0 1 5.06-6.06M9.53 9.53A3.5 3.5 0 0 1 12 8.5c1.93 0 3.5 1.57 3.5 3.5 0 .87-.32 1.67-.85 2.29M1 1l22 22" stroke="#007991" strokeWidth="2"/>
+              </svg>
+            )}
+          </span>
+          {/* Campo repetir contraseña */}
+          <input
+            required
+            className="input"
+            type={showRepeatPassword ? "text" : "password"}
+            name="repeatPassword"
+            placeholder="Repetir contraseña"
+            value={repeatPassword}
+            onChange={(e) => setRepeatPassword(e.target.value)}
+            style={{ marginLeft: "-18px", paddingRight: "38px", marginTop: "-10px" }}
+            autoComplete="new-password"
+            onCopy={e => e.preventDefault()}
+            onPaste={e => e.preventDefault()}
+            onCut={e => e.preventDefault()}
+          />
+          <span
+            onClick={() => setShowRepeatPassword((v) => !v)}
+            style={{
+              position: "relative",
+              left: "calc(100% - 38px)",
+              top: "-34px",
+              cursor: "pointer",
+              fontSize: 20,
+              color: "#007991",
+              userSelect: "none",
+              zIndex: 2,
+              width: 0,
+              display: "inline-block"
+            }}
+            tabIndex={-1}
+            aria-label={showRepeatPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+          >
+            {showRepeatPassword ? (
               // Ojito abierto
               <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
                 <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" stroke="#007991" strokeWidth="2"/>

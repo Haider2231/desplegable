@@ -5,12 +5,12 @@ const facturaController = require("../controllers/facturaController");
 const { verificarToken } = require("../middlewares/authMiddleware");
 const pool = require("../db");
 
-// Descargar factura PDF y enviar por correo si se pasa ?enviarCorreo=1
-router.get("/:facturaId/pdf", (req, res) => {
-  const facturaId = req.params.facturaId;
-  const pdfPath = path.join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
-  res.download(pdfPath, `factura_${facturaId}.pdf`);
-});
+// Elimina la ruta de descarga directa del PDF
+// router.get("/:facturaId/pdf", (req, res) => {
+//   const facturaId = req.params.facturaId;
+//   const pdfPath = path.join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
+//   res.download(pdfPath, `factura_${facturaId}.pdf`);
+// });
 
 router.get("/cancha/:cancha_id", verificarToken, facturaController.getFacturasByCancha);
 
