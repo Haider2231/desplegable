@@ -533,7 +533,7 @@ import React, { useEffect, useState, useRef } from "react";
                           }
                           alt="Establecimiento"
                           style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 8 }}
-                          onError={e => { e.target.src = "https://via.placeholder.com/90x90?text=Sin+imagen"; }}
+                          onError={e => { e.target.onerror = null; e.target.src = "/balon.png"; }}
                         />
                       )}
                       <div style={{ flex: 1 }}>
