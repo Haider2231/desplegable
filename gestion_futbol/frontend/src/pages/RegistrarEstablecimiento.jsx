@@ -107,6 +107,18 @@ export default function RegistrarEstablecimiento() {
       Swal.fire("Ubicación requerida", "Por favor, ingresa una dirección válida.", "warning");
       return;
     }
+    if (selectedImages.length === 0) {
+      Swal.fire("Imágenes requeridas", "Debes subir al menos una imagen del lugar.", "warning");
+      return;
+    }
+    if (selectedDocs.length === 0) {
+      Swal.fire("Documentos requeridos", "Debes subir al menos un documento.", "warning");
+      return;
+    }
+    if (parseInt(precioRef.current.value, 10) < 0) {
+      Swal.fire("Precio inválido", "El precio no puede ser negativo.", "warning");
+      return;
+    }
     setLoading(true);
 
     const formData = new FormData();
@@ -228,7 +240,13 @@ export default function RegistrarEstablecimiento() {
         <label>Teléfono:</label>
         <input type="text" ref={telefonoRef} required style={{ width: "100%", marginBottom: 12 }} />
         <label>Precio por hora:</label>
-        <input type="number" ref={precioRef} required style={{ width: "100%", marginBottom: 12 }} />
+        <input
+          type="number"
+          ref={precioRef}
+          required
+          min="0"
+          style={{ width: "100%", marginBottom: 12 }}
+        />
         <label>Cantidad de canchas:</label>
         <input type="number" ref={cantidadRef} required style={{ width: "100%", marginBottom: 12 }} />
         <label>Imágenes del lugar:</label>
