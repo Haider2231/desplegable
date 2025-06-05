@@ -13,7 +13,7 @@ function markerPopupHtml(cancha) {
     if (!imgUrl.startsWith("http")) {
       imgUrl = `https://canchassinteticas.site${imgUrl}`;
     }
-    content += `<img src="${imgUrl}" alt="Imagen del establecimiento" style="width:100%; height:auto; max-height:150px; margin-bottom:10px; border-radius:8px;" onerror="this.onerror=null;this.src='https://via.placeholder.com/300x150?text=Sin+imagen';">`;
+    content += `<img src="${imgUrl}" alt="Imagen del establecimiento" style="width:100%; height:auto; max-height:150px; margin-bottom:10px; border-radius:8px;" onerror="this.onerror=null;this.src='/balon.png';">`;
   }
 
   // Mostrar imágenes de la cancha si existen
@@ -21,7 +21,11 @@ function markerPopupHtml(cancha) {
     content += `<div>`;
     cancha.imagenes.forEach((img) => {
       if (img) {
-        content += `<img src="${img}" alt="Imagen de la cancha" style="width:100%; height:auto; max-height:150px; margin-bottom:10px;">`;
+        let imgUrl = img;
+        if (!imgUrl.startsWith("http")) {
+          imgUrl = `https://canchassinteticas.site${imgUrl}`;
+        }
+        content += `<img src="${imgUrl}" alt="Imagen de la cancha" style="width:100%; height:auto; max-height:150px; margin-bottom:10px;" onerror="this.onerror=null;this.src='/balon.png';">`;
       }
     });
     content += `</div>`;
