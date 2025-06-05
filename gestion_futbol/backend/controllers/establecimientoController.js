@@ -15,10 +15,14 @@ exports.createEstablecimiento = async (req, res) => {
     const lng = req.body.lng;
     const cantidad_canchas = parseInt(req.body.cantidad_canchas, 10) || 0;
     let imagenes_urls = [];
-    // Permite varias imágenes
+    // Permite varias imágenes (soporta tanto 'imagenes' como 'imagen' por compatibilidad)
     if (req.files && req.files.imagenes && req.files.imagenes.length > 0) {
       imagenes_urls = req.files.imagenes.map(img => `/uploads/${img.filename}`);
       console.log("Imágenes subidas:", imagenes_urls);
+    } else if (req.files && req.files.imagen && req.files.imagen.length > 0) {
+      // Soporta el caso legacy de un solo campo 'imagen'
+      imagenes_urls = req.files.imagen.map(img => `/uploads/${img.filename}`);
+      console.log("Imagen subida (legacy):", imagenes_urls);
     } else {
       console.log("No se recibieron imágenes en el request");
     }
