@@ -15,8 +15,8 @@ exports.createEstablecimiento = async (req, res) => {
     const lng = req.body.lng;
     const cantidad_canchas = parseInt(req.body.cantidad_canchas, 10) || 0;
     let imagen_url = null;
-    // Cambia req.file a req.files?.imagen[0] para multer.fields
     if (req.files && req.files.imagen && req.files.imagen[0]) {
+      // Siempre guarda la URL relativa
       imagen_url = `/uploads/${req.files.imagen[0].filename}`;
     }
     // Validación robusta (acepta 0 como precio, lat, lng válidos)
@@ -42,19 +42,24 @@ exports.createEstablecimiento = async (req, res) => {
     // SOLO crear canchas aquí, NO en el frontend
     for (let i = 0; i < cantidad_canchas; i++) {
       // Al crear la cancha, asigna la imagen_url del establecimiento como imagen principal de la cancha
-      await pool.query(
+      const canchaRes = await pool.query(
         `INSERT INTO canchas (establecimiento_id, nombre, dueno_id) VALUES ($1, $2, $3) RETURNING id`,
         [establecimiento.id, `Cancha ${i + 1}`, dueno_id]
-      ).then(async (canchaRes) => {
-        const canchaId = canchaRes.rows[0].id;
-        if (imagen_url) {
-          // Guarda la imagen en cancha_imagenes para que se muestre en el mapa
+      );
+      const canchaId = canchaRes.rows[0].id;
+      if (imagen_url) {
+        // Verifica si ya existe una imagen para la cancha antes de insertar
+        const imgExists = await pool.query(
+          `SELECT 1 FROM cancha_imagenes WHERE cancha_id = $1 AND url = $2`,
+          [canchaId, imagen_url]
+        );
+        if (imgExists.rowCount === 0) {
           await pool.query(
             `INSERT INTO cancha_imagenes (cancha_id, url, orden) VALUES ($1, $2, 0)`,
             [canchaId, imagen_url]
           );
         }
-      });
+      }
     }
 
     // Guardar documentos si existen (req.files.documentos)
@@ -74,7 +79,6 @@ exports.createEstablecimiento = async (req, res) => {
     res.status(500).json({ error: "Error al crear establecimiento" });
   }
 };
-
 
 // Obtener establecimientos por dueño
 exports.getEstablecimientosByDueno = async (req, res) => {
