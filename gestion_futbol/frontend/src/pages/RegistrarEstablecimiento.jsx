@@ -7,6 +7,7 @@ export default function RegistrarEstablecimiento() {
   const [loading, setLoading] = useState(false);
   const [imagenPreview, setImagenPreview] = useState(null);
   const [selectedDocs, setSelectedDocs] = useState([]);
+  const [selectedImages, setSelectedImages] = useState([]);
   const nombreRef = useRef();
   const direccionRef = useRef();
   const telefonoRef = useRef();
@@ -83,6 +84,23 @@ export default function RegistrarEstablecimiento() {
     setSelectedDocs(prev => prev.filter((_, i) => i !== idx));
   };
 
+  const handleImagenesChange = (e) => {
+    // Permite seleccionar varias imágenes de uno en uno y acumularlas
+    let nuevas = Array.from(e.target.files);
+    let actuales = [...selectedImages];
+    nuevas.forEach((file) => {
+      if (!actuales.some(f => f.name === file.name && f.size === file.size)) {
+        actuales.push(file);
+      }
+    });
+    setSelectedImages(actuales);
+    e.target.value = "";
+  };
+
+  const handleQuitarImagen = (idx) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!lat || !lng) {
@@ -120,10 +138,9 @@ export default function RegistrarEstablecimiento() {
     formData.append("dueno_id", dueno_id);
 
     // Imágenes principales (varias)
-    if (imagenRef.current && imagenRef.current.files.length > 0) {
-      const files = imagenRef.current.files;
-      for (let i = 0; i < files.length; i++) {
-        formData.append("imagenes", files[i]);
+    if (selectedImages.length > 0) {
+      for (let i = 0; i < selectedImages.length; i++) {
+        formData.append("imagenes", selectedImages[i]);
       }
     }
     // Documentos
@@ -157,8 +174,9 @@ export default function RegistrarEstablecimiento() {
         setLat(null);
         setLng(null);
         setDireccion("");
-        setImagenPreview(null); // <-- Vacía la imagen de vista previa
+        setImagenPreview(null);
         setSelectedDocs([]);
+        setSelectedImages([]);
       } else {
         Swal.fire("Error", data.error || "Error al registrar el establecimiento", "error");
       }
@@ -178,6 +196,19 @@ export default function RegistrarEstablecimiento() {
 
   return (
     <div style={{ maxWidth: 500, margin: "2rem auto", background: "#fff", borderRadius: 12, boxShadow: "0 4px 16px #b2f7ef", padding: "2rem" }}>
+      {/* Mensaje informativo sobre el tiempo de respuesta */}
+      <div style={{
+        background: "#e0f7fa",
+        color: "#007991",
+        borderRadius: 8,
+        padding: "12px 18px",
+        marginBottom: 18,
+        fontWeight: 600,
+        fontSize: 15,
+        border: "1.5px solid #43e97b"
+      }}>
+        La respuesta a tu solicitud será enviada en un máximo de 24 horas al correo electrónico que ingresaste.
+      </div>
       <h2>Registrar Establecimiento</h2>
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <label>Nombre del establecimiento:</label>
@@ -205,17 +236,44 @@ export default function RegistrarEstablecimiento() {
           type="file"
           ref={imagenRef}
           accept="image/*"
-          required
           multiple
+          // Quita el atributo required para evitar el error de validación del input,
+          // ya que la selección real se gestiona en selectedImages.
           style={{ width: "100%", marginBottom: 12 }}
-          onChange={handleImagenChange}
+          onChange={handleImagenesChange}
         />
-        {imagenPreview && (
-          <img
-            src={imagenPreview}
-            alt="Vista previa"
-            style={{ width: "100%", maxHeight: 180, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "1px solid #43e97b" }}
-          />
+        {/* Mostrar lista de imágenes seleccionadas con opción de quitar */}
+        {selectedImages.length > 0 && (
+          <ul style={{ margin: "8px 0 12px 0", paddingLeft: 18, fontSize: 14 }}>
+            {selectedImages.map((file, idx) => (
+              <li key={idx} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {file.name}
+                <button
+                  type="button"
+                  onClick={() => handleQuitarImagen(idx)}
+                  style={{
+                    marginLeft: 6,
+                    background: "#d32f2f",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: 22,
+                    height: 22,
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    lineHeight: "18px",
+                    fontSize: 16,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                  title="Quitar imagen"
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
         )}
         <label>Subir documentos (PDF, imágenes, etc):</label>
         <input

@@ -46,9 +46,12 @@ exports.propietario = async (req, res) => {
     }
     const userId = req.user.userId;
 
-    // Trae todas las canchas del propietario
+    // Trae todas las canchas del propietario SOLO de establecimientos activos
     const canchasRes = await pool.query(
-      `SELECT c.id, c.nombre FROM canchas c WHERE c.dueno_id = $1`,
+      `SELECT c.id, c.nombre, e.nombre AS establecimiento_nombre
+         FROM canchas c
+         JOIN establecimientos e ON c.establecimiento_id = e.id
+        WHERE c.dueno_id = $1 AND e.estado = 'activo'`,
       [userId]
     );
     const canchaIds = canchasRes.rows.map(c => c.id);
@@ -57,7 +60,7 @@ exports.propietario = async (req, res) => {
       return res.json({ total_reservas: 0, ingresos: 0, canchas: [] });
     }
 
-    // Trae reservas y abonos (ingresos) por cancha
+    // Trae reservas y abonos (ingresos) por cancha SOLO de establecimientos activos
     const reservasDetalleRes = await pool.query(
       `SELECT 
           c.id AS cancha_id,
@@ -71,11 +74,11 @@ exports.propietario = async (req, res) => {
             '[]'
           ) AS reservas_detalle
         FROM canchas c
-        LEFT JOIN establecimientos e ON c.establecimiento_id = e.id
+        JOIN establecimientos e ON c.establecimiento_id = e.id
         LEFT JOIN disponibilidades d ON d.cancha_id = c.id
         LEFT JOIN reservas r ON d.id = r.disponibilidad_id
         LEFT JOIN facturas f ON f.reserva_id = r.id
-        WHERE c.dueno_id = $1
+        WHERE c.dueno_id = $1 AND e.estado = 'activo'
         GROUP BY c.id, c.nombre, e.nombre
         ORDER BY e.nombre, c.nombre`,
       [userId]

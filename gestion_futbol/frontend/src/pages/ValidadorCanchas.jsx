@@ -95,8 +95,7 @@ export default function ValidadorCanchas() {
                 <b>Teléfono:</b> {selectedEst.telefono} <br />
                 <b>Precio por hora:</b> ${selectedEst.precio} <br />
                 <b>Cantidad de canchas:</b> {selectedEst.cantidad_canchas} <br />
-                <b>Lat/Lng:</b> {selectedEst.lat}, {selectedEst.lng} <br />
-                <b>Estado:</b> {selectedEst.estado}
+               
                 {/* Mostrar imagen principal si existe */}
                 {selectedEst.imagen_url && (
                   <div style={{ marginTop: 12 }}>
