@@ -127,10 +127,11 @@ export default function RegistrarEstablecimiento() {
         telefonoRef.current.value = "";
         precioRef.current.value = "";
         cantidadRef.current.value = "";
-        imagenRef.current.value = "";
-        documentosRef.current.value = "";
+        if (imagenRef.current) imagenRef.current.value = "";
+        if (documentosRef.current) documentosRef.current.value = "";
         setLat(null);
         setLng(null);
+        setDireccion("");
       } else {
         Swal.fire("Error", data.error || "Error al registrar el establecimiento", "error");
       }
@@ -165,7 +166,15 @@ export default function RegistrarEstablecimiento() {
         <label>Cantidad de canchas:</label>
         <input type="number" ref={cantidadRef} required style={{ width: "100%", marginBottom: 12 }} />
         <label>Imagen del lugar:</label>
-        <input type="file" ref={imagenRef} accept="image/*" required style={{ width: "100%", marginBottom: 12 }} />
+        <input
+          type="file"
+          ref={imagenRef}
+          accept="image/*"
+          required
+          style={{ width: "100%", marginBottom: 12 }}
+          // Asegúrate de que solo se pueda seleccionar una imagen
+          multiple={false}
+        />
         <label>Subir documentos (PDF, imágenes, etc):</label>
         <input type="file" ref={documentosRef} accept="application/pdf,image/*" multiple required style={{ width: "100%", marginBottom: 12 }} />
         <button type="submit" disabled={loading} style={{ marginTop: 10, padding: "10px 30px", borderRadius: 8, background: "#007991", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer" }}>
