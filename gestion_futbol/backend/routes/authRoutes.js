@@ -47,12 +47,12 @@ router.get(
   authController.getPropietarios
 );
 
-// Obtener usuario por ID (nombre y teléfono)
+// Obtener usuario por ID (nombre, email y teléfono)
 router.get("/usuarios/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const result = await require("../db").query(
-      "SELECT nombre, telefono FROM usuarios WHERE id = $1",
+      "SELECT id, nombre, email, telefono FROM usuarios WHERE id = $1",
       [id]
     );
     if (result.rowCount === 0) {

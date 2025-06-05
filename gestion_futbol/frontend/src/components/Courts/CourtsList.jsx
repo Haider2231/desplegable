@@ -140,6 +140,8 @@ export default function CourtsList() {
                   {est.cantidad_canchas}
                 </span>
               </div>
+              {/* Mostrar propietario */}
+              <EstOwnerInfo dueno_id={est.dueno_id} />
               {est.imagen_url && (
                 <img
                   src={
@@ -156,9 +158,6 @@ export default function CourtsList() {
                     marginTop: 10,
                     boxShadow: "0 2px 8px #43e97b22",
                   }}
-                  onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/340x120?text=Sin+imagen";
-                  }}
                 />
               )}
             </div>
@@ -169,8 +168,7 @@ export default function CourtsList() {
   );
 }
 
-// Agrega este componente al final del archivo
-function CourtOwnerInfo({ dueno_id }) {
+function EstOwnerInfo({ dueno_id }) {
   const [user, setUser] = React.useState(null);
 
   React.useEffect(() => {
@@ -180,15 +178,19 @@ function CourtOwnerInfo({ dueno_id }) {
     })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data && data.nombre && data.email) setUser(data);
-      });
+        // Asegura que el backend devuelva nombre y email
+        if (data && (data.nombre || data.email)) setUser(data);
+        else setUser(null);
+      })
+      .catch(() => setUser(null));
   }, [dueno_id]);
 
-  if (!user) return <div>Cargando propietario...</div>;
+  if (!dueno_id) return null;
+  if (!user) return <div style={{ color: "#888", fontSize: 13 }}>Propietario: ...</div>;
   return (
-    <div style={{ marginTop: 6, marginBottom: 6 }}>
-      <b>Propietario:</b> {user.nombre} <br />
-      <b>Email:</b> {user.email}
+    <div style={{ marginTop: 4, marginBottom: 6, fontSize: 14 }}>
+      <b>Propietario:</b> {user.nombre ? user.nombre : "Sin nombre"} <br />
+      <b>Email:</b> {user.email ? user.email : "Sin email"}
     </div>
   );
 }
