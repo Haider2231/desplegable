@@ -102,7 +102,13 @@ export default function NavBar() {
     };
     checkFactura();
     const interval = setInterval(checkFactura, 60000);
-    return () => clearInterval(interval);
+    // Limpia la factura pendiente al descargar
+    window.removeEventListener("facturaDescargada", checkFactura);
+    window.addEventListener("facturaDescargada", checkFactura);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("facturaDescargada", checkFactura);
+    };
   }, []);
 
   return (
@@ -176,17 +182,6 @@ export default function NavBar() {
         </NavLink>
       )}
 
-      {facturaPendiente && (
-        <a
-          href={facturaPendiente}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="nav-btn"
-        >
-          <span role="img" aria-label="pdf" style={{ marginRight: 6 }}>📄</span>
-          Descargar factura
-        </a>
-      )}
       {location.pathname === "/quiero-registrar-cancha" && (
         <NavLink to="/quiero-registrar-cancha" className="nav-btn" style={{ background: "#ffeb3b", color: "#388e3c", fontWeight: 700 }}>
           ¿Deseas registrar tu cancha? Lee esto primero
