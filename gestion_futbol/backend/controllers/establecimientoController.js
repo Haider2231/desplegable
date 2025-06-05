@@ -14,20 +14,13 @@ exports.createEstablecimiento = async (req, res) => {
     const lat = req.body.lat;
     const lng = req.body.lng;
     const cantidad_canchas = parseInt(req.body.cantidad_canchas, 10) || 0;
-    let imagen_url = null;
-    // LOG para depuración
-    console.log("req.files:", req.files);
-    if (req.files && req.files.imagen && req.files.imagen[0]) {
-      imagen_url = `/uploads/${req.files.imagen[0].filename}`;
-      console.log("Imagen subida:", imagen_url);
-      // Verifica si el archivo físico ya existe (opcional, multer normalmente sobreescribe)
-      const fs = require("fs");
-      const fullPath = require("path").join(__dirname, "../uploads", req.files.imagen[0].filename);
-      if (fs.existsSync(fullPath)) {
-        console.log("El archivo físico ya existe, no se vuelve a guardar.");
-      }
+    let imagenes_urls = [];
+    // Permite varias imágenes
+    if (req.files && req.files.imagenes && req.files.imagenes.length > 0) {
+      imagenes_urls = req.files.imagenes.map(img => `/uploads/${img.filename}`);
+      console.log("Imágenes subidas:", imagenes_urls);
     } else {
-      console.log("No se recibió imagen en el request");
+      console.log("No se recibieron imágenes en el request");
     }
     // Validación robusta (acepta 0 como precio, lat, lng válidos)
     if (
@@ -45,36 +38,34 @@ exports.createEstablecimiento = async (req, res) => {
     const result = await pool.query(
       `INSERT INTO establecimientos (nombre, direccion, lat, lng, telefono, precio, dueno_id, cantidad_canchas, imagen_url, estado)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pendiente') RETURNING *`,
-      [nombre, direccion, lat, lng, telefono, precio, dueno_id, cantidad_canchas, imagen_url]
+      [nombre, direccion, lat, lng, telefono, precio, dueno_id, cantidad_canchas, imagenes_urls[0] || null]
     );
     const establecimiento = result.rows[0];
 
     // SOLO crear canchas aquí, NO en el frontend
     for (let i = 0; i < cantidad_canchas; i++) {
-      // Al crear la cancha, asigna la imagen_url del establecimiento como imagen principal de la cancha
       const canchaRes = await pool.query(
         `INSERT INTO canchas (establecimiento_id, nombre, dueno_id) VALUES ($1, $2, $3) RETURNING id`,
         [establecimiento.id, `Cancha ${i + 1}`, dueno_id]
       );
       const canchaId = canchaRes.rows[0].id;
-      if (imagen_url) {
-        // Verifica si ya existe una imagen para la cancha antes de insertar
+      // Asocia todas las imágenes subidas a la cancha
+      for (let j = 0; j < imagenes_urls.length; j++) {
+        const img_url = imagenes_urls[j];
         const imgExists = await pool.query(
           `SELECT 1 FROM cancha_imagenes WHERE cancha_id = $1 AND url = $2`,
-          [canchaId, imagen_url]
+          [canchaId, img_url]
         );
         if (imgExists.rowCount === 0) {
           await pool.query(
-            `INSERT INTO cancha_imagenes (cancha_id, url, orden) VALUES ($1, $2, 0)`,
-            [canchaId, imagen_url]
+            `INSERT INTO cancha_imagenes (cancha_id, url, orden) VALUES ($1, $2, $3)`,
+            [canchaId, img_url, j]
           );
-        } else {
-          console.log("La imagen ya está registrada para esta cancha, no se vuelve a guardar en la base de datos.");
         }
       }
     }
 
-    // Guardar documentos si existen (req.files.documentos)
+    // Guardar documentos si existen (varios)
     if (req.files && req.files.documentos) {
       for (let i = 0; i < req.files.documentos.length; i++) {
         const archivo = req.files.documentos[i];

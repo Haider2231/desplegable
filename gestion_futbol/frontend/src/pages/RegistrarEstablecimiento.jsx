@@ -97,9 +97,12 @@ export default function RegistrarEstablecimiento() {
     }
     formData.append("dueno_id", dueno_id);
 
-    // Imagen principal
+    // Imágenes principales (varias)
     if (imagenRef.current && imagenRef.current.files.length > 0) {
-      formData.append("imagen", imagenRef.current.files[0]);
+      const files = imagenRef.current.files;
+      for (let i = 0; i < files.length; i++) {
+        formData.append("imagenes", files[i]);
+      }
     }
     // Documentos
     if (documentosRef.current && documentosRef.current.files.length > 0) {
@@ -144,7 +147,7 @@ export default function RegistrarEstablecimiento() {
   };
 
   const handleImagenChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files && e.target.files.length > 0) {
       setImagenPreview(URL.createObjectURL(e.target.files[0]));
     } else {
       setImagenPreview(null);
@@ -175,12 +178,13 @@ export default function RegistrarEstablecimiento() {
         <input type="number" ref={precioRef} required style={{ width: "100%", marginBottom: 12 }} />
         <label>Cantidad de canchas:</label>
         <input type="number" ref={cantidadRef} required style={{ width: "100%", marginBottom: 12 }} />
-        <label>Imagen del lugar:</label>
+        <label>Imágenes del lugar:</label>
         <input
           type="file"
           ref={imagenRef}
           accept="image/*"
           required
+          multiple
           style={{ width: "100%", marginBottom: 12 }}
           onChange={handleImagenChange}
         />

@@ -12,13 +12,13 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => cb(null, Date.now() + "-" + Math.round(Math.random() * 1E9) + path.extname(file.originalname))
 });
 const upload = multer({ storage });
-// POST: Crear establecimiento (soporta imagen y documentos)
+// POST: Crear establecimiento (soporta imagenES y documentos)
 router.post(
   "/",
   verificarToken,
   verificarRol(["usuario", "propietario", "admin"]),
   upload.fields([
-    { name: "imagen", maxCount: 1 },
+    { name: "imagenes", maxCount: 10 }, // Permite hasta 10 imágenes
     { name: "documentos", maxCount: 10 }
   ]),
   establecimientoController.createEstablecimiento
