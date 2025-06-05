@@ -67,7 +67,10 @@ import React, { useEffect, useState, useRef } from "react";
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         })
           .then(res => res.json())
-          .then(data => setEstablecimientos(Array.isArray(data) ? data : []));
+          .then(data => {
+            // Filtra solo establecimientos activos
+            setEstablecimientos(Array.isArray(data) ? data.filter(e => e.estado === "activo") : []);
+          });
       }
     }, []);
 
@@ -133,12 +136,6 @@ import React, { useEffect, useState, useRef } from "react";
       const hora_fin = calcularHoraFin(hora_inicio);
       if (!fecha || !hora_inicio) {
         Swal.fire("Faltan datos", "Completa todos los campos.", "warning");
-        return;
-      }
-      // Validación: solo horas exactas (minutos "00")
-      const [hInicio, mInicio] = hora_inicio.split(":");
-      if (mInicio !== "00") {
-        Swal.fire("Horario inválido", "Solo puedes seleccionar horas exactas (por ejemplo, 09:00, 10:00, etc).", "warning");
         return;
       }
       // Validación extra para horario fuera de rango
@@ -272,6 +269,7 @@ import React, { useEffect, useState, useRef } from "react";
           script.src =
             "https://maps.googleapis.com/maps/api/js?key=AIzaSyAYDCSXtmUI-KR3qJ29oRdemNUpSIb-UDQ&libraries=places";
           script.async = true;
+          script.defer = true;
           script.onload = initAutocomplete;
           document.body.appendChild(script);
         } else {
@@ -487,6 +485,26 @@ import React, { useEffect, useState, useRef } from "react";
             >
               ⏰ Agregar horarios
             </button>
+            {/* Elimina el botón de agregar nuevo establecimiento */}
+            {/* 
+            <button
+              className="manage-menu-btn"
+              disabled
+              style={{
+                background: "#fff",
+                color: "#007991",
+                border: "none",
+                borderRadius: 8,
+                padding: "12px 18px",
+                fontWeight: 700,
+                fontSize: 16,
+                marginBottom: 8,
+                cursor: "not-allowed"
+              }}
+            >
+              ➕ Agregar nuevo establecimiento
+            </button>
+            */}
           </div>
           {/* Panel central dinámico */}
           <div style={{ flex: 1, padding: "2rem" }}>
@@ -551,75 +569,54 @@ import React, { useEffect, useState, useRef } from "react";
                                       flexDirection: "column",
                                       gap: "10px"
                                     }}>
-                                      {/* Filtra horarios futuros y elimina duplicados */}
-                                      {(() => {
-                                        const hoy = new Date();
-                                        hoy.setHours(0,0,0,0);
-                                        const vistos = new Set();
-                                        const horariosFiltrados = (cancha.horarios || [])
-                                          .filter(h => {
-                                            if (!h.fecha) return false;
-                                            const fechaHorario = new Date(h.fecha.split("T")[0]);
-                                            if (fechaHorario < hoy) return false;
-                                            // Solo mostrar horarios con minutos en 00
-                                            const [hInicio, mInicio] = h.hora_inicio.split(":");
-                                            const [hFin, mFin] = h.hora_fin.split(":");
-                                            if (mInicio !== "00" || mFin !== "00") return false;
-                                            // Genera una clave única por fecha, hora_inicio y hora_fin
-                                            const clave = `${h.fecha?.split("T")[0]}_${h.hora_inicio}_${h.hora_fin}`;
-                                            if (vistos.has(clave)) return false;
-                                            vistos.add(clave);
-                                            return true;
-                                          });
-                                        return horariosFiltrados.length > 0 ? (
-                                          horariosFiltrados.map(h => (
-                                            <li key={h.id} style={{
-                                              background: h.disponible ? "#e6fbe6" : "#ffeaea",
-                                              border: `2px solid ${h.disponible ? "#43e97b" : "#d32f2f"}`,
-                                              borderRadius: 10,
-                                              padding: "10px 16px",
-                                              display: "flex",
-                                              alignItems: "center",
-                                              justifyContent: "space-between",
-                                              boxShadow: h.disponible ? "0 1px 4px #43e97b33" : "0 1px 4px #d32f2f22",
-                                              fontWeight: 600,
-                                              color: h.disponible ? "#388e3c" : "#d32f2f"
-                                            }}>
-                                              <span>
-                                                <b>Fecha:</b> <span style={{ color: "#222" }}>{h.fecha?.split("T")[0] || h.fecha}</span>
-                                                {" | "}
-                                                <b>Hora:</b> <span style={{ color: "#222" }}>{h.hora_inicio} - {h.hora_fin}</span>
+                                      {cancha.horarios && cancha.horarios.length > 0 ? (
+                                        cancha.horarios.map(h => (
+                                          <li key={h.id} style={{
+                                            background: h.disponible ? "#e6fbe6" : "#ffeaea",
+                                            border: `2px solid ${h.disponible ? "#43e97b" : "#d32f2f"}`,
+                                            borderRadius: 10,
+                                            padding: "10px 16px",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            boxShadow: h.disponible ? "0 1px 4px #43e97b33" : "0 1px 4px #d32f2f22",
+                                            fontWeight: 600,
+                                            color: h.disponible ? "#388e3c" : "#d32f2f"
+                                          }}>
+                                            <span>
+                                              <b>Fecha:</b> <span style={{ color: "#222" }}>{h.fecha?.split("T")[0] || h.fecha}</span>
+                                              {" | "}
+                                              <b>Hora:</b> <span style={{ color: "#222" }}>{h.hora_inicio} - {h.hora_fin}</span>
+                                            </span>
+                                            {h.disponible ? (
+                                              <span style={{
+                                                color: "#388e3c",
+                                                fontWeight: 800,
+                                                fontSize: 15,
+                                                marginLeft: 18
+                                              }}>
+                                                Disponible
                                               </span>
-                                              {h.disponible ? (
-                                                <span style={{
-                                                  color: "#388e3c",
-                                                  fontWeight: 800,
-                                                  fontSize: 15,
-                                                  marginLeft: 18
-                                                }}>
-                                                  Disponible
-                                                </span>
-                                              ) : (
-                                                <span style={{
-                                                  color: "#d32f2f",
-                                                  fontWeight: 800,
-                                                  fontSize: 15,
-                                                  marginLeft: 18,
-                                                  textAlign: "right"
-                                                }}>
-                                                  Reservado
-                                                  {/* Siempre mostrar info de usuario y abono/restante usando FetchFacturaInfo */}
-                                                  <FetchFacturaInfo disponibilidadId={h.id} />
-                                                </span>
-                                              )}
-                                            </li>
-                                          ))
-                                        ) : (
-                                          <li style={{ color: "#888", fontWeight: 500, fontSize: 15, padding: "8px 0" }}>
-                                            No hay horarios registrados.
+                                            ) : (
+                                              <span style={{
+                                                color: "#d32f2f",
+                                                fontWeight: 800,
+                                                fontSize: 15,
+                                                marginLeft: 18,
+                                                textAlign: "right"
+                                              }}>
+                                                Reservado
+                                                {/* Siempre mostrar info de usuario y abono/restante usando FetchFacturaInfo */}
+                                                <FetchFacturaInfo disponibilidadId={h.id} />
+                                              </span>
+                                            )}
                                           </li>
-                                        );
-                                      })()}
+                                        ))
+                                      ) : (
+                                        <li style={{ color: "#888", fontWeight: 500, fontSize: 15, padding: "8px 0" }}>
+                                          No hay horarios registrados.
+                                        </li>
+                                      )}
                                     </ul>
                                   </div>
                                 </li>
@@ -733,9 +730,23 @@ import React, { useEffect, useState, useRef } from "react";
                     }}
                   />
                   <label style={{ fontWeight: 600, color: "#007991" }}>Hora inicio:</label>
-                  <select
+                  <input
+                    type="time"
                     value={horarioForm.hora_inicio}
-                    onChange={e => setHorarioForm({ ...horarioForm, hora_inicio: e.target.value })}
+                    min="09:00"
+                    max="22:00"
+                    onChange={e => {
+                      const value = e.target.value;
+                      if (value < "09:00") {
+                        Swal.fire("Horario inválido", "No se puede poner un horario antes de las 9:00 am.", "warning");
+                        return;
+                      }
+                      if (value > "22:00") {
+                        Swal.fire("Horario inválido", "No se puede poner un horario después de las 10:00 pm.", "warning");
+                        return;
+                      }
+                      setHorarioForm({ ...horarioForm, hora_inicio: value });
+                    }}
                     required
                     style={{
                       border: "1.5px solid #43e97b",
@@ -744,17 +755,7 @@ import React, { useEffect, useState, useRef } from "react";
                       fontSize: 16,
                       outline: "none"
                     }}
-                  >
-                    <option value="">Selecciona la hora de inicio</option>
-                    {Array.from({ length: 14 }).map((_, i) => {
-                      // Horas de 09:00 a 22:00
-                      const hour = 9 + i;
-                      const value = `${hour.toString().padStart(2, "0")}:00`;
-                      return (
-                        <option key={value} value={value}>{value}</option>
-                      );
-                    })}
-                  </select>
+                  />
                   <label style={{ fontWeight: 600, color: "#007991" }}>Hora fin :</label>
                   <input
                     type="time"
@@ -787,6 +788,14 @@ import React, { useEffect, useState, useRef } from "react";
                 </form>
               </div>
             )}
+            {/* Panel: Agregar nuevo establecimiento (como modal/panel) */}
+            {/* 
+            {showEstFormPanel && (
+              <div>
+                ...formulario de agregar establecimiento...
+              </div>
+            )}
+            */}
           </div>
         </div>
       </div>
@@ -799,7 +808,16 @@ import React, { useEffect, useState, useRef } from "react";
         : `Cancha ${idx + 1}`;
     }
 
+
   }
+
+  // Elimina el componente AgregarHorarioForm, ya que el formulario de agregar horario ya está implementado en el panel "agregar_horario".
+  // No es necesario tener el componente AgregarHorarioForm en este flujo.
+  // Puedes borrar todo esto al final del archivo:
+
+  // Formulario inline para agregar horario a una cancha
+  // function AgregarHorarioForm({ onAgregar }) {
+  //   ...código del formulario...
 
   function FetchFacturaInfo({ disponibilidadId }) {
     const [factura, setFactura] = React.useState(null);

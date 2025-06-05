@@ -12,7 +12,15 @@ export default function ValidadorCanchas() {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
       .then(res => res.json())
-      .then(data => setEstablecimientos(Array.isArray(data) ? data : []))
+      .then(data => {
+        // Filtra solo objetos que tengan campos de establecimiento (no canchas)
+        const soloEstablecimientos = Array.isArray(data)
+          ? data.filter(e =>
+              e.nombre && e.direccion && e.estado === "pendiente" && !e.establecimiento_id // evita canchas
+            )
+          : [];
+        setEstablecimientos(soloEstablecimientos);
+      })
       .finally(() => setLoadingEst(false));
   }, []);
 

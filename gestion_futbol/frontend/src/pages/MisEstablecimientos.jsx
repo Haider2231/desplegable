@@ -56,11 +56,11 @@ export default function MisEstablecimientos() {
     e.preventDefault();
     setLoading(true);
     const formData = new FormData();
-    formData.append("nombre", nombreRef.current.value);
-    formData.append("direccion", direccionRef.current.value);
-    formData.append("telefono", telefonoRef.current.value);
-    formData.append("precio", precioRef.current.value);
-    formData.append("cantidad_canchas", cantidadRef.current.value);
+    formData.append("nombre", nombreRef.current.value || "");
+    formData.append("direccion", direccionRef.current.value || "");
+    formData.append("telefono", telefonoRef.current.value || "");
+    formData.append("precio", precioRef.current.value || "");
+    formData.append("cantidad_canchas", cantidadRef.current.value || "");
     if (imagenRef.current && imagenRef.current.files.length > 0) {
       formData.append("imagen", imagenRef.current.files[0]);
     }
@@ -70,9 +70,9 @@ export default function MisEstablecimientos() {
         formData.append("documentos", docs[i]);
       }
     }
-    // Mantén lat/lng originales
-    formData.append("lat", est.lat);
-    formData.append("lng", est.lng);
+    // Mantén lat/lng originales (asegúrate de que no sean undefined)
+    formData.append("lat", est.lat ?? "");
+    formData.append("lng", est.lng ?? "");
 
     try {
       const token = localStorage.getItem("token");

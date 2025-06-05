@@ -1,6 +1,8 @@
 const pool = require("../db");
 const path = require("path");
 // Crear un establecimiento (soporta multipart/form-data)
+
+// Crear un establecimiento (soporta multipart/form-data)
 exports.createEstablecimiento = async (req, res) => {
   try {
     // Los campos pueden venir como string (de FormData)
@@ -17,18 +19,19 @@ exports.createEstablecimiento = async (req, res) => {
     if (req.files && req.files.imagen && req.files.imagen[0]) {
       imagen_url = `/uploads/${req.files.imagen[0].filename}`;
     }
-    // Validación robusta (acepta 0 como precio válido)
+    // Validación robusta (acepta 0 como precio, lat, lng válidos)
     if (
       !nombre ||
       !direccion ||
       !dueno_id ||
       !telefono ||
       (precio === undefined || precio === null || precio === "") ||
-      !lat ||
-      !lng
+      lat === undefined || lat === null || lat === "" ||
+      lng === undefined || lng === null || lng === ""
     ) {
       return res.status(400).json({ error: "Faltan datos obligatorios" });
     }
+    // Fuerza el estado a 'pendiente' al crear
     const result = await pool.query(
       `INSERT INTO establecimientos (nombre, direccion, lat, lng, telefono, precio, dueno_id, cantidad_canchas, imagen_url, estado)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pendiente') RETURNING *`,
@@ -71,6 +74,7 @@ exports.createEstablecimiento = async (req, res) => {
     res.status(500).json({ error: "Error al crear establecimiento" });
   }
 };
+
 
 // Obtener establecimientos por dueño
 exports.getEstablecimientosByDueno = async (req, res) => {

@@ -11,7 +11,7 @@ exports.getCanchas = async (req, res) => {
                 json_agg(CONCAT('https://canchassinteticas.site', ci.url)) AS imagenes
          FROM canchas c
          LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
-         WHERE c.establecimiento_id = $1
+        WHERE c.establecimiento_id = $1 AND c.estado = 'activa'
          GROUP BY c.id`,
         [establecimiento_id]
       );
@@ -21,7 +21,7 @@ exports.getCanchas = async (req, res) => {
                 json_agg(CONCAT('https://canchassinteticas.site', ci.url)) AS imagenes
          FROM canchas c
          LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
-         WHERE c.dueno_id = $1
+         WHERE c.establecimiento_id = $1 AND c.estado = 'activa'
          GROUP BY c.id`,
         [dueno_id]
       );
@@ -31,6 +31,7 @@ exports.getCanchas = async (req, res) => {
                 json_agg(CONCAT('https://canchassinteticas.site', ci.url)) AS imagenes
          FROM canchas c
          LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
+         WHERE c.estado = 'activa'
          GROUP BY c.id`
       );
     }
@@ -130,7 +131,7 @@ exports.getCanchasByEstablecimiento = async (req, res) => {
               json_agg(CONCAT('https://canchassinteticas.site', ci.url)) AS imagenes
        FROM canchas c
        LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
-       WHERE c.establecimiento_id = $1
+       WHERE c.establecimiento_id = $1 AND c.estado = 'activa'
        GROUP BY c.id`,
       [id]
     );
@@ -168,7 +169,7 @@ exports.getCanchasConHorariosByEstablecimiento = async (req, res) => {
       `SELECT c.id AS cancha_id, c.establecimiento_id, c.nombre, e.precio
        FROM canchas c
        JOIN establecimientos e ON c.establecimiento_id = e.id
-       WHERE c.establecimiento_id = $1`,
+         WHERE c.establecimiento_id = $1 AND c.estado = 'activa'`,
       [id]
     );
     const canchas = canchasRes.rows;
