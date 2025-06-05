@@ -142,7 +142,11 @@ export default function CourtsList() {
               </div>
               {est.imagen_url && (
                 <img
-                  src={est.imagen_url}
+                  src={
+                    est.imagen_url.startsWith("http")
+                      ? est.imagen_url
+                      : `https://canchassinteticas.site${est.imagen_url}`
+                  }
                   alt="Establecimiento"
                   style={{
                     width: "100%",
@@ -151,6 +155,9 @@ export default function CourtsList() {
                     borderRadius: 10,
                     marginTop: 10,
                     boxShadow: "0 2px 8px #43e97b22",
+                  }}
+                  onError={(e) => {
+                    e.target.src = "https://via.placeholder.com/340x120?text=Sin+imagen";
                   }}
                 />
               )}

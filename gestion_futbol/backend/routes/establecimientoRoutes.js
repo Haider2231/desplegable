@@ -35,7 +35,7 @@ router.get("/documentos/:establecimiento_id", async (req, res) => {
     );
     const docs = result.rows.map(doc => ({
       ...doc,
-      url: doc.url.startsWith("https")
+      url: doc.url.startsWith("http")
         ? doc.url
         : `${process.env.BACKEND_URL || "https://canchassinteticas.site/"}${doc.url}`
     }));

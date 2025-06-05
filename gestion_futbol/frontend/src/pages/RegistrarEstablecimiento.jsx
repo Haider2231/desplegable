@@ -5,6 +5,7 @@ export default function RegistrarEstablecimiento() {
   const [lat, setLat] = useState(null);
   const [lng, setLng] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [imagenPreview, setImagenPreview] = useState(null);
   const nombreRef = useRef();
   const direccionRef = useRef();
   const telefonoRef = useRef();
@@ -141,6 +142,14 @@ export default function RegistrarEstablecimiento() {
     setLoading(false);
   };
 
+  const handleImagenChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setImagenPreview(URL.createObjectURL(e.target.files[0]));
+    } else {
+      setImagenPreview(null);
+    }
+  };
+
   return (
     <div style={{ maxWidth: 500, margin: "2rem auto", background: "#fff", borderRadius: 12, boxShadow: "0 4px 16px #b2f7ef", padding: "2rem" }}>
       <h2>Registrar Establecimiento</h2>
@@ -172,9 +181,16 @@ export default function RegistrarEstablecimiento() {
           accept="image/*"
           required
           style={{ width: "100%", marginBottom: 12 }}
-          // Asegúrate de que solo se pueda seleccionar una imagen
           multiple={false}
+          onChange={handleImagenChange}
         />
+        {imagenPreview && (
+          <img
+            src={imagenPreview}
+            alt="Vista previa"
+            style={{ width: "100%", maxHeight: 180, objectFit: "cover", borderRadius: 8, marginBottom: 12, border: "1px solid #43e97b" }}
+          />
+        )}
         <label>Subir documentos (PDF, imágenes, etc):</label>
         <input type="file" ref={documentosRef} accept="application/pdf,image/*" multiple required style={{ width: "100%", marginBottom: 12 }} />
         <button type="submit" disabled={loading} style={{ marginTop: 10, padding: "10px 30px", borderRadius: 8, background: "#007991", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer" }}>

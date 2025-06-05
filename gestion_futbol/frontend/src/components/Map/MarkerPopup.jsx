@@ -14,7 +14,7 @@ export default function MarkerPopup({ cancha }) {
           {cancha.imagenes.map((img, idx) => (
             <img
               key={idx}
-              src={img}
+              src={img && !img.startsWith("http") ? `https://canchassinteticas.site${img}` : img}
               alt="Imagen de la cancha"
               style={{
                 width: "100%",
@@ -22,6 +22,7 @@ export default function MarkerPopup({ cancha }) {
                 maxHeight: 150,
                 marginBottom: 10,
               }}
+              onError={e => { e.target.src = "https://via.placeholder.com/300x150?text=Sin+imagen"; }}
             />
           ))}
         </div>

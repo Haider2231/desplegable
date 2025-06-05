@@ -525,7 +525,16 @@ import React, { useEffect, useState, useRef } from "react";
                       gap: 18
                     }}>
                       {est.imagen_url && (
-                        <img src={est.imagen_url} alt="Establecimiento" style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 8 }} />
+                        <img
+                          src={
+                            est.imagen_url.startsWith("http")
+                              ? est.imagen_url
+                              : `https://canchassinteticas.site${est.imagen_url}`
+                          }
+                          alt="Establecimiento"
+                          style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 8 }}
+                          onError={e => { e.target.src = "https://via.placeholder.com/90x90?text=Sin+imagen"; }}
+                        />
                       )}
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 700, fontSize: 18, color: "#007991" }}>{est.nombre}</div>
