@@ -72,6 +72,8 @@ export default function NavBar() {
       navigate("/estadisticas", { replace: true });
     } else if (rol === "propietario" && location.pathname === "/") {
       navigate("/manage-courts", { replace: true });
+    } else if (rol === "validador" && location.pathname === "/") {
+      navigate("/validador/canchas", { replace: true });
     }
   }, [rol, location.pathname, navigate]);
 
