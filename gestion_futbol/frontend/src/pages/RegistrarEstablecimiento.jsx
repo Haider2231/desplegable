@@ -133,6 +133,7 @@ export default function RegistrarEstablecimiento() {
         setLat(null);
         setLng(null);
         setDireccion("");
+        setImagenPreview(null); // <-- Vacía la imagen de vista previa
       } else {
         Swal.fire("Error", data.error || "Error al registrar el establecimiento", "error");
       }
@@ -153,26 +154,6 @@ export default function RegistrarEstablecimiento() {
   return (
     <div style={{ maxWidth: 500, margin: "2rem auto", background: "#fff", borderRadius: 12, boxShadow: "0 4px 16px #b2f7ef", padding: "2rem" }}>
       <h2>Registrar Establecimiento</h2>
-      {/* Documentos requeridos */}
-      <div style={{ marginBottom: 18 }}>
-        <b>Documentos requeridos:</b>
-        <ul style={{ marginTop: 8, marginBottom: 8 }}>
-          <li>Documento de identidad (cédula de ciudadanía o extranjería).</li>
-          <li>
-            <b>Uno de los siguientes documentos:</b>
-            <ul style={{ marginTop: 6, marginBottom: 6 }}>
-              <li>Certificado de matrícula mercantil vigente.</li>
-              <li>Contrato de arriendo/administración.</li>
-              <li>Recibo de servicio público del establecimiento.</li>
-            </ul>
-          </li>
-          <li>Fotos actuales de la cancha (mínimo 2).</li>
-          <li>Dirección exacta y número de contacto.</li>
-        </ul>
-        <span style={{ color: "#007991", fontSize: 15 }}>
-          Estos documentos son necesarios para validar que eres el propietario o administrador del lugar.
-        </span>
-      </div>
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <label>Nombre del establecimiento:</label>
         <input type="text" ref={nombreRef} required style={{ width: "100%", marginBottom: 12 }} />
