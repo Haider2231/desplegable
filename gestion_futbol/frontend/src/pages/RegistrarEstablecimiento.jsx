@@ -223,7 +223,8 @@ export default function RegistrarEstablecimiento() {
           ref={documentosRef}
           accept="application/pdf,image/*"
           multiple
-          required
+          // Quita el atributo required para evitar el error de validación del input,
+          // ya que la selección real se gestiona en selectedDocs.
           style={{ width: "100%", marginBottom: 12 }}
           onChange={handleDocumentosChange}
         />
