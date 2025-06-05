@@ -4,6 +4,13 @@ const canchaController = require("../controllers/canchaController");
 const { verificarToken, verificarRol } = require("../middlewares/authMiddleware");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+
+// Asegúrate de que la carpeta uploads existe
+const uploadsDir = path.join(__dirname, "../uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),

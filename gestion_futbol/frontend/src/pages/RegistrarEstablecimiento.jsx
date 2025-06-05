@@ -181,7 +181,6 @@ export default function RegistrarEstablecimiento() {
           accept="image/*"
           required
           style={{ width: "100%", marginBottom: 12 }}
-          multiple={false}
           onChange={handleImagenChange}
         />
         {imagenPreview && (

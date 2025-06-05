@@ -15,9 +15,19 @@ exports.createEstablecimiento = async (req, res) => {
     const lng = req.body.lng;
     const cantidad_canchas = parseInt(req.body.cantidad_canchas, 10) || 0;
     let imagen_url = null;
+    // LOG para depuración
+    console.log("req.files:", req.files);
     if (req.files && req.files.imagen && req.files.imagen[0]) {
-      // Siempre guarda la URL relativa
       imagen_url = `/uploads/${req.files.imagen[0].filename}`;
+      console.log("Imagen subida:", imagen_url);
+      // Verifica si el archivo físico ya existe (opcional, multer normalmente sobreescribe)
+      const fs = require("fs");
+      const fullPath = require("path").join(__dirname, "../uploads", req.files.imagen[0].filename);
+      if (fs.existsSync(fullPath)) {
+        console.log("El archivo físico ya existe, no se vuelve a guardar.");
+      }
+    } else {
+      console.log("No se recibió imagen en el request");
     }
     // Validación robusta (acepta 0 como precio, lat, lng válidos)
     if (
@@ -58,6 +68,8 @@ exports.createEstablecimiento = async (req, res) => {
             `INSERT INTO cancha_imagenes (cancha_id, url, orden) VALUES ($1, $2, 0)`,
             [canchaId, imagen_url]
           );
+        } else {
+          console.log("La imagen ya está registrada para esta cancha, no se vuelve a guardar en la base de datos.");
         }
       }
     }
