@@ -94,11 +94,49 @@ export default function ValidadorCanchas() {
                 <ul>
                   {docsEst.map(doc => (
                     <li key={doc.id} style={{ marginBottom: 10 }}>
-                      <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={
+                          doc.url.startsWith("http")
+                            ? doc.url
+                            : `https://canchassinteticas.site${doc.url}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: "inline-block", marginBottom: 4 }}
+                      >
                         {doc.tipo.startsWith("image") ? (
-                          <img src={doc.url} alt="Documento" style={{ maxWidth: 180, maxHeight: 120, borderRadius: 6, border: "1px solid #43e97b" }} />
+                          <img
+                            src={
+                              doc.url.startsWith("http")
+                                ? doc.url
+                                : `https://canchassinteticas.site${doc.url}`
+                            }
+                            alt="Documento"
+                            style={{
+                              maxWidth: 180,
+                              maxHeight: 120,
+                              borderRadius: 6,
+                              border: "1px solid #43e97b",
+                              display: "block",
+                              marginBottom: 4
+                            }}
+                          />
+                        ) : doc.tipo === "application/pdf" ? (
+                          <>
+                            <span style={{ color: "#d32f2f", fontWeight: 600 }}>
+                              PDF: {decodeURIComponent(doc.url.split("/").pop())}
+                            </span>
+                            <span style={{ marginLeft: 8, color: "#888", fontSize: 13 }}>
+                              (Haz clic para abrir)
+                            </span>
+                          </>
                         ) : (
-                          <span>{doc.tipo}</span>
+                          <span>
+                            {decodeURIComponent(doc.url.split("/").pop())}
+                            <span style={{ marginLeft: 8, color: "#888", fontSize: 13 }}>
+                              ({doc.tipo})
+                            </span>
+                          </span>
                         )}
                       </a>
                     </li>
