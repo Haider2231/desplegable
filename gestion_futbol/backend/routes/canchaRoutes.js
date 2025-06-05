@@ -42,7 +42,7 @@ router.get("/documentos/:cancha_id", async (req, res) => {
       ...doc,
       url: doc.url.startsWith("https")
         ? doc.url
-        : `${process.env.BACKEND_URL || "https://canchassinteticas.site"}${doc.url}`
+        : `${process.env.BACKEND_URL || "https://canchassinteticas.site/"}${doc.url}`
     }));
     res.json(docs);
   } catch (err) {
