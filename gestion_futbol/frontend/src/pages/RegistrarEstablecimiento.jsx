@@ -6,6 +6,7 @@ export default function RegistrarEstablecimiento() {
   const [lng, setLng] = useState(null);
   const [loading, setLoading] = useState(false);
   const [imagenPreview, setImagenPreview] = useState(null);
+  const [selectedDocs, setSelectedDocs] = useState([]);
   const nombreRef = useRef();
   const direccionRef = useRef();
   const telefonoRef = useRef();
@@ -61,6 +62,27 @@ export default function RegistrarEstablecimiento() {
     }
   }, []);
 
+  const handleDocumentosChange = (e) => {
+    // Permite seleccionar varios archivos de uno en uno y acumularlos
+    let nuevosArchivos = Array.from(e.target.files);
+    let archivosActuales = [...selectedDocs];
+
+    // Evita duplicados por nombre y tamaño
+    nuevosArchivos.forEach((file) => {
+      if (!archivosActuales.some(f => f.name === file.name && f.size === file.size)) {
+        archivosActuales.push(file);
+      }
+    });
+    setSelectedDocs(archivosActuales);
+
+    // Limpia el input para permitir volver a seleccionar el mismo archivo si se borra
+    e.target.value = "";
+  };
+
+  const handleQuitarDoc = (idx) => {
+    setSelectedDocs(prev => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!lat || !lng) {
@@ -105,10 +127,9 @@ export default function RegistrarEstablecimiento() {
       }
     }
     // Documentos
-    if (documentosRef.current && documentosRef.current.files.length > 0) {
-      const docs = documentosRef.current.files;
-      for (let i = 0; i < docs.length; i++) {
-        formData.append("documentos", docs[i]);
+    if (selectedDocs.length > 0) {
+      for (let i = 0; i < selectedDocs.length; i++) {
+        formData.append("documentos", selectedDocs[i]);
       }
     }
 
@@ -137,6 +158,7 @@ export default function RegistrarEstablecimiento() {
         setLng(null);
         setDireccion("");
         setImagenPreview(null); // <-- Vacía la imagen de vista previa
+        setSelectedDocs([]);
       } else {
         Swal.fire("Error", data.error || "Error al registrar el establecimiento", "error");
       }
@@ -203,7 +225,41 @@ export default function RegistrarEstablecimiento() {
           multiple
           required
           style={{ width: "100%", marginBottom: 12 }}
+          onChange={handleDocumentosChange}
         />
+        {/* Mostrar lista de archivos seleccionados con opción de quitar */}
+        {selectedDocs.length > 0 && (
+          <ul style={{ margin: "8px 0 12px 0", paddingLeft: 18, fontSize: 14 }}>
+            {selectedDocs.map((file, idx) => (
+              <li key={idx} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {file.name}
+                <button
+                  type="button"
+                  onClick={() => handleQuitarDoc(idx)}
+                  style={{
+                    marginLeft: 6,
+                    background: "#d32f2f",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: 22,
+                    height: 22,
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    lineHeight: "18px",
+                    fontSize: 16,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                  title="Quitar archivo"
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
         <button type="submit" disabled={loading} style={{ marginTop: 10, padding: "10px 30px", borderRadius: 8, background: "#007991", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer" }}>
           {loading ? "Registrando..." : "Registrar Establecimiento"}
         </button>
