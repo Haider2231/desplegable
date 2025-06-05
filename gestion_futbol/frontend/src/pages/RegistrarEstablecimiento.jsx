@@ -203,7 +203,31 @@ export default function RegistrarEstablecimiento() {
           multiple
           required
           style={{ width: "100%", marginBottom: 12 }}
+          onChange={e => {
+            // Permite seleccionar varios archivos de uno en uno y acumularlos
+            if (e.target.files && e.target.files.length > 0) {
+              // Creamos un DataTransfer para acumular archivos
+              const dt = new DataTransfer();
+              // Archivos ya seleccionados anteriormente
+              if (documentosRef.current && documentosRef.current.files && documentosRef.current.files.length > 0) {
+                Array.from(documentosRef.current.files).forEach(f => dt.items.add(f));
+              }
+              // Nuevos archivos seleccionados
+              Array.from(e.target.files).forEach(f => dt.items.add(f));
+              documentosRef.current.files = dt.files;
+              // Forzamos un re-render para que el input muestre el nombre de todos los archivos
+              e.target.value = "";
+            }
+          }}
         />
+        {/* Mostrar lista de archivos seleccionados */}
+        {documentosRef.current && documentosRef.current.files && documentosRef.current.files.length > 0 && (
+          <ul style={{ margin: "8px 0 12px 0", paddingLeft: 18, fontSize: 14 }}>
+            {Array.from(documentosRef.current.files).map((file, idx) => (
+              <li key={idx}>{file.name}</li>
+            ))}
+          </ul>
+        )}
         <button type="submit" disabled={loading} style={{ marginTop: 10, padding: "10px 30px", borderRadius: 8, background: "#007991", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer" }}>
           {loading ? "Registrando..." : "Registrar Establecimiento"}
         </button>
