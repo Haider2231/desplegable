@@ -17,11 +17,19 @@ exports.createEstablecimiento = async (req, res) => {
     let imagenes_urls = [];
     // Permite varias imágenes (soporta tanto 'imagenes' como 'imagen' por compatibilidad)
     if (req.files && req.files.imagenes && req.files.imagenes.length > 0) {
-      imagenes_urls = req.files.imagenes.map(img => `/uploads/${img.filename}`);
+      imagenes_urls = req.files.imagenes.map(img => 
+        img.filename.startsWith("http")
+          ? img.filename
+          : `https://canchassinteticas.site/uploads/${img.filename}`
+      );
       console.log("Imágenes subidas:", imagenes_urls);
     } else if (req.files && req.files.imagen && req.files.imagen.length > 0) {
       // Soporta el caso legacy de un solo campo 'imagen'
-      imagenes_urls = req.files.imagen.map(img => `/uploads/${img.filename}`);
+      imagenes_urls = req.files.imagen.map(img => 
+        img.filename.startsWith("http")
+          ? img.filename
+          : `https://canchassinteticas.site/uploads/${img.filename}`
+      );
       console.log("Imagen subida (legacy):", imagenes_urls);
     } else {
       console.log("No se recibieron imágenes en el request");
@@ -73,7 +81,9 @@ exports.createEstablecimiento = async (req, res) => {
     if (req.files && req.files.documentos && req.files.documentos.length > 0) {
       for (let i = 0; i < req.files.documentos.length; i++) {
         const archivo = req.files.documentos[i];
-        const url = `/uploads/${archivo.filename}`;
+        const url = archivo.filename.startsWith("http")
+          ? archivo.filename
+          : `https://canchassinteticas.site/uploads/${archivo.filename}`;
         await pool.query(
           `INSERT INTO documentos_establecimiento (establecimiento_id, url, tipo) VALUES ($1, $2, $3)`,
           [establecimiento.id, url, archivo.mimetype]
@@ -86,7 +96,6 @@ exports.createEstablecimiento = async (req, res) => {
     res.status(500).json({ error: "Error al crear establecimiento" });
   }
 };
-
 // Obtener establecimientos por dueño
 exports.getEstablecimientosByDueno = async (req, res) => {
   const { dueno_id } = req.params;

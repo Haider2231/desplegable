@@ -87,7 +87,67 @@ export default function ValidadorCanchas() {
           </div>
           {selectedEst && (
             <div style={{ flex: 2, borderLeft: "2px solid #43e97b", paddingLeft: 24 }}>
-              <h3>Documentos de {selectedEst.nombre}</h3>
+              <h3>Revisión de {selectedEst.nombre}</h3>
+              {/* Mostrar todos los datos del establecimiento */}
+              <div style={{ marginBottom: 18, background: "#f8f9fd", borderRadius: 8, padding: 16, border: "1px solid #b2f7ef" }}>
+                <b>Nombre:</b> {selectedEst.nombre} <br />
+                <b>Dirección:</b> {selectedEst.direccion} <br />
+                <b>Teléfono:</b> {selectedEst.telefono} <br />
+                <b>Precio por hora:</b> ${selectedEst.precio} <br />
+                <b>Cantidad de canchas:</b> {selectedEst.cantidad_canchas} <br />
+                <b>Lat/Lng:</b> {selectedEst.lat}, {selectedEst.lng} <br />
+                <b>Estado:</b> {selectedEst.estado}
+                {/* Mostrar imagen principal si existe */}
+                {selectedEst.imagen_url && (
+                  <div style={{ marginTop: 12 }}>
+                    <b>Imagen principal:</b>
+                    <br />
+                    <img
+                      src={
+                        selectedEst.imagen_url.startsWith("http")
+                          ? selectedEst.imagen_url
+                          : `https://canchassinteticas.site${selectedEst.imagen_url}`
+                      }
+                      alt="Imagen principal"
+                      style={{
+                        width: 220,
+                        maxHeight: 180,
+                        objectFit: "cover",
+                        borderRadius: 8,
+                        marginTop: 6,
+                        border: "1.5px solid #43e97b"
+                      }}
+                    />
+                  </div>
+                )}
+                {/* Mostrar galería de imágenes si existen varias */}
+                {selectedEst.imagenes && Array.isArray(selectedEst.imagenes) && selectedEst.imagenes.length > 1 && (
+                  <div style={{ marginTop: 12 }}>
+                    <b>Galería de imágenes:</b>
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
+                      {selectedEst.imagenes.map((img, idx) => (
+                        <img
+                          key={idx}
+                          src={
+                            img.startsWith("http")
+                              ? img
+                              : `https://canchassinteticas.site${img}`
+                          }
+                          alt={`Imagen ${idx + 1}`}
+                          style={{
+                            width: 110,
+                            maxHeight: 90,
+                            objectFit: "cover",
+                            borderRadius: 6,
+                            border: "1px solid #43e97b"
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <h4 style={{ marginTop: 18 }}>Documentos subidos</h4>
               {docsEst.length === 0 ? (
                 <div>No hay documentos.</div>
               ) : (

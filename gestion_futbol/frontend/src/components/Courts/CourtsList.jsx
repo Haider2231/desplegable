@@ -168,3 +168,27 @@ export default function CourtsList() {
     </div>
   );
 }
+
+// Agrega este componente al final del archivo
+function CourtOwnerInfo({ dueno_id }) {
+  const [user, setUser] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!dueno_id) return;
+    fetch(`/auth/usuarios/${dueno_id}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.nombre && data.email) setUser(data);
+      });
+  }, [dueno_id]);
+
+  if (!user) return <div>Cargando propietario...</div>;
+  return (
+    <div style={{ marginTop: 6, marginBottom: 6 }}>
+      <b>Propietario:</b> {user.nombre} <br />
+      <b>Email:</b> {user.email}
+    </div>
+  );
+}
