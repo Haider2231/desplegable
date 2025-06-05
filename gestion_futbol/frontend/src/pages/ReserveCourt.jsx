@@ -12,6 +12,8 @@ export default function ReserveCourt() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [expandedCanchaId, setExpandedCanchaId] = useState(null);
+  const [selectedFecha, setSelectedFecha] = useState(null);
+  const [showHorarios, setShowHorarios] = useState(true);
 
   // Cargar canchas y horarios del establecimiento seleccionado
   useEffect(() => {
@@ -94,9 +96,7 @@ export default function ReserveCourt() {
               ? {
                   ...c,
                   horarios: c.horarios.map(h =>
-                    h.id === horario.id
-                      ? { ...h, disponible: false, abono: data.abono, restante: data.restante }
-                      : h
+                    h.id === horario.id ? { ...h, disponible: false, abono: data.abono, restante: data.restante } : h
                   )
                 }
               : c
@@ -108,36 +108,14 @@ export default function ReserveCourt() {
             monto: data.monto,
             abono: data.abono,
             restante: data.restante,
-            factura_url: data.factura_url,
-            fecha: data.fecha,
-            hora_fin: data.hora_fin
+            factura_url: data.factura_url
           }
         });
       } else {
         Swal.fire("Error", data.error || "No se pudo crear la reserva", "error");
       }
-    } catch (err) {
-      // Manejo de error de reserva ya tomada
-      if (
-        err.response &&
-        (err.response.status === 409 ||
-          (err.response.data && err.response.data.error && err.response.data.error.includes("ya fue reservado")))
-      ) {
-        Swal.fire({
-          icon: "error",
-          title: "Horario no disponible",
-          text: err.response.data.error || "¡Este horario ya fue reservado por otro usuario! Por favor selecciona otro horario disponible.",
-          confirmButtonColor: "#d32f2f"
-        });
-      } else {
-        // Otros errores
-        Swal.fire({
-          icon: "error",
-          title: "Error",
-          text: err.response?.data?.error || "Ocurrió un error al reservar.",
-          confirmButtonColor: "#d32f2f"
-        });
-      }
+    } catch {
+      Swal.fire("Error", "No se pudo conectar con el servidor", "error");
     }
     setLoading(false);
   };
@@ -237,7 +215,7 @@ export default function ReserveCourt() {
             marginBottom: 18,
             letterSpacing: 2
           }}>
-            Horarios disponibles
+            Horarios
           </h2>
           {error && <div className="reserve-error" style={{
             background: "#ffd6d6",
@@ -260,74 +238,103 @@ export default function ReserveCourt() {
             (() => {
               const cancha = canchas.find(c => c.cancha_id === expandedCanchaId);
               if (!cancha) return <div style={{ color: "#888", fontSize: 15 }}>Selecciona una cancha.</div>;
-              // Filtra solo los horarios disponibles y futuros
-              const now = new Date();
-              const horariosDisponibles = (cancha.horarios || []).filter(h => {
-                if (!h.disponible) return false;
-                // Fecha y hora de inicio
-                const fechaStr = h.fecha?.split("T")[0] || h.fecha;
-                const horaInicio = h.hora_inicio;
-                if (!fechaStr || !horaInicio) return false;
-                const [year, month, day] = fechaStr.split("-").map(Number);
-                const [hour, minute] = horaInicio.split(":").map(Number);
-                const fechaHora = new Date(year, month - 1, day, hour, minute, 0, 0);
-                return fechaHora >= now;
+              // Filtra solo los horarios disponibles
+              const horariosDisponibles = (cancha.horarios || []).filter(h => h.disponible);
+              // Agrupa por fecha
+              const horariosPorFecha = {};
+              horariosDisponibles.forEach(h => {
+                const fecha = h.fecha?.split("T")[0] || h.fecha;
+                if (!horariosPorFecha[fecha]) horariosPorFecha[fecha] = [];
+                horariosPorFecha[fecha].push(h);
               });
+              const fechas = Object.keys(horariosPorFecha).sort();
+              // Si no hay fecha seleccionada, selecciona la primera
+              const fechaActiva = selectedFecha && fechas.includes(selectedFecha) ? selectedFecha : fechas[0];
               return (
                 <div style={{ marginBottom: 8, marginTop: 6 }}>
-                  {horariosDisponibles.length > 0 ? (
-                    <div
-                      style={{
-                        maxHeight: 5 * 72, // 5 items aprox 72px each
-                        overflowY: horariosDisponibles.length > 5 ? "auto" : "visible",
-                        paddingRight: horariosDisponibles.length > 5 ? 8 : 0
-                      }}
-                    >
-                      <ul style={{ paddingLeft: 0, listStyle: "none", margin: 0 }}>
-                        {horariosDisponibles.slice(0, 100).map((horario, idx) => (
-                          <li key={horario.id} style={{
-                            marginBottom: 14,
-                            background: horario.disponible ? "#e0ffe8" : "#ffeaea",
-                            borderRadius: 10,
-                            padding: "14px 16px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            boxShadow: "0 2px 8px #43e97b33"
-                          }}>
-                            <span style={{ fontWeight: 600, color: "#222" }}>
-                              <span style={{ display: "block" }}>
-                                <b>Fecha:</b> {horario.fecha?.split("T")[0] || horario.fecha}
-                              </span>
-                              <span style={{ display: "block" }}>
-                                <b>Hora:</b> {horario.hora_inicio} - {horario.hora_fin}
-                              </span>
-                            </span>
-                            <button
-                              className="reserve-btn"
-                              onClick={() => handleReservarYPagar(cancha, horario)}
-                              disabled={loading || !horario.disponible}
-                              style={{
-                                marginLeft: 12,
-                                background: horario.disponible
-                                  ? "linear-gradient(90deg, #388e3c 0%, #43a047 100%)"
-                                  : "#ccc",
-                                color: "#fff",
-                                border: "none",
-                                borderRadius: 8,
-                                padding: "8px 18px",
-                                fontWeight: 700,
-                                fontSize: 15,
-                                cursor: horario.disponible ? "pointer" : "not-allowed",
-                                boxShadow: "0 2px 8px #43e97b33"
-                              }}
-                            >
-                              {horario.disponible ? "Reservar y pagar" : "Reservado"}
-                            </button>
-                          </li>
+                  {fechas.length > 0 ? (
+                    <>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
+                        {fechas.map(fecha => (
+                          <button
+                            key={fecha}
+                            onClick={() => {
+                              if (fecha === fechaActiva) {
+                                setShowHorarios(h => !h);
+                              } else {
+                                setSelectedFecha(fecha);
+                                setShowHorarios(true);
+                              }
+                            }}
+                            style={{
+                              background: fechaActiva === fecha && showHorarios ? "#43e97b" : "#e0f7fa",
+                              color: fechaActiva === fecha && showHorarios ? "#fff" : "#007991",
+                              border: "none",
+                              borderRadius: 8,
+                              padding: "8px 18px",
+                              fontWeight: 700,
+                              fontSize: 15,
+                              cursor: "pointer",
+                              boxShadow: fechaActiva === fecha && showHorarios ? "0 2px 8px #43e97b33" : "none"
+                            }}
+                          >
+                            {new Date(fecha + "T00:00:00").toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "short" })}
+                          </button>
                         ))}
-                      </ul>
-                    </div>
+                      </div>
+                      {showHorarios && (
+                        <div
+                          style={{
+                            maxHeight: 5 * 72,
+                            overflowY: horariosPorFecha[fechaActiva].length > 5 ? "auto" : "visible",
+                            paddingRight: horariosPorFecha[fechaActiva].length > 5 ? 8 : 0
+                          }}
+                        >
+                          <ul style={{ paddingLeft: 0, listStyle: "none", margin: 0 }}>
+                            {horariosPorFecha[fechaActiva].slice(0, 100).map((horario, idx) => (
+                              <li key={horario.id} style={{
+                                marginBottom: 14,
+                                background: "#e0ffe8",
+                                borderRadius: 10,
+                                padding: "14px 16px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                boxShadow: "0 2px 8px #43e97b33"
+                              }}>
+                                <span style={{ fontWeight: 600, color: "#222" }}>
+                                  <span style={{ display: "block" }}>
+                                    <b>Fecha:</b> {horario.fecha?.split("T")[0] || horario.fecha}
+                                  </span>
+                                  <span style={{ display: "block" }}>
+                                    <b>Hora:</b> {horario.hora_inicio} - {horario.hora_fin}
+                                  </span>
+                                </span>
+                                <button
+                                  className="reserve-btn"
+                                  onClick={() => handleReservarYPagar(cancha, horario)}
+                                  disabled={loading}
+                                  style={{
+                                    marginLeft: 12,
+                                    background: "linear-gradient(90deg, #388e3c 0%, #43a047 100%)",
+                                    color: "#fff",
+                                    border: "none",
+                                    borderRadius: 8,
+                                    padding: "8px 18px",
+                                    fontWeight: 700,
+                                    fontSize: 15,
+                                    cursor: "pointer",
+                                    boxShadow: "0 2px 8px #43e97b33"
+                                  }}
+                                >
+                                  Reservar y pagar
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div style={{ color: "#888", fontSize: 15, textAlign: "center" }}>No hay horarios disponibles.</div>
                   )}
