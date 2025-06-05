@@ -196,14 +196,7 @@ export default function RegistrarEstablecimiento() {
           />
         )}
         <label>Subir documentos (PDF, imágenes, etc):</label>
-        <input
-          type="file"
-          ref={documentosRef}
-          accept="application/pdf,image/*"
-          multiple
-          required
-          style={{ width: "100%", marginBottom: 12 }}
-        />
+        <input type="file" ref={documentosRef} accept="application/pdf,image/*" multiple required style={{ width: "100%", marginBottom: 12 }} />
         <button type="submit" disabled={loading} style={{ marginTop: 10, padding: "10px 30px", borderRadius: 8, background: "#007991", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer" }}>
           {loading ? "Registrando..." : "Registrar Establecimiento"}
         </button>
@@ -211,3 +204,28 @@ export default function RegistrarEstablecimiento() {
     </div>
   );
 }
+{documentos && documentos.length > 0 && (
+  <div style={{ marginTop: 10 }}>
+    <b>Documentos subidos:</b>
+    <ul>
+      {documentos.map((doc, idx) => (
+        <li key={doc.id || idx}>
+          <a
+            href={
+              doc.url.startsWith("http")
+                ? doc.url
+                : `https://canchassinteticas.site${doc.url}`
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {doc.url.split("/").pop()}
+          </a>
+          <span style={{ marginLeft: 8, color: "#888", fontSize: 13 }}>
+            ({doc.tipo})
+          </span>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}

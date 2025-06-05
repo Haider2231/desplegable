@@ -70,7 +70,7 @@ exports.createEstablecimiento = async (req, res) => {
     }
 
     // Guardar documentos si existen (varios)
-    if (req.files && req.files.documentos) {
+    if (req.files && req.files.documentos && req.files.documentos.length > 0) {
       for (let i = 0; i < req.files.documentos.length; i++) {
         const archivo = req.files.documentos[i];
         const url = `/uploads/${archivo.filename}`;

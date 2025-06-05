@@ -43,3 +43,7 @@ console.log("Conectando a la base de datos...");
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });
+
+// ADVERTENCIA: La carpeta /uploads NO debe perderse al redesplegar.
+// Si usas un VPS, asegúrate de que /uploads es persistente.
+// Si usas Railway/Heroku, considera usar S3 o Cloudinary para archivos subidos.
