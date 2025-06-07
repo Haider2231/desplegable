@@ -6,7 +6,6 @@ export default function MisEstablecimientos() {
   const [loading, setLoading] = useState(true);
   const [rol, setRol] = useState(null);
   const [reenviandoId, setReenviandoId] = useState(null);
-  const [imagenPreview, setImagenPreview] = useState(null);
 
   // Refs para reenviar documentos
   const nombreRef = useRef();
@@ -99,14 +98,6 @@ export default function MisEstablecimientos() {
     setLoading(false);
   };
 
-  const handleImagenChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setImagenPreview(URL.createObjectURL(e.target.files[0]));
-    } else {
-      setImagenPreview(null);
-    }
-  };
-
   if (loading) return <div style={{ padding: 32 }}>Cargando...</div>;
 
   // Mostrar todos los establecimientos, agrupando por estado
@@ -183,20 +174,7 @@ export default function MisEstablecimientos() {
                           <label>Cantidad de canchas:</label>
                           <input type="number" ref={cantidadRef} defaultValue={est.cantidad_canchas} required style={{ width: "100%", marginBottom: 8 }} />
                           <label>Imagen del lugar:</label>
-                          <input
-                            type="file"
-                            ref={imagenRef}
-                            accept="image/*"
-                            style={{ width: "100%", marginBottom: 8 }}
-                            onChange={handleImagenChange}
-                          />
-                          {imagenPreview && (
-                            <img
-                              src={imagenPreview}
-                              alt="Vista previa"
-                              style={{ width: "100%", maxHeight: 180, objectFit: "cover", borderRadius: 8, marginBottom: 8, border: "1px solid #43e97b" }}
-                            />
-                          )}
+                          <input type="file" ref={imagenRef} accept="image/*" style={{ width: "100%", marginBottom: 8 }} />
                           <label>Subir documentos (PDF, imágenes, etc):</label>
                           <input type="file" ref={documentosRef} accept="application/pdf,image/*" multiple style={{ width: "100%", marginBottom: 8 }} />
                           <button

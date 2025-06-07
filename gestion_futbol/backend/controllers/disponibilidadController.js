@@ -18,6 +18,7 @@ exports.addDisponibilidad = async (req, res) => {
 // Obtener disponibilidades por cancha (solo FUTUROS)
 exports.getDisponibilidadesByCancha = async (req, res) => {
   const { cancha_id } = req.params;
+  const { fecha, hora } = req.query;
   if (isNaN(cancha_id)) {
     return res.status(400).json({ error: "El ID de la cancha debe ser un número válido." });
   }
@@ -25,14 +26,53 @@ exports.getDisponibilidadesByCancha = async (req, res) => {
     const now = new Date();
     const fechaHoy = now.toISOString().slice(0, 10);
     const horaAhora = now.toTimeString().slice(0, 5);
-    const result = await pool.query(
-      `SELECT id, fecha, hora_inicio, hora_fin, disponible
-       FROM disponibilidades
-       WHERE cancha_id = $1 AND disponible = true
-         AND (fecha > $2 OR (fecha = $2 AND hora_fin > $3))
-       ORDER BY fecha, hora_inicio`,
-      [parseInt(cancha_id), fechaHoy, horaAhora]
+
+    // Verifica que la cancha exista y esté activa
+    const canchaRes = await pool.query(
+      "SELECT * FROM canchas WHERE id = $1 AND estado = 'activa'",
+      [parseInt(cancha_id)]
     );
+    if (canchaRes.rowCount === 0) {
+      return res.status(404).json({ error: "No se encontró la cancha o no está activa." });
+    }
+
+    let query = `
+      SELECT id, fecha, hora_inicio, hora_fin, disponible
+      FROM disponibilidades
+      WHERE cancha_id = $1 AND disponible = true
+    `;
+    const params = [parseInt(cancha_id)];
+    let idx = 2;
+
+    if (fecha) {
+      query += ` AND fecha = $${idx++}`;
+      params.push(fecha);
+      // Elimina la verificación de hora/hora_fin: para cualquier fecha muestra todos los horarios de ese día
+    } else {
+      // Si no hay filtro de fecha, solo futuros
+      query += ` AND (fecha > $${idx} OR (fecha = $${idx} AND hora_fin > $${idx + 1}))`;
+      params.push(fechaHoy, horaAhora);
+      idx += 2;
+    }
+
+    if (hora) {
+      query += ` AND hora_inicio = $${idx++}`;
+      params.push(hora);
+    }
+
+    query += " ORDER BY fecha, hora_inicio";
+
+    // --- DEBUG: LOG de la consulta y parámetros para este caso especial ---
+    console.log("DEBUG DISPONIBILIDAD QUERY:", query);
+    console.log("DEBUG DISPONIBILIDAD PARAMS:", params);
+    // --- FIN DEBUG ---
+
+    const result = await pool.query(query, params);
+
+    // --- DEBUG: LOG de los resultados para este caso especial ---
+    console.log("DEBUG DISPONIBILIDAD RESULT:", result.rows);
+    // --- FIN DEBUG ---
+
     res.json(result.rows);
   } catch (error) {
     console.error("Error al obtener las disponibilidades de la cancha:", error);

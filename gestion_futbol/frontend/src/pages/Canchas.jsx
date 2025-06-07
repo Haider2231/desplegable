@@ -9,7 +9,22 @@ export default function Home() {
   const [canchas, setCanchas] = useState([]);
   const [error, setError] = useState("");
 
- 
+  // Probar conexión backend/DB
+  const testBackend = async () => {
+    try {
+      const res = await fetch("/test-db");
+      const data = await res.json();
+      if (data.db_time || data.now) {
+        setDbStatus("Conexión OK: " + (data.db_time || data.now));
+      } else if (data.error) {
+        setDbStatus("Error backend: " + data.error);
+      } else {
+        setDbStatus("Sin conexión a la base de datos");
+      }
+    } catch (err) {
+      setDbStatus("No hay conexión con el backend");
+    }
+  };
 
   // Obtener canchas al montar el componente
   useEffect(() => {

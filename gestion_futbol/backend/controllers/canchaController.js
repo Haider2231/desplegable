@@ -8,27 +8,27 @@ exports.getCanchas = async (req, res) => {
     if (establecimiento_id) {
       result = await pool.query(
         `SELECT c.id AS cancha_id, c.establecimiento_id, c.nombre, c.dueno_id,
-                json_agg(ci.url) AS imagenes
+                json_agg(CONCAT('http://localhost:5000', ci.url)) AS imagenes
          FROM canchas c
          LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
-        WHERE c.establecimiento_id = $1 AND c.estado = 'activa'
+         WHERE c.establecimiento_id = $1 AND c.estado = 'activa'
          GROUP BY c.id`,
         [establecimiento_id]
       );
     } else if (dueno_id) {
       result = await pool.query(
         `SELECT c.id AS cancha_id, c.establecimiento_id, c.nombre, c.dueno_id,
-                json_agg(ci.url) AS imagenes
+                json_agg(CONCAT('http://localhost:5000', ci.url)) AS imagenes
          FROM canchas c
          LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
-         WHERE c.establecimiento_id = $1 AND c.estado = 'activa'
+         WHERE c.dueno_id = $1 AND c.estado = 'activa'
          GROUP BY c.id`,
         [dueno_id]
       );
     } else {
       result = await pool.query(
         `SELECT c.id AS cancha_id, c.establecimiento_id, c.nombre, c.dueno_id,
-                json_agg(ci.url) AS imagenes
+                json_agg(CONCAT('http://localhost:5000', ci.url)) AS imagenes
          FROM canchas c
          LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
          WHERE c.estado = 'activa'
@@ -41,6 +41,7 @@ exports.getCanchas = async (req, res) => {
   }
 };
 
+// Registrar una nueva cancha asociada a un establecimiento (pendiente de validación)
 exports.createCancha = async (req, res) => {
   const { establecimiento_id, nombre, precio } = req.body;
   try {
@@ -121,14 +122,13 @@ exports.validarCancha = async (req, res) => {
   }
 };
 
-
 // GET /establecimientos/:id/canchas
 exports.getCanchasByEstablecimiento = async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query(
       `SELECT c.id AS cancha_id, c.establecimiento_id,
-              json_agg(CONCAT('https://canchassinteticas.site', ci.url)) AS imagenes
+              json_agg(CONCAT('http://localhost:5000', ci.url)) AS imagenes
        FROM canchas c
        LEFT JOIN cancha_imagenes ci ON c.id = ci.cancha_id
        WHERE c.establecimiento_id = $1 AND c.estado = 'activa'
@@ -164,20 +164,33 @@ exports.getDisponibilidadByCancha = async (req, res) => {
 exports.getCanchasConHorariosByEstablecimiento = async (req, res) => {
   const { id } = req.params;
   try {
-    // Trae canchas y el precio del establecimiento
+    // Trae canchas y el precio, hora_apertura y hora_cierre del establecimiento SOLO si están activas
     const canchasRes = await pool.query(
-      `SELECT c.id AS cancha_id, c.establecimiento_id, c.nombre, e.precio
+      `SELECT c.id AS cancha_id, c.establecimiento_id, c.nombre, e.precio, e.hora_apertura, e.hora_cierre
        FROM canchas c
        JOIN establecimientos e ON c.establecimiento_id = e.id
-         WHERE c.establecimiento_id = $1 AND c.estado = 'activa'`,
+       WHERE c.establecimiento_id = $1 AND c.estado = 'activa'`,
       [id]
     );
     const canchas = canchasRes.rows;
-    // Trae horarios de todas las canchas de ese establecimiento
+    // Trae TODOS los horarios de todas las canchas de ese establecimiento (no solo disponibles)
+    // Incluye info de abono, restante, abonador, pago_completado y el estado de la reserva
     const horariosRes = await pool.query(
-      `SELECT d.*, d.cancha_id
-       FROM disponibilidades d
-       WHERE d.cancha_id = ANY($1::int[])`,
+      `SELECT 
+          d.*, 
+          d.cancha_id,
+          f.abono,
+          f.restante,
+          CASE WHEN f.estado = 'pagada' THEN true ELSE false END AS pago_completado,
+          u.nombre AS nombre_abonador,
+          u.telefono AS telefono_abonador,
+          r.estado AS estado_reserva
+        FROM disponibilidades d
+        LEFT JOIN reservas r ON r.disponibilidad_id = d.id
+        LEFT JOIN facturas f ON f.reserva_id = r.id
+        LEFT JOIN usuarios u ON r.usuario_id = u.id
+        WHERE d.cancha_id = ANY($1::int[])
+        ORDER BY d.fecha, d.hora_inicio`,
       [canchas.map(c => c.cancha_id)]
     );
     // Asocia horarios a cada cancha

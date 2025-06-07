@@ -36,14 +36,16 @@ exports.crearFacturaYGenerarPDF = async ({
   hora_inicio,
   hora_fin,
   cancha_id,
-  client
+  estado = "pendiente", // nuevo
+  client,
+  pagoFinal = false // NUEVO: indica si es la factura final (pago completado)
 }) => {
   // Validaciones estrictas para evitar errores de PDF
   if (
     !reservaId ||
     !usuarioId ||
-    !precio ||
-    abono === undefined ||
+    precio === undefined || precio === null ||
+    abono === undefined || abono === null ||
     !cancha_nombre ||
     !direccion ||
     !fecha ||
@@ -55,16 +57,25 @@ exports.crearFacturaYGenerarPDF = async ({
   }
 
   // Calcula el restante correctamente
-  const restante = precio - abono;
+  let restante = precio - abono;
+  let abonoMostrado = abono;
+  let pagoFinalMostrado = 0;
+
+  // Si es pago final, el usuario paga el restante y el abono ya fue pagado antes
+  if (pagoFinal) {
+    abonoMostrado = abono; // abono ya pagado antes
+    pagoFinalMostrado = restante; // lo que paga ahora
+    restante = 0;
+  }
 
   // Usa el cliente de la transacción si se pasa, si no usa pool
   const db = client || pool;
 
   // 1. Guarda la factura en la base de datos
   const result = await db.query(
-    `INSERT INTO facturas (reserva_id, usuario_id, monto, abono, restante, fecha)
-     VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id, fecha`,
-    [reservaId, usuarioId, precio, abono, precio - abono]
+    `INSERT INTO facturas (reserva_id, usuario_id, monto, abono, restante, fecha, estado)
+     VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING id, fecha`,
+    [reservaId, usuarioId, precio, abono, restante, estado]
   );
   const facturaId = result.rows[0].id;
   const fechaFactura = result.rows[0].fecha;
@@ -162,7 +173,7 @@ exports.crearFacturaYGenerarPDF = async ({
 
     // Detalles de pago (recuadro, borde verde)
     doc
-      .rect(40, 270, 515, 70) // Reduce el alto del bloque
+      .rect(40, 270, 515, pagoFinal ? 90 : 70) // Más alto si es pago final
       .strokeColor("#43e97b")
       .lineWidth(1.5)
       .stroke()
@@ -175,15 +186,20 @@ exports.crearFacturaYGenerarPDF = async ({
       .fillColor("#222")
       .text("Valor total:", 50, 297)
       .text("Abono realizado:", 50, 312)
-      .text("Restante por pagar:", 50, 327)
+      .text(pagoFinal ? "Valor pagado ahora:" : "Restante por pagar:", 50, 327)
       .font("Helvetica-Bold")
       .fillColor("#388e3c")
       .text(`$${precio}`, 200, 297)
       .fillColor("#43e97b")
-      .text(`$${abono}`, 200, 312)
-      .fillColor("#d32f2f")
-      .text(`$${precio - abono}`, 200, 327)
+      .text(`$${abonoMostrado}`, 200, 312)
+      .fillColor(pagoFinal ? "#388e3c" : "#d32f2f")
+      .text(pagoFinal ? `$${pagoFinalMostrado}` : `$${precio - abonoMostrado}`, 200, 327)
       .fillColor("black");
+
+    if (pagoFinal) {
+      doc.font("Helvetica-Bold").fontSize(13).fillColor("#388e3c")
+        .text("¡Pago completado!", 50, 347);
+    }
 
     // Mensaje final centrado (ajusta la posición Y para que no se salga)
     doc
@@ -205,7 +221,7 @@ exports.crearFacturaYGenerarPDF = async ({
       .text("Factura generada por Fútbol Piloto - Tu plataforma de reservas", 0, footerY + 10, { align: "center", width: pageWidth })
       .font("Helvetica")
       .fontSize(14)
-      .text("Contacto: futbolupiloto@gmail.com",0, footerY + 22, { align: "center", width: pageWidth })
+      .text("Contacto: futbolupiloto@gmail.com",0, footerY + 21, { align: "center", width: pageWidth })
       .font("Helvetica-Bold")
       doc.end();
   } catch (err) {

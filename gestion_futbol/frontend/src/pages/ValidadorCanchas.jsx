@@ -35,6 +35,28 @@ export default function ValidadorCanchas() {
   };
 
   const validarEstablecimiento = async (est, aprobar) => {
+    if (aprobar) {
+      const confirm = await Swal.fire({
+        title: "¿Estás seguro de aprobar este establecimiento?",
+        text: "Esta acción lo habilitará para operar en la plataforma.",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Sí, aprobar",
+        cancelButtonText: "Cancelar"
+      });
+      if (!confirm.isConfirmed) return;
+    }
+    if (!aprobar) {
+      const confirm = await Swal.fire({
+        title: "¿Estás seguro de rechazar este establecimiento?",
+        text: "Esta acción rechazará la solicitud y notificará al usuario.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, rechazar",
+        cancelButtonText: "Cancelar"
+      });
+      if (!confirm.isConfirmed) return;
+    }
     const motivo = !aprobar
       ? (await Swal.fire({
           title: "Motivo de rechazo",
@@ -87,117 +109,91 @@ export default function ValidadorCanchas() {
           </div>
           {selectedEst && (
             <div style={{ flex: 2, borderLeft: "2px solid #43e97b", paddingLeft: 24 }}>
-              <h3>Revisión de {selectedEst.nombre}</h3>
-              {/* Mostrar todos los datos del establecimiento */}
-              <div style={{ marginBottom: 18, background: "#f8f9fd", borderRadius: 8, padding: 16, border: "1px solid #b2f7ef" }}>
-                <b>Nombre:</b> {selectedEst.nombre} <br />
-                <b>Dirección:</b> {selectedEst.direccion} <br />
-                <b>Teléfono:</b> {selectedEst.telefono} <br />
-                <b>Precio por hora:</b> ${selectedEst.precio} <br />
-                <b>Cantidad de canchas:</b> {selectedEst.cantidad_canchas} <br />
-               
-                {/* Mostrar imagen principal si existe */}
-                {selectedEst.imagen_url && (
-                  <div style={{ marginTop: 12 }}>
-                    <b>Imagen principal:</b>
-                    <br />
-                    <img
-                      src={
-                        selectedEst.imagen_url.startsWith("http")
-                          ? selectedEst.imagen_url
-                          : `https://canchassinteticas.site${selectedEst.imagen_url}`
-                      }
-                      alt="Imagen principal"
-                      style={{
-                        width: 220,
-                        maxHeight: 180,
-                        objectFit: "cover",
-                        borderRadius: 8,
-                        marginTop: 6,
-                        border: "1.5px solid #43e97b"
-                      }}
-                    />
+              <h3>Datos del establecimiento</h3>
+              <div style={{ marginBottom: 18, fontSize: 16 }}>
+                <div><b>Nombre:</b> {selectedEst.nombre}</div>
+                <div><b>Dirección:</b> {selectedEst.direccion}</div>
+                <div><b>Teléfono:</b> {selectedEst.telefono}</div>
+                <div><b>Precio por hora:</b> ${selectedEst.precio}</div>
+                <div><b>Cantidad de canchas:</b> {selectedEst.cantidad_canchas}</div>
+                <div>
+                  <b>Días disponibles:</b>{" "}
+                  {selectedEst.dias_disponibles
+                    ? selectedEst.dias_disponibles
+                        .split(",")
+                        .map(d => ({
+                          "1": "Lunes",
+                          "2": "Martes",
+                          "3": "Miércoles",
+                          "4": "Jueves",
+                          "5": "Viernes",
+                          "6": "Sábado",
+                          "0": "Domingo"
+                        }[d] || d))
+                        .join(", ")
+                    : ""}
+                </div>
+                <div>
+                  <b>Horario:</b> {selectedEst.hora_apertura} - {selectedEst.hora_cierre}
+                </div>
+                <div>
+                  <b>Duración por turno:</b> {selectedEst.duracion_turno} min
+                </div>
+                <div>
+                  <b>Imágenes:</b>
+                  <div style={{ display: "flex", gap: 10, marginTop: 6, flexWrap: "wrap" }}>
+                    {selectedEst.imagen_url && (
+                      <img
+                        src={selectedEst.imagen_url}
+                        alt="Imagen principal"
+                        style={{
+                          width: 100,
+                          height: 70,
+                          objectFit: "cover",
+                          borderRadius: 6,
+                          border: "1px solid #43e97b"
+                        }}
+                      />
+                    )}
+                    {/* Si tienes endpoint para más imágenes, puedes agregarlas aquí */}
                   </div>
-                )}
-                {/* Mostrar galería de imágenes si existen varias */}
-                {selectedEst.imagenes && Array.isArray(selectedEst.imagenes) && selectedEst.imagenes.length > 1 && (
-                  <div style={{ marginTop: 12 }}>
-                    <b>Galería de imágenes:</b>
-                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
-                      {selectedEst.imagenes.map((img, idx) => (
-                        <img
-                          key={idx}
-                          src={
-                            img.startsWith("http")
-                              ? img
-                              : `https://canchassinteticas.site${img}`
-                          }
-                          alt={`Imagen ${idx + 1}`}
-                          style={{
-                            width: 110,
-                            maxHeight: 90,
-                            objectFit: "cover",
-                            borderRadius: 6,
-                            border: "1px solid #43e97b"
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
-              <h4 style={{ marginTop: 18 }}>Documentos subidos</h4>
+              <h3>Documentos de {selectedEst.nombre}</h3>
               {docsEst.length === 0 ? (
                 <div>No hay documentos.</div>
               ) : (
                 <ul>
                   {docsEst.map(doc => (
                     <li key={doc.id} style={{ marginBottom: 10 }}>
-                      <a
-                        href={
-                          doc.url.startsWith("http")
-                            ? doc.url
-                            : `https://canchassinteticas.site${doc.url}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ display: "inline-block", marginBottom: 4 }}
-                      >
-                        {doc.tipo.startsWith("image") ? (
+                      {doc.tipo.startsWith("image") ? (
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer">
                           <img
-                            src={
-                              doc.url.startsWith("http")
-                                ? doc.url
-                                : `https://canchassinteticas.site${doc.url}`
-                            }
+                            src={doc.url}
                             alt="Documento"
                             style={{
                               maxWidth: 180,
                               maxHeight: 120,
                               borderRadius: 6,
                               border: "1px solid #43e97b",
-                              display: "block",
                               marginBottom: 4
                             }}
                           />
-                        ) : doc.tipo === "application/pdf" ? (
-                          <>
-                            <span style={{ color: "#d32f2f", fontWeight: 600 }}>
-                              PDF: {decodeURIComponent(doc.url.split("/").pop())}
-                            </span>
-                            <span style={{ marginLeft: 8, color: "#888", fontSize: 13 }}>
-                              (Haz clic para abrir)
-                            </span>
-                          </>
-                        ) : (
+                        </a>
+                      ) : doc.tipo === "application/pdf" ? (
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span role="img" aria-label="pdf" style={{ fontSize: 22 }}>📄</span>
                           <span>
-                            {decodeURIComponent(doc.url.split("/").pop())}
-                            <span style={{ marginLeft: 8, color: "#888", fontSize: 13 }}>
-                              ({doc.tipo})
-                            </span>
+                            {doc.url.split("/").pop().length < 30
+                              ? doc.url.split("/").pop()
+                              : "Documento PDF"}
                           </span>
-                        )}
-                      </a>
+                        </a>
+                      ) : (
+                        <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                          {doc.url.split("/").pop()}
+                        </a>
+                      )}
                     </li>
                   ))}
                 </ul>

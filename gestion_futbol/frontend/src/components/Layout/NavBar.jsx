@@ -68,13 +68,10 @@ export default function NavBar() {
   }, []);
 
   useEffect(() => {
-    if (rol === "admin" && location.pathname === "/") {
-      navigate("/estadisticas", { replace: true });
-    } else if (rol === "propietario" && location.pathname === "/") {
+    if (rol === "propietario" && location.pathname === "/") {
       navigate("/manage-courts", { replace: true });
-    } else if (rol === "validador" && location.pathname === "/") {
-      navigate("/validador/canchas", { replace: true });
     }
+    // Ya no hay redirección automática para admin en "/"
   }, [rol, location.pathname, navigate]);
 
   const isGuest = !rol;
@@ -102,13 +99,7 @@ export default function NavBar() {
     };
     checkFactura();
     const interval = setInterval(checkFactura, 60000);
-    // Limpia la factura pendiente al descargar
-    window.removeEventListener("facturaDescargada", checkFactura);
-    window.addEventListener("facturaDescargada", checkFactura);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("facturaDescargada", checkFactura);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -126,12 +117,7 @@ export default function NavBar() {
           </NavLink>
           {rol === "usuario" && (
             <>
-              <NavLink to="/estadisticas" className="nav-btn">
-                Estadísticas
-              </NavLink>
-              <NavLink to="/registrar-establecimiento" className="nav-btn">
-                Registrar establecimiento
-              </NavLink>
+
               {tieneEstablecimiento && (
                 <NavLink to="/mis-establecimientos" className="nav-btn">
                   Estado de mi establecimiento
@@ -147,15 +133,11 @@ export default function NavBar() {
           <NavLink to="/courts" className="nav-btn">
             Canchas
           </NavLink>
-          <NavLink to="/estadisticas" className="nav-btn">
-            Estadísticas
-          </NavLink>
+
           <NavLink to="/admin-users" className="nav-btn">
             Panel usuarios
           </NavLink>
-          <NavLink to="/admin/crear-establecimiento" className="nav-btn">
-            Crear Establecimiento
-          </NavLink>
+  
         </>
       )}
 
@@ -163,12 +145,6 @@ export default function NavBar() {
         <>
           <NavLink to="/manage-courts" className="nav-btn">
             Gestionar canchas
-          </NavLink>
-          <NavLink to="/estadisticas" className="nav-btn">
-            Estadísticas
-          </NavLink>
-          <NavLink to="/registrar-establecimiento" className="nav-btn">
-            Registrar establecimiento
           </NavLink>
           <NavLink to="/mis-establecimientos" className="nav-btn">
             Mis establecimientos
@@ -182,6 +158,17 @@ export default function NavBar() {
         </NavLink>
       )}
 
+      {facturaPendiente && (
+        <a
+          href={facturaPendiente}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="nav-btn"
+        >
+          <span role="img" aria-label="pdf" style={{ marginRight: 6 }}>📄</span>
+          Descargar factura
+        </a>
+      )}
       {location.pathname === "/quiero-registrar-cancha" && (
         <NavLink to="/quiero-registrar-cancha" className="nav-btn" style={{ background: "#ffeb3b", color: "#388e3c", fontWeight: 700 }}>
           ¿Deseas registrar tu cancha? Lee esto primero

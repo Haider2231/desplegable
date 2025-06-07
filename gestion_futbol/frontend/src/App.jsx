@@ -23,6 +23,7 @@ import AdminCrearEstablecimiento from "./pages/AdminCrearEstablecimiento";
 import ValidadorCanchas from "./pages/ValidadorCanchas";
 import RegistrarEstablecimiento from "./pages/RegistrarEstablecimiento";
 import MisEstablecimientos from "./pages/MisEstablecimientos";
+import MisReservas from "./pages/MisReservas";
 import { useLocation } from "react-router-dom";
 
 import MisReservas from "./pages/MisReservas";
@@ -96,6 +97,7 @@ function App() {
                   <Route path="/quiero-registrar-cancha" element={<QuieroRegistrarCancha />} />
                   <Route path="/registrar-establecimiento" element={<RegistrarEstablecimiento />} />
                   <Route path="/mis-establecimientos" element={<MisEstablecimientos />} />
+                  <Route path="/mis-reservas" element={<MisReservas />} />
                 </Routes>
               </div>
               <Footer />
@@ -154,34 +156,15 @@ function QuieroRegistrarCancha() {
       <h2>¿Quieres registrar tu cancha?</h2>
       <p>
         Para registrar tu cancha debes primero crear una cuenta e iniciar sesión.<br />
-        Luego podrás acceder al formulario para registrar tu establecimiento y subir los documentos requeridos.
+        Luego podrás acceder al formulario para registrar tu establecimiento y subir los documentos requeridos.<br /><br />
+        <b>Pasos:</b>
+        <ol>
+          <li>Regístrate o inicia sesión.</li>
+          <li>Accede a este apartado y haz clic en el botón de abajo.</li>
+          <li>Llena el formulario y sube los documentos.</li>
+          <li>Un validador revisará tu solicitud y te notificaremos cuando esté aprobada.</li>
+        </ol>
       </p>
-      <div style={{ marginBottom: 18 }}>
-        <b>Documentos requeridos:</b>
-        <ul style={{ marginTop: 8, marginBottom: 8 }}>
-          <li>Documento de identidad (cédula de ciudadanía o extranjería).</li>
-          <li>
-            <b>Uno de los siguientes documentos:</b>
-            <ul style={{ marginTop: 6, marginBottom: 6 }}>
-              <li>Certificado de matrícula mercantil vigente.</li>
-              <li>Contrato de arriendo/administración.</li>
-              <li>Recibo de servicio público del establecimiento.</li>
-            </ul>
-          </li>
-          <li>Fotos actuales de la cancha (mínimo 2).</li>
-          <li>Dirección exacta y número de contacto.</li>
-        </ul>
-        <span style={{ color: "#007991", fontSize: 15 }}>
-          Estos documentos son necesarios para validar que eres el propietario o administrador del lugar.
-        </span>
-      </div>
-      <b>Pasos:</b>
-      <ol>
-        <li>Regístrate o inicia sesión.</li>
-        <li>Accede a este apartado y haz clic en el botón de abajo.</li>
-        <li>Llena el formulario y sube los documentos.</li>
-        <li>Un validador revisará tu solicitud y te notificaremos cuando esté aprobada.</li>
-      </ol>
       {!user ? (
         <button
           onClick={() => window.location.href = "/login"}

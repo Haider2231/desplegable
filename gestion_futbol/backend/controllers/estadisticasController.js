@@ -46,12 +46,9 @@ exports.propietario = async (req, res) => {
     }
     const userId = req.user.userId;
 
-    // Trae todas las canchas del propietario SOLO de establecimientos activos
+    // Trae todas las canchas del propietario
     const canchasRes = await pool.query(
-      `SELECT c.id, c.nombre, e.nombre AS establecimiento_nombre
-         FROM canchas c
-         JOIN establecimientos e ON c.establecimiento_id = e.id
-        WHERE c.dueno_id = $1 AND e.estado = 'activo'`,
+      `SELECT c.id, c.nombre FROM canchas c WHERE c.dueno_id = $1`,
       [userId]
     );
     const canchaIds = canchasRes.rows.map(c => c.id);
@@ -60,7 +57,7 @@ exports.propietario = async (req, res) => {
       return res.json({ total_reservas: 0, ingresos: 0, canchas: [] });
     }
 
-    // Trae reservas y abonos (ingresos) por cancha SOLO de establecimientos activos
+    // Trae reservas y abonos (ingresos) por cancha
     const reservasDetalleRes = await pool.query(
       `SELECT 
           c.id AS cancha_id,
@@ -74,11 +71,11 @@ exports.propietario = async (req, res) => {
             '[]'
           ) AS reservas_detalle
         FROM canchas c
-        JOIN establecimientos e ON c.establecimiento_id = e.id
+        LEFT JOIN establecimientos e ON c.establecimiento_id = e.id
         LEFT JOIN disponibilidades d ON d.cancha_id = c.id
         LEFT JOIN reservas r ON d.id = r.disponibilidad_id
         LEFT JOIN facturas f ON f.reserva_id = r.id
-        WHERE c.dueno_id = $1 AND e.estado = 'activo'
+        WHERE c.dueno_id = $1
         GROUP BY c.id, c.nombre, e.nombre
         ORDER BY e.nombre, c.nombre`,
       [userId]
@@ -132,11 +129,10 @@ exports.admin = async (req, res) => {
     const usuariosRes = await pool.query(`SELECT COUNT(*) FROM usuarios WHERE verificado = true`);
     // Canchas
     const canchasRes = await pool.query(`SELECT COUNT(*) FROM canchas`);
-    // Establecimientos
-    const establecimientosRes = await pool.query(`SELECT COUNT(*) FROM establecimientos`);
     // Reservas totales
     const reservasRes = await pool.query(`SELECT COUNT(*) FROM reservas`);
     // Actividad por día (últimos 7 días)
+    // Cambia 'fecha' por el campo correcto, por ejemplo 'created_at' o 'fecha_reserva'
     const actividadRes = await pool.query(
       `SELECT TO_CHAR(r.fecha_reserva, 'YYYY-MM-DD') AS fecha, COUNT(*) AS reservas
          FROM reservas r
@@ -147,7 +143,6 @@ exports.admin = async (req, res) => {
     res.json({
       usuarios: parseInt(usuariosRes.rows[0].count),
       canchas: parseInt(canchasRes.rows[0].count),
-      establecimientos: parseInt(establecimientosRes.rows[0].count),
       reservas: parseInt(reservasRes.rows[0].count),
       actividad: actividadRes.rows.map(r => ({
         fecha: r.fecha,

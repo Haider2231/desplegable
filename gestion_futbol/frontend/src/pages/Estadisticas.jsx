@@ -63,49 +63,14 @@ export default function Estadisticas({ rol: propRol }) {
     else return;
 
     fetchStats()
-      .then(res => {
-        // Solo muestra estadísticas si el propietario tiene al menos un establecimiento ACTIVO
-        if (rol === "propietario") {
-          fetch("/establecimientos/dueno/" + getUserIdFromToken(), {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-          })
-            .then(r => r.json())
-            .then(ests => {
-              const hayActivo = Array.isArray(ests) && ests.some(e => e.estado === "activo");
-              if (hayActivo) setData(res);
-              else setData({ error: "Tus establecimientos aún no han sido aprobados. Las estadísticas estarán disponibles cuando se activen." });
-              setLoading(false);
-            })
-            .catch(() => {
-              setData({ error: "No se pudo validar el estado de tus establecimientos." });
-              setLoading(false);
-            });
-        } else {
-          setData(res);
-          setLoading(false);
-        }
-      })
+      .then(setData)
       .catch((err) =>
         setData({
           error: "No se pudo cargar estadísticas: " + (err?.message || err),
         })
-      );
+      )
+      .finally(() => setLoading(false));
   }, [rol]);
-
-  // Utilidad para extraer userId del token
-  function getUserIdFromToken() {
-    try {
-      const token = localStorage.getItem("token");
-      if (token) {
-        const base64Url = token.split(".")[1];
-        let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-        while (base64.length % 4) base64 += "=";
-        const payload = JSON.parse(atob(base64));
-        return payload.userId;
-      }
-    } catch {}
-    return null;
-  }
 
   // Función para descargar PDF de estadísticas
   const handleDescargarPDF = () => {
@@ -733,22 +698,12 @@ export default function Estadisticas({ rol: propRol }) {
               <div style={{ width: "100%", height: 260 }}>
                 <Bar
                   data={{
-                    labels: ["Usuarios", "Canchas", "Establecimientos", "Reservas"],
+                    labels: ["Usuarios", "Canchas", "Reservas"],
                     datasets: [
                       {
                         label: "Totales del sistema",
-                        data: [
-                          data.usuarios,
-                          data.canchas,
-                          data.establecimientos || 0,
-                          data.reservas,
-                        ],
-                        backgroundColor: [
-                          "#43a047",
-                          "#388e3c",
-                          "#007991",
-                          "#00c6fb",
-                        ],
+                        data: [data.usuarios, data.canchas, data.reservas],
+                        backgroundColor: ["#43a047", "#388e3c", "#00c6fb"],
                       },
                     ],
                   }}
@@ -814,7 +769,6 @@ export default function Estadisticas({ rol: propRol }) {
           <div style={{ marginTop: 16, textAlign: "center" }}>
             <strong>Usuarios registrados:</strong> {data.usuarios} <br />
             <strong>Canchas:</strong> {data.canchas} <br />
-            <strong>Establecimientos:</strong> {data.establecimientos || 0} <br />
             <strong>Reservas totales:</strong> {data.reservas}
           </div>
         </div>

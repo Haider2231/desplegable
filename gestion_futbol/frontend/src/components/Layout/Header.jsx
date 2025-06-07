@@ -1,12 +1,16 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../../styles/globalHeaderNav.css";
 
 
 export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showRegistroModal, setShowRegistroModal] = useState(false);
   const [showInstrucciones, setShowInstrucciones] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+  const profileMenuRef = useRef(null);
 
   // Obtener usuario del token
   let user = null;
@@ -21,12 +25,53 @@ export default function Header() {
     }
   } catch {}
 
+  // Cerrar menú al hacer click fuera
+  useEffect(() => {
+    if (!showProfileMenu) return;
+    function handleClickOutside(e) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+        setShowProfileMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showProfileMenu]);
+
+  // Consulta la cantidad de pagos pendientes del usuario
+  useEffect(() => {
+    async function fetchPendientes() {
+      try {
+        const res = await fetch("/reservas/mis-reservas", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+        const data = await res.json();
+        // Asegura que data sea un array y filtra por estado pendiente
+        if (Array.isArray(data)) {
+          setPendingCount(data.filter(r => r.estado === "pendiente").length);
+        } else {
+          setPendingCount(0);
+        }
+      } catch {
+        setPendingCount(0);
+      }
+    }
+    if (user) fetchPendientes();
+  }, [user, showProfileMenu]); // <-- actualiza también al abrir/cerrar el menú
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.href = "/"; // Redirige y recarga como invitado (sin token)
   };
 
-  // Cambia el handler para mostrar el mensaje informativo
+  // Cambia el handler para que navegue al mapa principal SOLO si no está ya en "/"
+  const handleTituloClick = () => {
+    if (location.pathname !== "/") {
+      navigate("/", { replace: true });
+    }
+    // Si ya está en "/", no hace nada (evita recarga y evita triggers de NavBar)
+  };
+
+  // Define handleRegistrarCancha para evitar el error
   const handleRegistrarCancha = () => {
     navigate("/quiero-registrar-cancha");
   };
@@ -76,8 +121,11 @@ export default function Header() {
             display: "flex",
             alignItems: "center",
             gap: 2,
-            position: "relative"
+            position: "relative",
+            cursor: "pointer"
           }}
+          onClick={handleTituloClick}
+          title="Ir al inicio"
         >
           <span style={{
             fontSize: "2.5rem",
@@ -176,10 +224,13 @@ export default function Header() {
                   borderRadius: "32px",
                   boxShadow: "0 2px 16px 0 #1b5e2055",
                   padding: "0 0 0 0",
-                  transition: "box-shadow 0.18s, background 0.18s"
+                  transition: "box-shadow 0.18s, background 0.18s",
+                  zIndex: 1000
                 }}
                 tabIndex={0}
                 title={`Bienvenido, ${user.nombre.charAt(0).toUpperCase() + user.nombre.slice(1)}`}
+                onClick={() => setShowProfileMenu((v) => !v)}
+                ref={profileMenuRef}
               >
                 <div
                   className="avatar-animated"
@@ -196,10 +247,10 @@ export default function Header() {
                     fontSize: "1.6rem",
                     border: "3px solid #fff",
                     boxShadow: "0 4px 18px 0 #1b5e2055",
-                    position: "absolute",
-                    left: -10,
-                    top: "50%",
-                    transform: "translateY(-50%)",
+                    position: "relative",
+                    left: 0,
+                    top: "auto",
+                    transform: "none",
                     zIndex: 2,
                   }}
                 >
@@ -215,6 +266,28 @@ export default function Header() {
                   >
                   </span>
                   {user.nombre.charAt(0).toUpperCase()}
+                  {/* Badge de pagos pendientes */}
+                  {pendingCount > 0 && (
+                    <span style={{
+                      position: "absolute",
+                      top: -6,
+                      right: -6,
+                      background: "#d32f2f",
+                      color: "#fff",
+                      borderRadius: "50%",
+                      width: 22,
+                      height: 22,
+                      fontSize: 13,
+                      fontWeight: 800,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "2px solid #fff",
+                      boxShadow: "0 2px 8px #d32f2f44"
+                    }}>
+                      {pendingCount}
+                    </span>
+                  )}
                 </div>
                 <span
                   className="username-badge-combo"
@@ -225,10 +298,10 @@ export default function Header() {
                     background: "rgba(56,142,60,0.95)",
                     border: "2px solid #fff",
                     fontFamily: "'Bebas Neue', Impact, Arial, sans-serif",
-                    padding: "14px 32px 14px 60px",
+                    padding: "14px 24px 14px 56px",
                     borderRadius: "28px",
                     boxShadow: "0 4px 24px 0 #1b5e2055",
-                    marginLeft: 32,
+                    marginLeft: -18,
                     display: "inline-block",
                     minWidth: 140,
                     textOverflow: "ellipsis",
@@ -241,8 +314,115 @@ export default function Header() {
                 >
                   Bienvenido, {user.nombre.charAt(0).toUpperCase() + user.nombre.slice(1)}
                 </span>
+                <span
+                  style={{
+                    marginLeft: 8,
+                    marginRight: 0,
+                    fontSize: 22,
+                    color: "#fff",
+                    userSelect: "none",
+                    pointerEvents: "none",
+                    display: "flex",
+                    alignItems: "center"
+                  }}
+                >
+                  ▼
+                </span>
+                {showProfileMenu && (
+                  <div
+                    style={{
+                      position: "fixed",
+                      top: profileMenuRef.current
+                        ? profileMenuRef.current.getBoundingClientRect().bottom + window.scrollY + 8
+                        : 100,
+                      left: profileMenuRef.current
+                        ? profileMenuRef.current.getBoundingClientRect().left + window.scrollX
+                        : "50%",
+                      background: "#fff",
+                      borderRadius: 14,
+                      boxShadow: "0 8px 32px #43e97b33, 0 1.5px 8px #43e97b33",
+                      minWidth: 240,
+                      zIndex: 3000,
+                      padding: "14px 0",
+                      border: "2px solid #43e97b",
+                      animation: "fadeInProfileMenu 0.2s"
+                    }}
+                  >
+                    {/* Opciones para ADMIN */}
+                    {user?.rol === "admin" ? (
+                      <>
+                        <button
+                          style={profileMenuBtnStyle}
+                          onClick={() => { setShowProfileMenu(false); navigate("/admin/crear-establecimiento"); }}
+                        >
+                          🏢 Crear establecimiento
+                        </button>
+                        <button
+                          style={profileMenuBtnStyle}
+                          onClick={() => { setShowProfileMenu(false); navigate("/admin-users"); }}
+                        >
+                          👤 Panel usuarios
+                        </button>
+                        <button
+                          style={profileMenuBtnStyle}
+                          onClick={() => { setShowProfileMenu(false); navigate("/estadisticas"); }}
+                        >
+                          📊 Estadísticas
+                        </button>
+                        <hr style={{ margin: "8px 0", border: "none", borderTop: "1.5px solid #e0e0e0" }} />
+                        <button
+                          style={{ ...profileMenuBtnStyle, color: "#d32f2f" }}
+                          onClick={handleLogout}
+                        >
+                          Cerrar sesión
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {/* Opciones para usuario, propietario, validador */}
+                        <button
+                          style={profileMenuBtnStyle}
+                          onClick={() => { setShowProfileMenu(false); navigate("/mis-reservas"); }}
+                        >
+                          📅 Ver reservas hechas
+                        </button>
+                        <button
+                          style={profileMenuBtnStyle}
+                          onClick={() => { setShowProfileMenu(false); navigate("/mis-reservas?estado=pendiente"); }}
+                        >
+                          💸 Pagos pendientes
+                        </button>
+                        <button
+                          style={profileMenuBtnStyle}
+                          onClick={() => { setShowProfileMenu(false); navigate("/mis-reservas?estado=confirmada"); }}
+                        >
+                          ✅ Pagos completados
+                        </button>
+                        <button
+                          style={profileMenuBtnStyle}
+                          onClick={() => { setShowProfileMenu(false); navigate("/registrar-establecimiento"); }}
+                        >
+                          🏢 Registrar establecimiento
+                        </button>
+                        <button
+                          style={profileMenuBtnStyle}
+                          onClick={() => { setShowProfileMenu(false); navigate("/estadisticas"); }}
+                        >
+                          📊 Estadísticas
+                        </button>
+                        <hr style={{ margin: "8px 0", border: "none", borderTop: "1.5px solid #e0e0e0" }} />
+                        <button
+                          style={{ ...profileMenuBtnStyle, color: "#d32f2f" }}
+                          onClick={handleLogout}
+                        >
+                          Cerrar sesión
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
-              <button
+              {/* <button
                 className="football-btn"
                 style={{
                   background: "linear-gradient(90deg, #388e3c 0%, #43a047 100%)",
@@ -261,7 +441,7 @@ export default function Header() {
                 onClick={handleLogout}
               >
                 Cerrar sesión
-              </button>
+              </button> */}
             </>
           )}
         </div>
@@ -419,6 +599,32 @@ export default function Header() {
           </div>
         )}
       </div>
+      {/* Animación para el menú */}
+      <style>
+        {`
+          @keyframes fadeInProfileMenu {
+            from { opacity: 0; transform: translateY(-10px);}
+            to { opacity: 1; transform: translateY(0);}
+          }
+        `}
+      </style>
     </header>
   );
 }
+
+// Estilo para los botones del menú de perfil
+const profileMenuBtnStyle = {
+  width: "100%",
+  background: "none",
+  border: "none",
+  color: "#007991",
+  fontWeight: 700,
+  fontSize: 16,
+  textAlign: "left",
+  padding: "10px 24px",
+  cursor: "pointer",
+  transition: "background 0.18s",
+  outline: "none",
+  borderRadius: 0,
+  display: "block"
+};

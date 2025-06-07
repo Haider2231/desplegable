@@ -1,1163 +1,512 @@
-import React, { useEffect, useState, useRef } from "react";
-  import { getCanchasConHorarios, getCanchas } from "../api/api";
-  import Swal from "sweetalert2";
-  import "../styles/manageCourts.css";
-  import { useState as useReactState } from "react";
+import React, { useEffect, useState } from "react";
+import { getCanchasConHorarios } from "../api/api";
+import Swal from "sweetalert2";
+import "../styles/manageCourts.css";
 
-  export default function ManageCourts() {
-    const [establecimientos, setEstablecimientos] = useState([]);
-    const [selectedEstablecimiento, setSelectedEstablecimiento] = useState(null);
-    const [canchasConHorarios, setCanchasConHorarios] = useState([]);
-    const [activePanel, setActivePanel] = useState("establecimientos"); // "establecimientos" | "agregar_horario"
-    const [selectedEstForHorario, setSelectedEstForHorario] = useState(null);
-    const [canchasForHorario, setCanchasForHorario] = useState([]);
-    const [selectedCanchaForHorario, setSelectedCanchaForHorario] = useState(null);
-    const [horarioForm, setHorarioForm] = useState({ fecha: "", hora_inicio: "" }); // Elimina hora_fin del estado
-    const [loading, setLoading] = useState(false);
-    const [nuevoEstablecimiento, setNuevoEstablecimiento] = useState({
-      nombre: "",
-      direccion: "",
-      lat: "",
-      lng: "",
-      telefono: "",
-      precio: "",
-      cantidad_canchas: "" // <--- nuevo campo
-    });
-    const direccionEstRef = useRef();
+// NUEVO: Usa react-calendar para el calendario visual
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
 
-    // Refs para el formulario de nueva cancha
-    const nombreRef = useRef();
-    const direccionRef = useRef();
-    const telefonoRef = useRef();
-    const cantidadRef = useRef();
-    const imagenesRef = useRef();
-    const precioRef = useRef(); // Nuevo campo para el precio
+export default function ManageCourts() {
+  const [establecimientos, setEstablecimientos] = useState([]);
+  const [expandedEstId, setExpandedEstId] = useState(null);
+  const [canchasConHorarios, setCanchasConHorarios] = useState([]);
+  const [selectedCancha, setSelectedCancha] = useState(null);
+  const [horariosPorFecha, setHorariosPorFecha] = useState({});
+  const [selectedDate, setSelectedDate] = useState(null);
 
-    // Estado para expandir/cerrar listas de horarios
-    const [showReservados, setShowReservados] = useReactState(true);
-    const [showDisponibles, setShowDisponibles] = useReactState(true);
-
-    // Nuevo estado para la imagen del establecimiento
-    const [imagenEstablecimiento, setImagenEstablecimiento] = useState(null);
-
-    // Estado para controlar qué cancha está expandida
-    const [expandedCanchaId, setExpandedCanchaId] = useState(null);
-
-    // Nuevo: para saber qué establecimiento está expandido
-    const [expandedEstId, setExpandedEstId] = useState(null);
-
-    // Nuevo: estado para el panel de formulario de establecimiento
-    const [showEstFormPanel, setShowEstFormPanel] = useState(false);
-
-    // Obtener establecimientos del usuario al montar
-    useEffect(() => {
-      const token = localStorage.getItem("token");
-      let userId = null;
-      if (token) {
-        try {
-          const base64Url = token.split(".")[1];
-          let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-          while (base64.length % 4) base64 += "=";
-          const payload = JSON.parse(atob(base64));
-          userId = payload.userId;
-        } catch {}
-      }
-      if (userId) {
-        fetch(`/establecimientos/dueno/${userId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        })
-          .then(res => res.json())
-          .then(data => {
-            // Filtra solo establecimientos activos
-            setEstablecimientos(Array.isArray(data) ? data.filter(e => e.estado === "activo") : []);
-          });
-      }
-    }, []);
-
-    // Cuando selecciona un establecimiento para ver canchas y horarios
-    useEffect(() => {
-      if (expandedEstId) {
-        getCanchasConHorarios(expandedEstId)
-          .then(data => {
-            // Normaliza para que cada cancha tenga cancha_id
-            const normalizadas = Array.isArray(data)
-              ? data.map(c => ({
-                  ...c,
-                  cancha_id: c.cancha_id || c.id // asegúrate de que siempre haya cancha_id
-                }))
-              : [];
-            setCanchasConHorarios(normalizadas);
-          });
-      } else {
-        setCanchasConHorarios([]);
-      }
-    }, [expandedEstId]);
-
-    // Cuando selecciona un establecimiento en el panel de agregar horario
-    useEffect(() => {
-      if (selectedEstForHorario) {
-        getCanchas({ establecimiento_id: selectedEstForHorario.id })
-          .then(data => {
-            const filtered = Array.isArray(data)
-              ? data
-                  .filter(c => String(c.establecimiento_id) === String(selectedEstForHorario.id))
-                  .map(c => ({
-                    ...c,
-                    cancha_id: c.cancha_id || c.id // normaliza aquí también
-                  }))
-              : [];
-            setCanchasForHorario(filtered);
-          });
-        setSelectedCanchaForHorario(null);
-      } else {
-        setCanchasForHorario([]);
-        setSelectedCanchaForHorario(null);
-      }
-    }, [selectedEstForHorario]);
-
-    // Calcula la hora fin sumando 1 hora a la hora de inicio
-    function calcularHoraFin(horaInicio) {
-      if (!horaInicio) return "";
-      const [h, m] = horaInicio.split(":").map(Number);
-      let finH = h + 1;
-      let finM = m;
-      if (finH > 23) finH = 23; // No pasar de las 11pm
-      return `${String(finH).padStart(2, "0")}:${String(finM).padStart(2, "0")}`;
+  // Cargar establecimientos activos
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    let userId = null;
+    if (token) {
+      try {
+        const base64Url = token.split(".")[1];
+        let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+        while (base64.length % 4) base64 += "=";
+        const payload = JSON.parse(atob(base64));
+        userId = payload.userId;
+      } catch {}
     }
-
-    // Handler para agregar horario a una cancha específica (desde el panel izquierdo)
-    const handleAgregarHorarioCancha = async (e) => {
-      e.preventDefault();
-      if (!selectedEstForHorario || !selectedCanchaForHorario) {
-        Swal.fire("Selecciona establecimiento y cancha", "", "warning");
-        return;
-      }
-      const { fecha, hora_inicio } = horarioForm;
-      const hora_fin = calcularHoraFin(hora_inicio);
-      if (!fecha || !hora_inicio) {
-        Swal.fire("Faltan datos", "Completa todos los campos.", "warning");
-        return;
-      }
-      // Validación extra para horario fuera de rango
-      if (hora_inicio < "09:00" || hora_inicio > "22:00" || hora_fin > "23:00") {
-        Swal.fire("Horario inválido", "Solo se permiten horarios entre 9:00 am y 10:00 pm (fin máximo 11:00 pm).", "warning");
-        return;
-      }
-      try {
-        const res = await fetch("/disponibilidades", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({
-            cancha_id: selectedCanchaForHorario.cancha_id || selectedCanchaForHorario.id,
-            fecha,
-            hora_inicio,
-            hora_fin,
-          }),
+    if (userId) {
+      fetch(`/establecimientos/dueno/${userId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          setEstablecimientos(Array.isArray(data) ? data.filter(e => e.estado === "activo") : []);
         });
-        const data = await res.json();
-        if (data.id) {
-          Swal.fire("Horario agregado", "", "success");
-          setHorarioForm({ fecha: "", hora_inicio: "" }); // Limpia los campos
-          setSelectedEstForHorario(null);
-          setSelectedCanchaForHorario(null);
-          // Refresca la lista de canchas con horarios si corresponde
-          if (expandedEstId === selectedEstForHorario.id) {
-            getCanchasConHorarios(expandedEstId)
-              .then(data => setCanchasConHorarios(Array.isArray(data) ? data : []));
-          }
-          // Refresca la lista de canchas para el formulario
-          getCanchasConHorarios(selectedEstForHorario.id)
-            .then(data => setCanchasForHorario(Array.isArray(data) ? data : []));
-        } else {
-          Swal.fire("Error", data.error || "No se pudo agregar el horario", "error");
-        }
-      } catch {
-        Swal.fire("Error", "No se pudo agregar el horario", "error");
-      }
-    };
+    }
+  }, []);
 
-    // Registrar nueva cancha
-    const handleRegistrarCancha = async (e) => {
-      e.preventDefault();
-      if (!lat || !lng) {
-        Swal.fire("Ubicación requerida", "Por favor, ingresa una dirección válida.", "warning");
-        return;
-      }
-      setLoading(true);
-
-      const formData = new FormData();
-      formData.append("nombre", nombreRef.current.value);
-      formData.append("direccion", direccionRef.current.value);
-      formData.append("lat", lat);
-      formData.append("lng", lng);
-      formData.append("telefono_contacto", telefonoRef.current.value);
-      formData.append("precio", precioRef.current.value); // Cambia 'valor' por 'precio'
-      formData.append("establecimiento_id", selectedEstablecimiento.id); // Agregar establecimiento_id
-
-      // Obtener el dueno_id del token (decodifica el JWT)
-      let dueno_id = null;
-      try {
-        const token = localStorage.getItem("token");
-        if (token) {
-          const base64Url = token.split(".")[1];
-          let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-          while (base64.length % 4) base64 += "=";
-          const payload = JSON.parse(atob(base64));
-          dueno_id = payload.userId;
-        }
-      } catch {}
-      if (!dueno_id) {
-        Swal.fire("Error", "No se encontró el usuario. Inicia sesión.", "error");
-        setLoading(false);
-        return;
-      }
-      formData.append("dueno_id", dueno_id);
-
-      // Añadir imágenes
-      const files = imagenesRef.current.files;
-      for (let i = 0; i < files.length; i++) {
-        formData.append("imagenes", files[i]);
-      }
-
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch("/canchas", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
+  // Cargar canchas y horarios al expandir un establecimiento
+  useEffect(() => {
+    if (expandedEstId) {
+      getCanchasConHorarios(expandedEstId)
+        .then(data => {
+          const normalizadas = Array.isArray(data)
+            ? data.map(c => ({
+                ...c,
+                cancha_id: c.cancha_id || c.id
+              }))
+            : [];
+          setCanchasConHorarios(normalizadas);
         });
-        let data;
-        try {
-          data = await response.json();
-        } catch (jsonErr) {
-          console.error("Error al parsear JSON:", jsonErr);
-          data = {};
-        }
-        if (response.ok) {
-          Swal.fire("¡Cancha registrada!", "La cancha se registró con éxito.", "success");
-          if (nombreRef.current) nombreRef.current.value = "";
-          if (direccionRef.current) direccionRef.current.value = "";
-          if (telefonoRef.current) telefonoRef.current.value = "";
-          if (cantidadRef.current) cantidadRef.current.value = "";
-          if (imagenesRef.current) imagenesRef.current.value = "";
-          if (precioRef.current) precioRef.current.value = "";
-          setLat(null);
-          setLng(null);
-          // Recargar canchas
-          getCanchas().then(setCanchas);
-        } else {
-          console.error("Error al registrar cancha (backend):", data);
-          Swal.fire("Error", data.error || "Error al registrar la cancha", "error");
-        }
-      } catch (error) {
-        console.error("Error de red o fetch:", error);
-        Swal.fire("Error", "Error al conectar con el servidor", "error");
-      }
-      setLoading(false);
-    };
+    } else {
+      setCanchasConHorarios([]);
+      setSelectedCancha(null);
+      setHorariosPorFecha({});
+      setSelectedDate(null);
+    }
+  }, [expandedEstId]);
 
-    // Google Maps Autocomplete para dirección de establecimiento
-    useEffect(() => {
-      if (showEstFormPanel) {
-        if (!window.google || !window.google.maps) {
-          const script = document.createElement("script");
-          script.src =
-            "https://maps.googleapis.com/maps/api/js?key=AIzaSyAYDCSXtmUI-KR3qJ29oRdemNUpSIb-UDQ&libraries=places";
-          script.async = true;
-          script.defer = true;
-          script.onload = initAutocomplete;
-          document.body.appendChild(script);
-        } else {
-          initAutocomplete();
-        }
-      }
-      function initAutocomplete() {
-        if (
-          direccionEstRef.current &&
-          window.google &&
-          window.google.maps &&
-          !direccionEstRef.current.getAttribute("data-gmaps")
-        ) {
-          const autocomplete = new window.google.maps.places.Autocomplete(direccionEstRef.current, {
-            types: ["geocode"],
-            componentRestrictions: { country: "co" }
-          });
-          autocomplete.addListener("place_changed", () => {
-            const place = autocomplete.getPlace();
-            if (place.geometry) {
-              setNuevoEstablecimiento(est => ({
-                ...est,
-                direccion: place.formatted_address,
-                lat: place.geometry.location.lat(),
-                lng: place.geometry.location.lng()
-              }));
-            } else {
-              Swal.fire("Error", "No se pudo obtener la ubicación. Intenta nuevamente.", "error");
-            }
-          });
-          direccionEstRef.current.setAttribute("data-gmaps", "1");
-        }
-      }
-      return () => {
-        if (direccionEstRef.current) {
-          direccionEstRef.current.removeAttribute("data-gmaps");
-        }
-      };
-    }, [showEstFormPanel]);
+  // Agrupa horarios por fecha para la cancha seleccionada
+  useEffect(() => {
+    if (!selectedCancha) {
+      setHorariosPorFecha({});
+      return;
+    }
+    const horarios = selectedCancha.horarios || [];
+    const porFecha = {};
+    horarios.forEach(h => {
+      const fecha = h.fecha?.split("T")[0] || h.fecha;
+      if (!porFecha[fecha]) porFecha[fecha] = [];
+      porFecha[fecha].push(h);
+    });
+    setHorariosPorFecha(porFecha);
+  }, [selectedCancha]);
 
-    // Función para agregar un establecimiento
-    const handleAgregarEstablecimiento = async (e) => {
-      e.preventDefault();
-      const { nombre, direccion, lat, lng, telefono, precio, cantidad_canchas } = nuevoEstablecimiento;
-      if (!nombre || !direccion || !lat || !lng || !telefono || !precio || !cantidad_canchas || !imagenEstablecimiento) {
-        Swal.fire("Faltan datos", "Completa todos los campos y sube una imagen.", "warning");
-        return;
-      }
-      let dueno_id = null;
-      try {
-        const token = localStorage.getItem("token");
-        if (token) {
-          const base64Url = token.split(".")[1];
-          let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-          while (base64.length % 4) base64 += "=";
-          const payload = JSON.parse(atob(base64));
-          dueno_id = payload.userId;
-        }
-      } catch {}
-      if (!dueno_id) {
-        Swal.fire("Error", "No se encontró el usuario. Inicia sesión.", "error");
-        return;
-      }
-      try {
-        const token = localStorage.getItem("token");
-        const formData = new FormData();
-        formData.append("nombre", nombre);
-        formData.append("direccion", direccion);
-        formData.append("lat", lat);
-        formData.append("lng", lng);
-        formData.append("telefono", telefono);
-        formData.append("precio", precio);
-        formData.append("dueno_id", dueno_id);
-        formData.append("imagen", imagenEstablecimiento);
-        formData.append("cantidad_canchas", cantidad_canchas);
+  // Días con horarios para el calendario
+  const fechasConHorarios = Object.keys(horariosPorFecha);
 
-        const res = await fetch("/establecimientos", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
-        const data = await res.json();
-        if (res.ok) {
-          // NO crear canchas aquí, solo recargar canchas del establecimiento
-          fetch(`/canchas?establecimiento_id=${data.id}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-          })
-            .then(res => res.json())
-            .then(canchasData => setCanchas(Array.isArray(canchasData) ? canchasData : []));
-          Swal.fire("¡Establecimiento y canchas creados!", "", "success");
-          setEstablecimientos((prev) => [...prev, data]);
-          setShowEstFormPanel(false);
-          setNuevoEstablecimiento({
-            nombre: "",
-            direccion: "",
-            lat: "",
-            lng: "",
-            telefono: "",
-            precio: "",
-            cantidad_canchas: ""
-          });
-          setImagenEstablecimiento(null);
-        } else {
-          Swal.fire("Error", data.error || "No se pudo crear el establecimiento", "error");
-        }
-      } catch {
-        Swal.fire("Error", "No se pudo conectar con el servidor", "error");
-      }
-    };
-
-    // Obtener fecha mínima (hoy)
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    const minDate = `${yyyy}-${mm}-${dd}`;
-
-    // --- Google Maps Autocomplete SOLO para el panel de registro ---
-    useEffect(() => {
-      if (activePanel === "registrar") {
-        // Cargar Google Maps script si no está cargado
-        if (!window.google || !window.google.maps) {
-          const script = document.createElement("script");
-          script.src =
-            "https://maps.googleapis.com/maps/api/js?key=AIzaSyAYDCSXtmUI-KR3qJ29oRdemNUpSIb-UDQ&libraries=places";
-          script.async = true;
-          script.onload = initAutocomplete;
-          document.body.appendChild(script);
-        } else {
-          initAutocomplete();
-        }
-      }
-      function initAutocomplete() {
-        if (
-          direccionRef.current &&
-          window.google &&
-          window.google.maps &&
-          !direccionRef.current.getAttribute("data-gmaps")
-        ) {
-          const autocomplete = new window.google.maps.places.Autocomplete(direccionRef.current, {
-            types: ["geocode"],
-            componentRestrictions: { country: "co" } // Cambia el país si lo necesitas
-          });
-          autocomplete.addListener("place_changed", () => {
-            const place = autocomplete.getPlace();
-            if (place.geometry) {
-              setLat(place.geometry.location.lat());
-              setLng(place.geometry.location.lng());
-            } else {
-              Swal.fire("Error", "No se pudo obtener la ubicación. Intenta nuevamente.", "error");
-            }
-          });
-          direccionRef.current.setAttribute("data-gmaps", "1");
-        }
-      }
-      // Limpia el atributo al salir del panel de registro
-      return () => {
-        if (direccionRef.current) {
-          direccionRef.current.removeAttribute("data-gmaps");
-        }
-      };
-      // eslint-disable-next-line
-    }, [activePanel]);
-
-    // Mostrar canchas con al menos un horario reservado
-    // NOTA: Ahora, para cada cancha, buscamos su disponibilidad y mostramos el estado
-    return (
-      <div className="manage-courts-bg">
-        <div className="manage-courts-panel" style={{ display: "flex", minHeight: 600 }}>
-          {/* Menú lateral izquierdo */}
-          <div style={{
-            width: 220,
-            background: "#f7f7f7",
-            borderRight: "2px solid #b2f7ef",
-            padding: "2rem 1rem 2rem 1.5rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: 18
-          }}>
-            <button
-              className={`manage-menu-btn${activePanel === "establecimientos" ? " active" : ""}`}
-              onClick={() => setActivePanel("establecimientos")}
-              style={{
-                background: activePanel === "establecimientos" ? "#43e97b" : "#fff",
-                color: activePanel === "establecimientos" ? "#fff" : "#007991",
-                border: "none",
-                borderRadius: 8,
-                padding: "12px 18px",
-                fontWeight: 700,
-                fontSize: 16,
-                marginBottom: 8,
-                cursor: "pointer"
-              }}
-            >
-              🏢 Establecimientos
-            </button>
-            <button
-              className={`manage-menu-btn${activePanel === "agregar_horario" ? " active" : ""}`}
-              onClick={() => setActivePanel("agregar_horario")}
-              style={{
-                background: activePanel === "agregar_horario" ? "#43e97b" : "#fff",
-                color: activePanel === "agregar_horario" ? "#fff" : "#007991",
-                border: "none",
-                borderRadius: 8,
-                padding: "12px 18px",
-                fontWeight: 700,
-                fontSize: 16,
-                marginBottom: 8,
-                cursor: "pointer"
-              }}
-            >
-              ⏰ Agregar horarios
-            </button>
-            <button
-              className={`manage-menu-btn${activePanel === "horarios_batch" ? " active" : ""}`}
-              onClick={() => setActivePanel("horarios_batch")}
-              style={{
-                background: activePanel === "horarios_batch" ? "#43e97b" : "#fff",
-                color: activePanel === "horarios_batch" ? "#fff" : "#007991",
-                border: "none",
-                borderRadius: 8,
-                padding: "12px 18px",
-                fontWeight: 700,
-                fontSize: 16,
-                marginBottom: 8,
-                cursor: "pointer"
-              }}
-            >
-              📅 Crear horarios diarios
-            </button>
-          </div>
-          {/* Panel central dinámico */}
-          <div style={{ flex: 1, padding: "2rem" }}>
-            {/* Panel: Establecimientos */}
-            {activePanel === "establecimientos" && (
-              <div>
-                <h3 style={{ color: "#007991", fontWeight: 700, marginBottom: 12 }}>Mis establecimientos</h3>
-                <ul>
-                  {establecimientos.map(est => (
-                    <li key={est.id} style={{
-                      background: "#fff",
-                      borderRadius: 10,
-                      boxShadow: "0 2px 8px #b2f7ef33",
-                      marginBottom: 18,
-                      padding: 18,
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 18
-                    }}>
-                      {est.imagen_url && (
-                        <img src={est.imagen_url} alt="Establecimiento" style={{ width: 90, height: 90, objectFit: "cover", borderRadius: 8 }} />
-                      )}
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, fontSize: 18, color: "#007991" }}>{est.nombre}</div>
-                        <div style={{ color: "#388e3c" }}>{est.direccion}</div>
-                        <div>Teléfono: <b>{est.telefono}</b></div>
-                        <div>Precio: <b>${est.precio}</b></div>
-                        <div>
-                          Canchas registradas: <b>{expandedEstId === est.id ? canchasConHorarios.length : "..."}</b>
-                        </div>
-                        <button
-                          style={{
-                            marginTop: 10,
-                            background: "#43e97b",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: 6,
-                            padding: "6px 18px",
-                            fontWeight: 600,
-                            cursor: "pointer"
-                          }}
-                          onClick={() => setExpandedEstId(expandedEstId === est.id ? null : est.id)}
-                        >
-                          {expandedEstId === est.id ? "Ocultar canchas" : "Ver canchas"}
-                        </button>
-                        {expandedEstId === est.id && (
-                          <ul style={{ marginTop: 14 }}>
-                            {canchasConHorarios.length > 0 ? (
-                              canchasConHorarios.map((cancha, idx) => (
-                                <li key={cancha.cancha_id || cancha.id} style={{ marginBottom: 18 }}>
-                                  <div style={{ fontWeight: 700, fontSize: 17, color: "#007991", marginBottom: 4 }}>
-                                    {getCanchaDisplayName(cancha, idx)}
-                                  </div>
-                                  {/* Horarios de la cancha agrupados por día */}
-                                  <div style={{ margin: "8px 0" }}>
-                                    <b style={{ color: "#388e3c" }}>Horarios:</b>
-                                    <HorariosPorDia horarios={cancha.horarios || []} cancha={cancha} />
-                                  </div>
-                                </li>
-                              ))
-                            ) : (
-                              <li style={{ color: "#888", marginTop: 10 }}>
-                                No hay canchas registradas para este establecimiento.
-                              </li>
-                            )}
-                          </ul>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {/* Panel: Agregar horarios */}
-            {activePanel === "agregar_horario" && (
-              <div
-                style={{
-                  maxWidth: 500,
-                  margin: "2rem auto",
-                  background: "linear-gradient(120deg, #e0f7fa 0%, #f7fff7 100%)",
-                  borderRadius: 16,
-                  boxShadow: "0 6px 24px #b2f7ef88",
-                  padding: "2.5rem 2rem",
-                  border: "2px solid #b2f7ef",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center"
-                }}
-              >
-                <h2 style={{
-                  color: "#007991",
-                  fontWeight: 800,
-                  marginBottom: 24,
-                  letterSpacing: 1
-                }}>
-                  Agregar horario a una cancha
-                </h2>
-                {/* Formulario individual */}
-                <form
-                  onSubmit={handleAgregarHorarioCancha}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 18
-                  }}
-                >
-                  <label style={{ fontWeight: 600, color: "#007991" }}>Establecimiento:</label>
-                  <select
-                    value={selectedEstForHorario?.id || ""}
-                    onChange={e => {
-                      const est = establecimientos.find(est => String(est.id) === e.target.value);
-                      setSelectedEstForHorario(est || null);
-                    }}
-                    required
-                    style={{
-                      border: "1.5px solid #43e97b",
-                      borderRadius: 8,
-                      padding: "10px",
-                      fontSize: 16,
-                      outline: "none"
-                    }}
-                  >
-                    <option value="">Selecciona un establecimiento</option>
-                    {establecimientos.map(est => (
-                      <option key={est.id} value={est.id}>{est.nombre}</option>
-                    ))}
-                  </select>
-                  <label style={{ fontWeight: 600, color: "#007991" }}>Cancha:</label>
-                  <select
-                    value={selectedCanchaForHorario?.cancha_id || selectedCanchaForHorario?.id || ""}
-                    onChange={e => {
-                      const cancha = canchasForHorario.find(
-                        c => String(c.cancha_id || c.id) === e.target.value
-                      );
-                      setSelectedCanchaForHorario(cancha || null);
-                    }}
-                    required
-                    disabled={!selectedEstForHorario}
-                    style={{
-                      border: "1.5px solid #43e97b",
-                      borderRadius: 8,
-                      padding: "10px",
-                      fontSize: 16,
-                      outline: "none"
-                    }}
-                  >
-                    <option value="">Selecciona una cancha</option>
-                    {canchasForHorario.map((cancha, idx) => (
-                      <option key={cancha.cancha_id || cancha.id} value={cancha.cancha_id || cancha.id}>
-                        {getCanchaDisplayName(cancha, idx)}
-                      </option>
-                    ))}
-                  </select>
-                  <label style={{ fontWeight: 600, color: "#007991" }}>Fecha:</label>
-                  <input
-                    type="date"
-                    value={horarioForm.fecha}
-                    min={minDate}
-                    onChange={e => setHorarioForm({ ...horarioForm, fecha: e.target.value })}
-                    required
-                    style={{
-                      border: "1.5px solid #43e97b",
-                      borderRadius: 8,
-                      padding: "10px",
-                      fontSize: 16,
-                      outline: "none"
-                    }}
-                  />
-                  <label style={{ fontWeight: 600, color: "#007991" }}>Hora inicio:</label>
-                  <input
-                    type="time"
-                    value={horarioForm.hora_inicio}
-                    min="09:00"
-                    max="22:00"
-                    onChange={e => {
-                      const value = e.target.value;
-                      if (value < "09:00") {
-                        Swal.fire("Horario inválido", "No se puede poner un horario antes de las 9:00 am.", "warning");
-                        return;
-                      }
-                      if (value > "22:00") {
-                        Swal.fire("Horario inválido", "No se puede poner un horario después de las 10:00 pm.", "warning");
-                        return;
-                      }
-                      setHorarioForm({ ...horarioForm, hora_inicio: value });
-                    }}
-                    required
-                    style={{
-                      border: "1.5px solid #43e97b",
-                      borderRadius: 8,
-                      padding: "10px",
-                      fontSize: 16,
-                      outline: "none"
-                    }}
-                  />
-                  <label style={{ fontWeight: 600, color: "#007991" }}>Hora fin :</label>
-                  <input
-                    type="time"
-                    value={calcularHoraFin(horarioForm.hora_inicio)}
-                    readOnly
-                    disabled
-                    style={{
-                      border: "1.5px solid #43e97b",
-                      borderRadius: 8,
-                      padding: "10px",
-                      fontSize: 16,
-                      outline: "none",
-                      background: "#f0f0f0"
-                    }}
-                  />
+  // Render principal
+  return (
+    <div className="manage-courts-bg" style={{ background: "linear-gradient(120deg, #e0f7fa 0%, #f7fff7 100%)" }}>
+      <div className="manage-courts-panel" style={{ display: "flex", minHeight: 600 }}>
+        {/* Menú lateral izquierdo */}
+        <div style={{
+          width: 220,
+          background: "#f7f7f7",
+          borderRight: "2px solid #b2f7ef",
+          padding: "2rem 1rem 2rem 1.5rem",
+          display: "flex",
+          flexDirection: "column",
+          gap: 18
+        }}>
+          <button
+            className="manage-menu-btn active"
+            style={{
+              background: "#43e97b",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              padding: "12px 18px",
+              fontWeight: 700,
+              fontSize: 16,
+              marginBottom: 8,
+              cursor: "pointer"
+            }}
+            disabled
+          >
+            🏢 Establecimientos
+          </button>
+        </div>
+        {/* Panel central */}
+        <div style={{ flex: 1, padding: "2rem" }}>
+          <h3 style={{ color: "#007991", fontWeight: 700, marginBottom: 12, fontSize: 26, letterSpacing: 1 }}>Mis establecimientos</h3>
+          <ul>
+            {establecimientos.map(est => (
+              <li key={est.id} style={{
+                background: "rgba(255,255,255,0.98)",
+                borderRadius: 16,
+                boxShadow: "0 4px 16px #b2f7ef44",
+                marginBottom: 28,
+                padding: 24,
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 24,
+                border: "2px solid #43e97b22"
+              }}>
+                {est.imagen_url && (
+                  <img src={est.imagen_url} alt="Establecimiento" style={{ width: 100, height: 100, objectFit: "cover", borderRadius: 12, border: "2px solid #43e97b" }} />
+                )}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 800, fontSize: 22, color: "#007991", marginBottom: 2 }}>{est.nombre}</div>
+                  <div style={{ color: "#388e3c", fontWeight: 600 }}>{est.direccion}</div>
+                  <div style={{ color: "#007991", fontWeight: 500, marginTop: 2 }}>Teléfono: <b>{est.telefono}</b></div>
+                  <div style={{ color: "#007991", fontWeight: 500 }}>Precio: <b>${est.precio}</b></div>
+                  <div style={{ color: "#007991", fontWeight: 500 }}>
+                    Canchas registradas: <b>{expandedEstId === est.id ? canchasConHorarios.length : "..."}</b>
+                  </div>
                   <button
-                    type="submit"
                     style={{
+                      marginTop: 14,
                       background: "#43e97b",
                       color: "#fff",
                       border: "none",
                       borderRadius: 8,
-                      padding: "6px 18px",
+                      padding: "8px 22px",
                       fontWeight: 700,
-                      cursor: "pointer"
+                      fontSize: 16,
+                      cursor: "pointer",
+                      boxShadow: "0 2px 8px #43e97b33",
+                      transition: "background 0.2s"
+                    }}
+                    onClick={() => {
+                      setExpandedEstId(expandedEstId === est.id ? null : est.id);
+                      setSelectedCancha(null);
+                      setSelectedDate(null);
                     }}
                   >
-                    Agregar horario
+                    {expandedEstId === est.id ? "Ocultar canchas" : "Ver canchas"}
                   </button>
-                </form>
-              </div>
-            )}
-            {activePanel === "horarios_batch" && (
-              <div
-                style={{
-                  maxWidth: 500,
-                  margin: "2rem auto",
-                  background: "linear-gradient(120deg, #e0f7fa 0%, #f7fff7 100%)",
-                  borderRadius: 16,
-                  boxShadow: "0 6px 24px #b2f7ef88",
-                  padding: "2.5rem 2rem",
-                  border: "2px solid #b2f7ef",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center"
-                }}
-              >
-                <h3 style={{ color: "#007991", fontWeight: 700, marginBottom: 10, fontSize: 20 }}>
-                  Crear horarios automáticos para un día
-                </h3>
-                <BatchHorariosForm
-                  establecimientos={establecimientos}
-                  minDate={minDate}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-
-    // Agrega esta función dentro del componente
-    function getCanchaDisplayName(cancha, idx) {
-      return cancha.nombre?.trim()
-        ? cancha.nombre
-        : `Cancha ${idx + 1}`;
-    }
-
-
-  }
-
-  // Elimina el componente AgregarHorarioForm, ya que el formulario de agregar horario ya está implementado en el panel "agregar_horario".
-  // No es necesario tener el componente AgregarHorarioForm en este flujo.
-  // Puedes borrar todo esto al final del archivo:
-
-  // Formulario inline para agregar horario a una cancha
-  // function AgregarHorarioForm({ onAgregar }) {
-  //   ...código del formulario...
-
-  function FetchFacturaInfo({ disponibilidadId }) {
-    const [factura, setFactura] = React.useState(null);
-    const [usuario, setUsuario] = React.useState(null);
-
-    React.useEffect(() => {
-      if (!disponibilidadId) return;
-      fetch(`/facturas/disponibilidad/${disponibilidadId}`)
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data && data.abono !== undefined && data.restante !== undefined) {
-            setFactura(data);
-            // Buscar usuario solo si hay user_id
-            if (data.user_id) {
-              // CORREGIDO: usa el endpoint correcto
-              fetch(`/auth/usuarios/${data.user_id}`)
-                .then(res => res.ok ? res.json() : null)
-                .then(userData => {
-                  if (userData && userData.nombre && userData.telefono) {
-                    setUsuario(userData);
-                  }
-                });
-            }
-          }
-        });
-    }, [disponibilidadId]);
-
-    if (!factura) return null;
-    return (
-      <span style={{
-        display: "block",
-        color: "#007991",
-        fontWeight: 600,
-        fontSize: 14,
-        marginTop: 2
-      }}>
-        <br />
-        {/* Mostrar datos del usuario si están disponibles */}
-        {usuario && (
-          <>
-            <span style={{ color: "#222" }}>
-              <b>Reservado por:</b> {usuario.nombre}
-              <br />
-              <b>Teléfono:</b> {usuario.telefono}
-              <br />
-            </span>
-          </>
-        )}
-        Abono: <span style={{ color: "#388e3c" }}>${factura.abono}</span>
-        <br />
-        Restante: <span style={{ color: "#d32f2f" }}>${factura.restante}</span>
-      </span>
-    );
-  }
-
-  // Agrega este componente al final del archivo
-  function BatchHorariosForm({ establecimientos, minDate }) {
-    const [selectedEst, setSelectedEst] = React.useState(null);
-    const [canchas, setCanchas] = React.useState([]);
-    const [selectedCancha, setSelectedCancha] = React.useState(null);
-    const [fecha, setFecha] = React.useState("");
-    const [horaInicio, setHoraInicio] = React.useState("09:00");
-    const [horaFin, setHoraFin] = React.useState("22:00");
-    const [intervalo, setIntervalo] = React.useState(60);
-    const [loading, setLoading] = React.useState(false);
-
-    // Cargar canchas cuando cambia el establecimiento seleccionado
-    React.useEffect(() => {
-      setSelectedCancha(null);
-      if (selectedEst) {
-        // Llama a la API para obtener canchas activas del establecimiento seleccionado
-        fetch(`/canchas?establecimiento_id=${selectedEst.id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        })
-          .then(res => res.json())
-          .then(data => {
-            setCanchas(Array.isArray(data) ? data : []);
-          });
-      } else {
-        setCanchas([]);
-      }
-    }, [selectedEst]);
-
-    const handleBatch = async (e) => {
-      e.preventDefault();
-      if (!selectedEst || !selectedCancha || !fecha || !horaInicio || !horaFin || !intervalo) {
-        Swal.fire("Faltan datos", "Completa todos los campos.", "warning");
-        return;
-      }
-      setLoading(true);
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch("/disponibilidades/batch", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            cancha_id: selectedCancha.cancha_id || selectedCancha.id,
-            fecha,
-            hora_inicio: horaInicio,
-            hora_fin: horaFin,
-            intervalo: parseInt(intervalo, 10)
-          }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          Swal.fire("Horarios generados", `Se crearon ${data.cantidad} horarios para la cancha.`, "success");
-          setFecha("");
-          setHoraInicio("09:00");
-          setHoraFin("22:00");
-          setIntervalo(60);
-        } else {
-          Swal.fire("Error", data.error || "No se pudieron crear los horarios", "error");
-        }
-      } catch {
-        Swal.fire("Error", "No se pudo conectar con el servidor", "error");
-      }
-      setLoading(false);
-    };
-
-    return (
-      <form onSubmit={handleBatch} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <label style={{ fontWeight: 600, color: "#007991" }}>Establecimiento:</label>
-        <select
-          value={selectedEst?.id || ""}
-          onChange={e => {
-            const est = establecimientos.find(est => String(est.id) === e.target.value);
-            setSelectedEst(est || null);
-          }}
-          required
-          style={{
-            border: "1.5px solid #43e97b",
-            borderRadius: 8,
-            padding: "10px",
-            fontSize: 16,
-            outline: "none"
-          }}
-        >
-          <option value="">Selecciona un establecimiento</option>
-          {establecimientos.map(est => (
-            <option key={est.id} value={est.id}>{est.nombre}</option>
-          ))}
-        </select>
-        <label style={{ fontWeight: 600, color: "#007991" }}>Cancha:</label>
-        <select
-          value={selectedCancha?.cancha_id || selectedCancha?.id || ""}
-          onChange={e => {
-            const cancha = canchas.find(
-              c => String(c.cancha_id || c.id) === e.target.value
-            );
-            setSelectedCancha(cancha || null);
-          }}
-          required
-          disabled={!selectedEst}
-          style={{
-            border: "1.5px solid #43e97b",
-            borderRadius: 8,
-            padding: "10px",
-            fontSize: 16,
-            outline: "none"
-          }}
-        >
-          <option value="">Selecciona una cancha</option>
-          {canchas.map((cancha, idx) => (
-            <option key={cancha.cancha_id || cancha.id} value={cancha.cancha_id || cancha.id}>
-              {cancha.nombre?.trim() ? cancha.nombre : `Cancha ${idx + 1}`}
-            </option>
-          ))}
-        </select>
-        <label style={{ fontWeight: 600, color: "#007991" }}>Fecha:</label>
-        <input
-          type="date"
-          value={fecha}
-          min={minDate}
-          onChange={e => setFecha(e.target.value)}
-          required
-          style={{
-            border: "1.5px solid #43e97b",
-            borderRadius: 8,
-            padding: "10px",
-            fontSize: 16,
-            outline: "none"
-          }}
-        />
-        <label style={{ fontWeight: 600, color: "#007991" }}>Hora inicio:</label>
-        <input
-          type="time"
-          value={horaInicio}
-          min="09:00"
-          max="22:00"
-          onChange={e => setHoraInicio(e.target.value)}
-          required
-          style={{
-            border: "1.5px solid #43e97b",
-            borderRadius: 8,
-            padding: "10px",
-            fontSize: 16,
-            outline: "none"
-          }}
-        />
-        <label style={{ fontWeight: 600, color: "#007991" }}>Hora fin:</label>
-        <input
-          type="time"
-          value={horaFin}
-          min="09:00"
-          max="23:00"
-          onChange={e => setHoraFin(e.target.value)}
-          required
-          style={{
-            border: "1.5px solid #43e97b",
-            borderRadius: 8,
-            padding: "10px",
-            fontSize: 16,
-            outline: "none"
-          }}
-        />
-        <label style={{ fontWeight: 600, color: "#007991" }}>Intervalo (minutos):</label>
-        <input
-          type="number"
-          value={intervalo}
-          min="15"
-          max="180"
-          step="15"
-          onChange={e => setIntervalo(e.target.value)}
-          required
-          style={{
-            border: "1.5px solid #43e97b",
-            borderRadius: 8,
-            padding: "10px",
-            fontSize: 16,
-            outline: "none"
-          }}
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            background: "#388e3c",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            padding: "10px 0",
-            fontWeight: 700,
-            fontSize: 16,
-            marginTop: 8,
-            cursor: loading ? "not-allowed" : "pointer"
-          }}
-        >
-          {loading ? "Generando..." : "Crear horarios automáticos"}
-        </button>
-      </form>
-    );
-  }
-
-  // Agrega este componente al final del archivo
-  function HorariosPorDia({ horarios, cancha }) {
-    const [selectedFecha, setSelectedFecha] = React.useState(null);
-    const [showHorarios, setShowHorarios] = React.useState(true);
-
-    // Agrupa horarios por fecha
-    const horariosPorFecha = {};
-    (horarios || []).forEach(h => {
-      const fecha = h.fecha?.split("T")[0] || h.fecha;
-      if (!horariosPorFecha[fecha]) horariosPorFecha[fecha] = [];
-      horariosPorFecha[fecha].push(h);
-    });
-    const fechas = Object.keys(horariosPorFecha).sort();
-    const fechaActiva = selectedFecha && fechas.includes(selectedFecha) ? selectedFecha : fechas[0];
-
-    return (
-      <div>
-        {fechas.length > 0 && (
-          <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-            {fechas.map(fecha => (
-              <button
-                key={fecha}
-                onClick={() => {
-                  if (fecha === fechaActiva) {
-                    setShowHorarios(h => !h);
-                  } else {
-                    setSelectedFecha(fecha);
-                    setShowHorarios(true);
-                  }
-                }}
-                style={{
-                  background: fechaActiva === fecha && showHorarios ? "#43e97b" : "#e0f7fa",
-                  color: fechaActiva === fecha && showHorarios ? "#fff" : "#007991",
-                  border: "none",
-                  borderRadius: 8,
-                  padding: "6px 14px",
-                  fontWeight: 700,
-                  fontSize: 15,
-                  cursor: "pointer",
-                  boxShadow: fechaActiva === fecha && showHorarios ? "0 2px 8px #43e97b33" : "none"
-                }}
-              >
-                {new Date(fecha + "T00:00:00").toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "short" })}
-              </button>
-            ))}
-          </div>
-        )}
-        {showHorarios && fechaActiva && (
-          <ul style={{ paddingLeft: 0, listStyle: "none", margin: 0 }}>
-            {horariosPorFecha[fechaActiva].map((h, idx) => (
-              <li key={h.id} style={{
-                background: h.disponible ? "#e6fbe6" : "#ffeaea",
-                border: `2px solid ${h.disponible ? "#43e97b" : "#d32f2f"}`,
-                borderRadius: 10,
-                padding: "10px 16px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                boxShadow: h.disponible ? "0 1px 4px #43e97b33" : "0 1px 4px #d32f2f22",
-                fontWeight: 600,
-                color: h.disponible ? "#388e3c" : "#d32f2f",
-                marginBottom: 10
-              }}>
-                <span>
-                  <b>Fecha:</b> <span style={{ color: "#222" }}>{h.fecha?.split("T")[0] || h.fecha}</span>
-                  {" | "}
-                  <b>Hora:</b> <span style={{ color: "#222" }}>{h.hora_inicio} - {h.hora_fin}</span>
-                </span>
-                {h.disponible ? (
-                  <span style={{
-                    color: "#388e3c",
-                    fontWeight: 800,
-                    fontSize: 15,
-                    marginLeft: 18
-                  }}>
-                    Disponible
-                    <button
-                      style={{
-                        marginLeft: 16,
-                        background: "#d32f2f",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 6,
-                        padding: "4px 12px",
-                        fontWeight: 600,
-                        cursor: "pointer"
-                      }}
-                      onClick={async () => {
-                        const ok = await Swal.fire({
-                          title: "¿Quitar este horario?",
-                          text: "Esta acción no se puede deshacer.",
-                          icon: "warning",
-                          showCancelButton: true,
-                          confirmButtonText: "Sí, quitar",
-                          cancelButtonText: "Cancelar"
-                        });
-                        if (!ok.isConfirmed) return;
-                        await fetch(`/disponibilidades/${h.id}`, {
-                          method: "DELETE",
-                          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-                        });
-                        // Quita el horario del estado local
-                        // Debes actualizar el estado en el padre si quieres que desaparezca sin recargar
-                        window.location.reload(); // O actualiza el estado correctamente
-                        Swal.fire("Horario eliminado", "", "success");
-                      }}
-                    >
-                      Quitar
-                    </button>
-                  </span>
-                ) : (
-                  <span style={{
-                    color: "#d32f2f",
-                    fontWeight: 800,
-                    fontSize: 15,
-                    marginLeft: 18,
-                    textAlign: "right"
-                  }}>
-                    Reservado
-                    <FetchFacturaInfo disponibilidadId={h.id} />
-                  </span>
-                )}
+                  {expandedEstId === est.id && (
+                    <ul style={{ marginTop: 18 }}>
+                      {canchasConHorarios.length > 0 ? (
+                        canchasConHorarios.map((cancha, idx) => (
+                          <li key={cancha.cancha_id || cancha.id} style={{ marginBottom: 28 }}>
+                            <div style={{ fontWeight: 700, fontSize: 19, color: "#007991", marginBottom: 6 }}>
+                              {cancha.nombre?.trim() ? cancha.nombre : `Cancha ${idx + 1}`}
+                            </div>
+                            <button
+                              style={{
+                                background: selectedCancha?.cancha_id === cancha.cancha_id ? "#388e3c" : "#e0f7fa",
+                                color: selectedCancha?.cancha_id === cancha.cancha_id ? "#fff" : "#007991",
+                                border: "none",
+                                borderRadius: 8,
+                                padding: "7px 18px",
+                                fontWeight: 700,
+                                fontSize: 15,
+                                cursor: "pointer",
+                                marginBottom: 12,
+                                boxShadow: selectedCancha?.cancha_id === cancha.cancha_id ? "0 2px 8px #43e97b33" : "none",
+                                transition: "background 0.2s"
+                              }}
+                              onClick={() => {
+                                setSelectedCancha(cancha);
+                                setSelectedDate(null);
+                              }}
+                            >
+                              {selectedCancha?.cancha_id === cancha.cancha_id ? "Ocultar horarios" : "Ver horarios"}
+                            </button>
+                            {/* Calendario visual */}
+                            {selectedCancha?.cancha_id === cancha.cancha_id && (
+                              <div style={{
+                                marginTop: 18,
+                                marginLeft:"-130px",
+                                background: "#f7fff7",
+                                borderRadius: 20,
+                                boxShadow: "0 6px 32px #43e97b33, 0 1.5px 8px #00799122",
+                                padding: "28px 32px 38px 32px",
+                                border: "3px solid #43e97b55",
+                                width: "100%",
+                                minWidth: 800,
+                                maxWidth: "none",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center"
+                              }}>
+                                <div style={{ fontWeight: 700, color: "#007991", fontSize: 19, marginBottom: 16, textAlign: "center", width: "100%", letterSpacing: 0.5 }}>
+                                  Selecciona un día para ver los horarios
+                                </div>
+                                <div style={{
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  width: "100%"
+                                }}>
+                                  <div style={{
+                                    minWidth: 420,
+                                    maxWidth: 520,
+                                    background: "#fff",
+                                    borderRadius: 18,
+                                    boxShadow: "0 2px 16px #43e97b22",
+                                    padding: "18px 16px 12px 16px",
+                                    border: "2.5px solid #43e97b33"
+                                  }}>
+                                    <Calendar
+                                      locale="es-CO"
+                                      tileClassName={({ date }) => {
+                                        const fechaStr = date.toISOString().slice(0, 10);
+                                        if (selectedDate && fechaStr === selectedDate) return "calendar-selected";
+                                        if (fechasConHorarios.includes(fechaStr)) return "calendar-has-horario";
+                                        return "";
+                                      }}
+                                      onClickDay={date => {
+                                        const fechaStr = date.toISOString().slice(0, 10);
+                                        setSelectedDate(fechaStr);
+                                      }}
+                                      value={selectedDate ? new Date(selectedDate) : null}
+                                      prevLabel="‹"
+                                      nextLabel="›"
+                                      prev2Label="«"
+                                      next2Label="»"
+                                      tileContent={({ date, view }) => {
+                                        const fechaStr = date.toISOString().slice(0, 10);
+                                        if (fechasConHorarios.includes(fechaStr)) {
+                                          return <div style={{
+                                            width: 10,
+                                            height: 10,
+                                            background: "#43e97b",
+                                            border: "2px solid #388e3c",
+                                            borderRadius: "50%",
+                                            margin: "0 auto",
+                                            marginTop: 2,
+                                            boxShadow: "0 0 6px #43e97b99"
+                                          }} />;
+                                        }
+                                        return null;
+                                      }}
+                                      tileDisabled={({ date, view }) => {
+                                        const today = new Date();
+                                        today.setHours(0,0,0,0);
+                                        return date < today;
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                                {/* Horarios debajo del calendario */}
+                                {selectedDate && horariosPorFecha[selectedDate] && (
+                                  <div style={{
+                                    background: "#fff",
+                                    border: "2px solid #43e97b22",
+                                    borderRadius: 12,
+                                    padding: "16px 18px",
+                                    marginTop: 24,
+                                    boxShadow: "0 2px 8px #43e97b22",
+                                    width: "100%",
+                                    maxWidth: 650, // antes 420, ahora más ancho
+                                    minWidth: 0,
+                                    marginLeft: "auto",
+                                    marginRight: "auto",
+                                    boxSizing: "border-box",
+                                    display: "block"
+                                  }}>
+                                    <div style={{ fontWeight: 700, color: "#007991", marginBottom: 8, fontSize: 16, textAlign: "center" }}>
+                                      Horarios para {new Date(selectedDate + "T00:00:00").toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "short" })}
+                                    </div>
+                                    <ul style={{ paddingLeft: 0, listStyle: "none", margin: 0, width: "100%" }}>
+                                      {horariosPorFecha[selectedDate] && horariosPorFecha[selectedDate].length > 0 ? (
+                                        horariosPorFecha[selectedDate].map((h, idx) => (
+                                          <li key={h.id} style={{
+                                            background: h.disponible
+                                              ? "#e6fbe6"
+                                              : h.pago_completado
+                                                ? "#e0f7fa"
+                                                : "#ffeaea",
+                                            border: `2px solid ${
+                                              h.disponible
+                                                ? "#43e97b"
+                                                : h.pago_completado
+                                                  ? "#388e3c"
+                                                  : "#d32f2f"
+                                            }`,
+                                            borderRadius: 10,
+                                            padding: "14px 18px",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "space-between",
+                                            boxShadow: h.disponible
+                                              ? "0 1px 4px #43e97b33"
+                                              : h.pago_completado
+                                                ? "0 1px 4px #388e3c33"
+                                                : "0 1px 4px #d32f2f22",
+                                            fontWeight: 700,
+                                            color: h.disponible
+                                              ? "#388e3c"
+                                              : h.pago_completado
+                                                ? "#388e3c"
+                                                : "#d32f2f",
+                                            marginBottom: 14,
+                                            fontSize: 16,
+                                            width: "100%"
+                                          }}>
+                                            <span>
+                                              <b>Hora:</b> <span style={{ color: "#222" }}>{h.hora_inicio} - {h.hora_fin}</span>
+                                            </span>
+                                            {h.disponible ? (
+                                              <button
+                                                style={{
+                                                  marginLeft: 16,
+                                                  background: "#d32f2f",
+                                                  color: "#fff",
+                                                  border: "none",
+                                                  borderRadius: 6,
+                                                  padding: "8px 24px",
+                                                  fontWeight: 700,
+                                                  fontSize: 16,
+                                                  cursor: "pointer"
+                                                }}
+                                                onClick={async () => {
+                                                  const ok = await Swal.fire({
+                                                    title: "¿Quitar este horario?",
+                                                    text: "Esta acción no se puede deshacer.",
+                                                    icon: "warning",
+                                                    showCancelButton: true,
+                                                    confirmButtonText: "Sí, quitar",
+                                                    cancelButtonText: "Cancelar"
+                                                  });
+                                                  if (!ok.isConfirmed) return;
+                                                  await fetch(`/disponibilidades/${h.id}`, {
+                                                    method: "DELETE",
+                                                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+                                                  });
+                                                  window.location.reload();
+                                                  Swal.fire("Horario eliminado", "", "success");
+                                                }}
+                                              >
+                                                Quitar
+                                              </button>
+                                            ) : (
+                                              h.pago_completado ? (
+                                                <span style={{
+                                                  color: "#388e3c",
+                                                  fontWeight: 800,
+                                                  fontSize: 17,
+                                                  marginLeft: 18,
+                                                  textAlign: "right"
+                                                }}>
+                                                  Pago completado
+                                                </span>
+                                              ) : (
+                                                <span style={{
+                                                  color: "#d32f2f",
+                                                  fontWeight: 800,
+                                                  fontSize: 15,
+                                                  marginLeft: 18,
+                                                  textAlign: "right",
+                                                  display: "flex",
+                                                  flexDirection: "column",
+                                                  alignItems: "flex-end"
+                                                }}>
+                                                  <span>Reservado</span>
+                                                  <span style={{ fontWeight: 600, fontSize: 14 }}>
+                                                    <b>Abonó:</b> {h.nombre_abonador || "N/A"}
+                                                  </span>
+                                                  <span style={{ fontWeight: 600, fontSize: 14 }}>
+                                                    <b>Tel:</b> {h.telefono_abonador || "N/A"}
+                                                  </span>
+                                                  <span style={{ fontWeight: 600, fontSize: 14 }}>
+                                                    <b>Abono:</b> ${h.abono || 0}
+                                                  </span>
+                                                  <span style={{ fontWeight: 600, fontSize: 14 }}>
+                                                    <b>Restante:</b> ${h.restante || 0}
+                                                  </span>
+                                                  <span style={{
+                                                    color: "#d32f2f",
+                                                    fontWeight: 800,
+                                                    fontSize: 14,
+                                                    marginTop: 2
+                                                  }}>
+                                                    Pago pendiente
+                                                  </span>
+                                                </span>
+                                              )
+                                            )}
+                                          </li>
+                                        ))
+                                      ) : (
+                                        <li style={{ color: "#888", textAlign: "center", padding: "12px 0" }}>
+                                          No hay horarios para este día.
+                                        </li>
+                                      )}
+                                    </ul>
+                                  </div>
+                                )}
+                                <style>
+                                  {`
+                                    .calendar-has-horario {
+                                      background: linear-gradient(120deg, #43e97b 60%, #38f9d7 100%) !important;
+                                      color: #fff !important;
+                                      border-radius: 12px !important;
+                                      font-weight: 700 !important;
+                                      box-shadow: 0 2px 8px #43e97b55;
+                                      border: 2px solid #388e3c !important;
+                                    }
+                                    .calendar-selected {
+                                      background: linear-gradient(120deg, #388e3c 60%, #43e97b 100%) !important;
+                                      color: #fff !important;
+                                      border-radius: 14px !important;
+                                      font-weight: 900 !important;
+                                      border: 2.5px solid #007991 !important;
+                                      box-shadow: 0 4px 16px #388e3c55;
+                                    }
+                                    .react-calendar {
+                                      border: none !important;
+                                      font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+                                      margin: 0;
+                                      font-size: 1.18rem;
+                                      background: transparent;
+                                    }
+                                    .react-calendar__tile {
+                                      min-height: 48px !important;
+                                      min-width: 48px !important;
+                                      font-size: 1.08rem;
+                                      border-radius: 10px !important;
+                                      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+                                    }
+                                    /* Elimina el color de fondo del tile activo para que solo el seleccionado tenga color */
+                                    .react-calendar__tile--active {
+                                      background: none !important;
+                                      color: inherit !important;
+                                      /* NO poner color ni background aquí */
+                                    }
+                                    .react-calendar__tile:enabled:hover, .react-calendar__tile:enabled:focus {
+                                      background: linear-gradient(120deg, #38f9d7 60%, #43e97b 100%) !important;
+                                      color: #007991 !important;
+                                      border-radius: 13px !important;
+                                      font-weight: 800 !important;
+                                      box-shadow: 0 2px 8px #43e97b33;
+                                    }
+                                    .react-calendar__navigation button {
+                                      color: #007991 !important;
+                                      font-weight: 800;
+                                      font-size: 1.3rem;
+                                      border-radius: 8px;
+                                      margin: 0 2px;
+                                      transition: background 0.15s;
+                                    }
+                                    .react-calendar__navigation button:enabled:hover, .react-calendar__navigation button:enabled:focus {
+                                      background: #e0f7fa !important;
+                                    }
+                                    .react-calendar__month-view__weekdays {
+                                      font-weight: 800;
+                                      color: #007991;
+                                      font-size: 1.1rem;
+                                      letter-spacing: 0.5px;
+                                    }
+                                    .react-calendar__tile--now {
+                                      background: #e0f7fa !important;
+                                      color: #007991 !important;
+                                      border-radius: 10px !important;
+                                      font-weight: 700 !important;
+                                      border: 1.5px solid #43e97b !important;
+                                    }
+                                    .react-calendar__tile--range {
+                                      background: none !important;
+                                    }
+                                    .react-calendar__tile--rangeStart,
+                                    .react-calendar__tile--rangeEnd {
+                                      background: none !important;
+                                    }
+                                  `}
+                                </style>
+                              </div>
+                            )}
+                          </li>
+                        ))
+                      ) : (
+                        <li style={{ color: "#888", marginTop: 10 }}>
+                          No hay canchas registradas para este establecimiento.
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
-        )}
+        </div>
       </div>
-    );
-  }
+    </div>
+  );
+}

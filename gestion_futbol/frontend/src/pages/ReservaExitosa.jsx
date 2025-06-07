@@ -1,6 +1,5 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
 
 export default function ReservaExitosa() {
   const location = useLocation();
@@ -13,33 +12,21 @@ export default function ReservaExitosa() {
     return null;
   }
 
-  // Guardar factura en localStorage hasta la hora de fin o por 1 hora si no hay fecha/hora
+  // Guardar factura en localStorage hasta la hora de fin o por 30 minutos si no hay fecha/hora
   React.useEffect(() => {
     if (factura_url) {
       let finReserva;
       if (fecha && hora_fin) {
         finReserva = new Date(`${fecha}T${hora_fin}`).getTime();
       } else {
+        // Si no hay fecha/hora, expira en 30 minutos
         finReserva = Date.now() + 1000 * 60 * 60;
       }
-      // Obtener userId del token
-      let userId = null;
-      try {
-        const token = localStorage.getItem("token");
-        if (token) {
-          const base64Url = token.split(".")[1];
-          let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-          while (base64.length % 4) base64 += "=";
-          const payload = JSON.parse(atob(base64));
-          userId = payload.userId;
-        }
-      } catch {}
       localStorage.setItem(
         "facturaPendiente",
         JSON.stringify({
           factura_url,
-          finReserva,
-          userId
+          finReserva
         })
       );
     }
@@ -67,14 +54,42 @@ export default function ReservaExitosa() {
           <div><b>Abono pagado:</b> ${abono}</div>
           <div><b>Restante por pagar:</b> ${restante}</div>
         </div>
-        {/* Quitar enlace de descarga de factura, solo mostrar mensaje */}
         <div style={{
           margin: "18px 0",
-          color: "#007991",
-          fontWeight: 700,
-          fontSize: 17
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center"
         }}>
-          Puedes verificar tu factura en el correo electrónico registrado.
+          <a
+            href={factura_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "inline-block",
+              background: "linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)",
+              color: "#fff",
+              fontWeight: "bold",
+              textDecoration: "none",
+              fontSize: "1.1rem",
+              padding: "12px 28px",
+              borderRadius: 8,
+              boxShadow: "0 2px 8px #43e97b44",
+              transition: "background 0.2s, color 0.2s",
+              marginBottom: 8
+            }}
+            onMouseOver={e => e.currentTarget.style.background = "linear-gradient(90deg, #38f9d7 0%, #43e97b 100%)"}
+            onMouseOut={e => e.currentTarget.style.background = "linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)"}
+          >
+            <span role="img" aria-label="pdf" style={{ marginRight: 8 }}>📄</span>
+            Descargar factura PDF
+          </a>
+          <span style={{
+            color: "#888",
+            fontSize: 13,
+            marginTop: 2
+          }}>
+            (Haz clic para abrir o guardar tu comprobante)
+          </span>
         </div>
         <button
           style={{
