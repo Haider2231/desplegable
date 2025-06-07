@@ -26,7 +26,6 @@ import MisEstablecimientos from "./pages/MisEstablecimientos";
 import MisReservas from "./pages/MisReservas";
 import { useLocation } from "react-router-dom";
 
-import MisReservas from "./pages/MisReservas";
 import ManualUsuario from "./pages/ManualUsuario";
 
 function App() {
