@@ -18,8 +18,8 @@ api.interceptors.request.use((config) => {
 export const login = (email, password) =>
   api.post("/auth/login", { email, password }).then((res) => res.data);
 
-export const register = ({ nombre, email, password, rol = "usuario", telefono }) =>
-  api.post("/auth/usuarios", { nombre, email, password, rol, telefono }).then((res) => res.data);
+export const register = ({ nombre, email, password, rol = "usuario" }) =>
+  api.post("/auth/register", { nombre, email, password, rol }).then((res) => res.data);
 
 export const verify = (email, codigo) =>
   api.post("/auth/verificar", { email, codigo }).then((res) => res.data);
@@ -63,12 +63,24 @@ export const updateUsuario = (id, data) =>
   api.put(`/auth/usuarios/${id}`, data).then((res) => res.data);
 
 export const createUsuario = (data) =>
-  api.post("/auth/usuarios/admin", data).then((res) => res.data);
+  api.post("/auth/usuarios", data).then((res) => res.data);
 
+// Obtener todos los establecimientos
 export const getEstablecimientos = () =>
   api.get("/establecimientos").then((res) => res.data);
 
+// Obtener todos los propietarios (usuarios con rol propietario, solo admin)
 export const getPropietarios = () =>
-  api.get("/auth/usuarios/propietarios").then((res) => res.data);
+ api.get("/auth/usuarios/propietarios").then((res) => res.data);
+
+export const pagarSaldoReserva = (reserva_id) =>
+  api.post(`/reservas/${reserva_id}/pagar-saldo`).then((res) => res.data);
+
+export const cancelarReserva = (reserva_id) =>
+  api.post(`/reservas/${reserva_id}/cancelar`).then((res) => res.data);
+
+// Obtener reservas del usuario autenticado (token)
+export const getReservasByUsuario = () =>
+  api.get("/reservas/mis-reservas").then((res) => res.data);
 
 // ...agrega más métodos según tus endpoints...
