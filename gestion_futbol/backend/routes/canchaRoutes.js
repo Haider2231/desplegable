@@ -29,7 +29,7 @@ router.post(
   verificarToken,
   verificarRol(["propietario", "admin"]),
   // Acepta hasta 5 imágenes y 5 documentos (puedes ajustar el límite)
-  require("multer")({ storage }).fields([
+  upload.fields([
     { name: "imagenes", maxCount: 5 },
     { name: "documentos", maxCount: 5 }
   ]),

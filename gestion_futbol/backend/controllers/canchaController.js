@@ -53,22 +53,25 @@ exports.createCancha = async (req, res) => {
     const cancha = result.rows[0];
 
     // Guardar imágenes si existen
-    if (req.files && req.files.length > 0) {
-      for (let i = 0; i < req.files.length; i++) {
-        const archivo = req.files[i];
+    if (req.files && req.files.imagenes && req.files.imagenes.length > 0) {
+      for (let i = 0; i < req.files.imagenes.length; i++) {
+        const archivo = req.files.imagenes[i];
         const url = `/uploads/${archivo.filename}`;
-        // Si es imagen, guarda en cancha_imagenes, si es documento, en documentos_cancha
-        if (archivo.mimetype.startsWith("image/")) {
-          await pool.query(
-            `INSERT INTO cancha_imagenes (cancha_id, url, orden) VALUES ($1, $2, $3)`,
-            [cancha.cancha_id || cancha.id, url, i]
-          );
-        } else {
-          await pool.query(
-            `INSERT INTO documentos_cancha (cancha_id, url, tipo) VALUES ($1, $2, $3)`,
-            [cancha.cancha_id || cancha.id, url, archivo.mimetype]
-          );
-        }
+        await pool.query(
+          `INSERT INTO cancha_imagenes (cancha_id, url, orden) VALUES ($1, $2, $3)`,
+          [cancha.cancha_id || cancha.id, url, i]
+        );
+      }
+    }
+    // Guardar documentos si existen
+    if (req.files && req.files.documentos && req.files.documentos.length > 0) {
+      for (let i = 0; i < req.files.documentos.length; i++) {
+        const archivo = req.files.documentos[i];
+        const url = `/uploads/${archivo.filename}`;
+        await pool.query(
+          `INSERT INTO documentos_cancha (cancha_id, url, tipo) VALUES ($1, $2, $3)`,
+          [cancha.cancha_id || cancha.id, url, archivo.mimetype]
+        );
       }
     }
     // Si usas campos separados (imagenes/documentos), también procesa req.body.documentos si es necesario
