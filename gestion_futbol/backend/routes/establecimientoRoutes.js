@@ -12,13 +12,14 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => cb(null, Date.now() + "-" + Math.round(Math.random() * 1E9) + path.extname(file.originalname))
 });
 const upload = multer({ storage });
-// POST: Crear establecimiento (soporta imagenES y documentos)
+
+// POST: Crear establecimiento (soporta varias imágenes y documentos)
 router.post(
   "/",
   verificarToken,
   verificarRol(["usuario", "propietario", "admin"]),
   upload.fields([
-    { name: "imagenes", maxCount: 10 }, // Permite hasta 10 imágenes
+    { name: "imagen", maxCount: 10 }, // Permite hasta 10 imágenes
     { name: "documentos", maxCount: 10 }
   ]),
   establecimientoController.createEstablecimiento
@@ -37,7 +38,7 @@ router.get("/documentos/:establecimiento_id", async (req, res) => {
       ...doc,
       url: doc.url.startsWith("http")
         ? doc.url
-        : `${process.env.BACKEND_URL || "https://canchassinteticas.site"}${doc.url}`
+        : `${process.env.BACKEND_URL || "http://localhost:5000"}${doc.url}`
     }));
     res.json(docs);
   } catch (err) {
@@ -52,11 +53,15 @@ router.get("/pendientes", verificarToken, verificarRol(["validador"]), async (re
     const result = await pool.query(
       "SELECT * FROM establecimientos WHERE estado = 'pendiente'"
     );
+    // Para depuración, imprime los resultados
+    // console.log("Pendientes para validar:", result.rows);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: "Error al obtener establecimientos pendientes" });
   }
 });
+
+const { aprobarEstablecimientoYGenerarHorarios } = require("../controllers/establecimientoController");
 
 // POST: Validar establecimiento (validador)
 router.post("/:establecimiento_id/validar", verificarToken, verificarRol(["validador"]), async (req, res) => {
@@ -65,10 +70,7 @@ router.post("/:establecimiento_id/validar", verificarToken, verificarRol(["valid
   const { aprobar, motivo } = req.body;
   try {
     if (aprobar) {
-      await pool.query(
-        "UPDATE establecimientos SET estado = 'activo', motivo_rechazo = NULL WHERE id = $1",
-        [establecimiento_id]
-      );
+      await aprobarEstablecimientoYGenerarHorarios(establecimiento_id);
       // Cambia el rol del usuario a propietario
       const est = await pool.query("SELECT dueno_id, nombre FROM establecimientos WHERE id = $1", [establecimiento_id]);
       if (est.rows.length > 0) {
@@ -135,16 +137,15 @@ router.post("/:establecimiento_id/validar", verificarToken, verificarRol(["valid
 
 // POST: Reenviar solicitud de establecimiento (actualiza datos y documentos, pone estado en 'pendiente')
 router.post("/:establecimiento_id/reenviar", verificarToken, upload.fields([
-  { name: "imagenes", maxCount: 10 },
+  { name: "imagen", maxCount: 1 },
   { name: "documentos", maxCount: 10 }
 ]), async (req, res) => {
   const pool = require("../db");
   const { establecimiento_id } = req.params;
   try {
     let imagen_url = null;
-    // Cambia a imagenes (plural)
-    if (req.files && req.files.imagenes && req.files.imagenes.length > 0) {
-      imagen_url = `/uploads/${req.files.imagenes[0].filename}`;
+    if (req.files && req.files.imagen && req.files.imagen[0]) {
+      imagen_url = `/uploads/${req.files.imagen[0].filename}`;
     }
     await pool.query(
       `UPDATE establecimientos SET

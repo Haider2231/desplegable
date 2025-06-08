@@ -18,8 +18,8 @@ api.interceptors.request.use((config) => {
 export const login = (email, password) =>
   api.post("/auth/login", { email, password }).then((res) => res.data);
 
-export const register = ({ nombre, email, password, rol = "usuario" }) =>
-  api.post("/auth/register", { nombre, email, password, rol }).then((res) => res.data);
+export const register = ({ nombre, email, password, rol = "usuario" ,telefono}) =>
+  api.post("/auth/usuarios", { nombre, email, password, rol,telefono }).then((res) => res.data);
 
 export const verify = (email, codigo) =>
   api.post("/auth/verificar", { email, codigo }).then((res) => res.data);
@@ -63,10 +63,10 @@ export const updateUsuario = (id, data) =>
   api.put(`/auth/usuarios/${id}`, data).then((res) => res.data);
 
 export const createUsuario = (data) =>
-  api.post("/auth/usuarios", data).then((res) => res.data);
+  api.post("/auth/usuarios/admin", data).then((res) => res.data);
 
-// Obtener todos los establecimientos
 export const getEstablecimientos = () =>
+  // Obtener todos los establecimientos
   api.get("/establecimientos").then((res) => res.data);
 
 // Obtener todos los propietarios (usuarios con rol propietario, solo admin)

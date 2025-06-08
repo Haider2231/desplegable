@@ -18,8 +18,8 @@ exports.createEstablecimiento = async (req, res) => {
     const cantidad_canchas = parseInt(req.body.cantidad_canchas, 10) || 0;
     // Cambia para soportar varias imágenes
     let imagenes_urls = [];
-    if (req.files && req.files.imagenes && req.files.imagenes.length > 0) {
-      imagenes_urls = req.files.imagenes.map(f => `/uploads/${f.filename}`);
+    if (req.files && req.files.imagen && req.files.imagen.length > 0) {
+      imagenes_urls = req.files.imagen.map(f => `/uploads/${f.filename}`);
     }
     // Para compatibilidad, la primera imagen será la principal
     let imagen_url = imagenes_urls.length > 0 ? imagenes_urls[0] : null;

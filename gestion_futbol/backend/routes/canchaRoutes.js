@@ -4,13 +4,6 @@ const canchaController = require("../controllers/canchaController");
 const { verificarToken, verificarRol } = require("../middlewares/authMiddleware");
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
-
-// Asegúrate de que la carpeta uploads existe
-const uploadsDir = path.join(__dirname, "../uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
@@ -22,14 +15,12 @@ const upload = multer({ storage });
 router.get("/", canchaController.getCanchas);
 
 // POST /canchas (solo establecimiento_id)
-
-// POST /canchas (solo establecimiento_id)
 router.post(
   "/",
   verificarToken,
   verificarRol(["propietario", "admin"]),
   // Acepta hasta 5 imágenes y 5 documentos (puedes ajustar el límite)
-  upload.fields([
+  require("multer")({ storage }).fields([
     { name: "imagenes", maxCount: 5 },
     { name: "documentos", maxCount: 5 }
   ]),
@@ -62,6 +53,5 @@ router.get("/pendientes", verificarToken, verificarRol(["validador"]), canchaCon
 
 // POST: Validar cancha (validador)
 router.post("/:cancha_id/validar", verificarToken, verificarRol(["validador"]), canchaController.validarCancha);
-
 
 module.exports = router;

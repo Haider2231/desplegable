@@ -5,14 +5,13 @@ const disponibilidadController = require("../controllers/disponibilidadControlle
 // POST: agregar disponibilidad
 router.post("/", disponibilidadController.addDisponibilidad);
 
-// GET: obtener disponibilidades por cancha
-router.get("/cancha/:cancha_id", disponibilidadController.getDisponibilidadesByCancha);
-
 // POST: agregar disponibilidades en batch
 router.post("/batch", disponibilidadController.addDisponibilidadesBatch);
 
+// GET: obtener disponibilidades por cancha
+router.get("/cancha/:cancha_id", disponibilidadController.getDisponibilidadesByCancha);
 
 // DELETE: eliminar disponibilidad por ID
-router.delete("/:id", disponibilidadController.deleteDisponibilidad);   
+router.delete("/:id", disponibilidadController.deleteDisponibilidad);
 
 module.exports = router;
