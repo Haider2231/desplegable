@@ -38,6 +38,11 @@ app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, "..", "frontend", "dist", "index.html"));
 });
 
+app.use((err, req, res, next) => {
+  console.error("Error no capturado:", err.stack || err);
+  res.status(500).json({ error: "Error interno del servidor", detalle: err.message });
+});
+
 console.log("Conectando a la base de datos...");
 
 app.listen(PORT, () => {
