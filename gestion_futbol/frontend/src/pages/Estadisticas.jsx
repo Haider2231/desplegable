@@ -222,6 +222,15 @@ export default function Estadisticas({ rol: propRol }) {
     doc.save("estadisticas.pdf");
   };
 
+  // Utilidad para formatear hora (ej: "08:00" -> "8 AM")
+  const formatHour = (hora) => {
+    if (!hora) return "";
+    const [h, m] = hora.split(":").map(Number);
+    const ampm = h < 12 ? "AM" : "PM";
+    const hour12 = h % 12 === 0 ? 12 : h % 12;
+    return `${hour12}${m ? ":" + String(m).padStart(2, "0") : ""} ${ampm}`;
+  };
+
   if (loading)
     return (
       <div style={{ textAlign: "center", margin: 24 }}>
@@ -380,6 +389,46 @@ export default function Estadisticas({ rol: propRol }) {
       );
     }
 
+    // --- NUEVO: Calcular reservas por hora ---
+    // Suponemos que data.reservas_por_hora es un array [{ hora: "08:00", reservas: 3 }, ...]
+    // Si no existe, lo calculamos a partir de reservas_detalle de todas las canchas
+    let reservasPorHora = [];
+    if (data.reservas_por_hora && Array.isArray(data.reservas_por_hora)) {
+      reservasPorHora = data.reservas_por_hora;
+    } else if (Array.isArray(data.canchas)) {
+      // Junta todas las reservas_detalle de todas las canchas
+      const horasMap = {};
+      data.canchas.forEach((c) => {
+        let reservasDetalle = [];
+        if (Array.isArray(c.reservas_detalle)) reservasDetalle = c.reservas_detalle;
+        else if (typeof c.reservas_detalle === "string") {
+          try { reservasDetalle = JSON.parse(c.reservas_detalle); } catch {}
+        }
+        reservasDetalle.forEach((r) => {
+          const hora = r.hora_inicio ? r.hora_inicio.slice(0, 5) : null;
+          if (hora) horasMap[hora] = (horasMap[hora] || 0) + 1;
+        });
+      });
+      // --- Rellenar de 08:00 a 21:00 ---
+      const horasRango = [];
+      for (let h = 8; h <= 21; h++) {
+        horasRango.push(`${String(h).padStart(2, "0")}:00`);
+      }
+      reservasPorHora = horasRango.map(hora => ({
+        hora,
+        reservas: horasMap[hora] || 0
+      }));
+    }
+
+    // --- NUEVO: Hora más concurrida ---
+    let horaMasConcurrida = "";
+    let maxReservas = 0;
+    if (reservasPorHora.length > 0) {
+      const max = reservasPorHora.reduce((acc, cur) => cur.reservas > acc.reservas ? cur : acc, reservasPorHora[0]);
+      horaMasConcurrida = max.hora;
+      maxReservas = max.reservas;
+    }
+
     return (
       <div className="estadisticas-fullwidth-bg">
         <div>
@@ -404,13 +453,41 @@ export default function Estadisticas({ rol: propRol }) {
           >
             Descargar PDF
           </button>
+          {/* NUEVO: Estadística de hora más concurrida */}
+          <div style={{ marginBottom: 18, fontSize: 17, color: "#007991", fontWeight: 600 }}>
+            {horaMasConcurrida
+              ? <>Hora más concurrida: <b>{formatHour(horaMasConcurrida)}</b> ({maxReservas} reservas)</>
+              : "No hay datos de horarios más concurridos."}
+          </div>
+          {/* NUEVO: Gráfico de reservas por hora */}
+          {reservasPorHora.length > 0 && (
+            <div style={{ width: "100%", maxWidth: 700, margin: "0 auto 24px auto", background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px #43e97b22", padding: 10 }}>
+              <Bar
+                data={{
+                  labels: reservasPorHora.map(r => formatHour(r.hora)),
+                  datasets: [{
+                    label: "Reservas por hora",
+                    data: reservasPorHora.map(r => r.reservas),
+                    backgroundColor: "#007991"
+                  }]
+                }}
+                options={{
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: true } },
+                  responsive: true,
+                  maintainAspectRatio: false,
+                }}
+                height={180}
+              />
+            </div>
+          )}
           <div
             style={{
               display: "flex",
               flexDirection: "row",
               flexWrap: "wrap",
               gap: 32,
-              justifyContent: "flex-start", // <-- pegado a la izquierda
+              justifyContent: "flex-start",
               alignItems: "flex-start",
               width: "100%",
               boxSizing: "border-box",
@@ -631,6 +708,31 @@ export default function Estadisticas({ rol: propRol }) {
     );
   }
   if (rol === "admin") {
+    // --- Calcular cancha más reservada y gráfico de reservas por cancha ---
+    let canchaMasReservada = "";
+    let maxReservas = 0;
+    let reservasPorCancha = [];
+
+    if (data.reservas_por_cancha && Array.isArray(data.reservas_por_cancha)) {
+      reservasPorCancha = data.reservas_por_cancha;
+    } else if (Array.isArray(data.reservas)) {
+      // Fallback: calcula reservasPorCancha a partir de data.reservas si existe
+      const canchaMap = {};
+      data.reservas.forEach(r => {
+        if (!canchaMap[r.cancha_nombre]) canchaMap[r.cancha_nombre] = 0;
+        canchaMap[r.cancha_nombre]++;
+      });
+      reservasPorCancha = Object.entries(canchaMap).map(([nombre, reservas]) => ({
+        nombre,
+        reservas
+      }));
+    }
+    if (reservasPorCancha.length > 0) {
+      const max = reservasPorCancha.reduce((acc, cur) => cur.reservas > acc.reservas ? cur : acc, reservasPorCancha[0]);
+      canchaMasReservada = max.nombre;
+      maxReservas = max.reservas;
+    }
+
     return (
       <div className="estadisticas-fullwidth-bg">
         <div>
@@ -663,6 +765,34 @@ export default function Estadisticas({ rol: propRol }) {
           >
             Descargar PDF
           </button>
+          {/* NUEVO: Cancha más reservada */}
+          {canchaMasReservada && (
+            <div style={{ marginBottom: 18, fontSize: 17, color: "#007991", fontWeight: 600 }}>
+              Cancha más reservada: <b>{canchaMasReservada}</b> ({maxReservas} reservas)
+            </div>
+          )}
+          {/* NUEVO: Gráfico de reservas por cancha */}
+          {reservasPorCancha.length > 0 && (
+            <div style={{ width: "100%", maxWidth: 700, margin: "0 auto 24px auto", background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px #43e97b22", padding: 10 }}>
+              <Bar
+                data={{
+                  labels: reservasPorCancha.map(r => r.nombre),
+                  datasets: [{
+                    label: "Reservas por cancha",
+                    data: reservasPorCancha.map(r => r.reservas),
+                    backgroundColor: "#388e3c"
+                  }]
+                }}
+                options={{
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: true } },
+                  responsive: true,
+                  maintainAspectRatio: false,
+                }}
+                height={180}
+              />
+            </div>
+          )}
           <div
             style={{
               display: "flex",

@@ -359,10 +359,18 @@ export default function AdminCrearEstablecimiento() {
           type="time"
           required
           value={horaApertura}
-          onChange={e => setHoraApertura(e.target.value)}
+          onChange={e => {
+            // Solo permite horas exactas
+            const val = e.target.value;
+            if (val && val.split(":")[1] !== "00") {
+              setHoraApertura(val.split(":")[0] + ":00");
+            } else {
+              setHoraApertura(val);
+            }
+          }}
           min="00:00"
           max="23:59"
-          step="900"
+          step="3600"
           style={{
             border: "1.5px solid #43e97b",
             borderRadius: 8,
@@ -376,10 +384,18 @@ export default function AdminCrearEstablecimiento() {
           type="time"
           required
           value={horaCierre}
-          onChange={e => setHoraCierre(e.target.value)}
+          onChange={e => {
+            // Solo permite horas exactas
+            const val = e.target.value;
+            if (val && val.split(":")[1] !== "00") {
+              setHoraCierre(val.split(":")[0] + ":00");
+            } else {
+              setHoraCierre(val);
+            }
+          }}
           min="00:00"
           max="23:59"
-          step="900"
+          step="3600"
           style={{
             border: "1.5px solid #43e97b",
             borderRadius: 8,

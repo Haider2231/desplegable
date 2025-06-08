@@ -34,11 +34,12 @@ router.get("/documentos/:establecimiento_id", async (req, res) => {
       "SELECT id, url, tipo FROM documentos_establecimiento WHERE establecimiento_id = $1",
       [establecimiento_id]
     );
+    // Construye URLs absolutas
     const docs = result.rows.map(doc => ({
       ...doc,
       url: doc.url.startsWith("http")
         ? doc.url
-        : `${process.env.BACKEND_URL || "http://localhost:5000"}${doc.url}`
+        : `${req.protocol}://${req.get("host")}${doc.url}`
     }));
     res.json(docs);
   } catch (err) {

@@ -181,14 +181,17 @@ export default function ValidadorCanchas() {
                           />
                         </a>
                       ) : doc.tipo === "application/pdf" ? (
-                        <a href={doc.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span role="img" aria-label="pdf" style={{ fontSize: 22 }}>📄</span>
-                          <span>
-                            {doc.url.split("/").pop().length < 30
-                              ? doc.url.split("/").pop()
-                              : "Documento PDF"}
-                          </span>
-                        </a>
+                        <>
+                          {console.log(doc.url)}
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span role="img" aria-label="pdf" style={{ fontSize: 22 }}>📄</span>
+                            <span>
+                              {doc.url.split("/").pop().length < 30
+                                ? doc.url.split("/").pop()
+                                : "Documento PDF"}
+                            </span>
+                          </a>
+                        </>
                       ) : (
                         <a href={doc.url} target="_blank" rel="noopener noreferrer">
                           {doc.url.split("/").pop()}

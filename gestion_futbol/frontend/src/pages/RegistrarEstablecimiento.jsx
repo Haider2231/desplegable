@@ -358,7 +358,8 @@ export default function RegistrarEstablecimiento() {
             borderRadius: 8,
             padding: "10px",
             fontSize: 16,
-            outline: "none"
+            outline: "none",
+            background: "#f7fff7"
           }}
         />
         <label style={{ fontWeight: 600, color: "#007991" }}>Horario de cierre:</label>
@@ -375,7 +376,8 @@ export default function RegistrarEstablecimiento() {
             borderRadius: 8,
             padding: "10px",
             fontSize: 16,
-            outline: "none"
+            outline: "none",
+            background: "#f7fff7"
           }}
         />
         <label style={{ fontWeight: 700, color: "#007991" }}>Duración por turno (minutos):</label>
