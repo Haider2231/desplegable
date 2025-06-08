@@ -11,7 +11,10 @@ const PORT = process.env.PORT || 5000;
 //}));
 
 app.use(cors({
-  origin: "https://canchassinteticas.site",
+  origin: [
+    "https://canchassinteticas.site",
+    "http://localhost:5173"
+  ],
   credentials: true
 }));
 app.use(express.json());

@@ -135,15 +135,16 @@ router.post("/:establecimiento_id/validar", verificarToken, verificarRol(["valid
 
 // POST: Reenviar solicitud de establecimiento (actualiza datos y documentos, pone estado en 'pendiente')
 router.post("/:establecimiento_id/reenviar", verificarToken, upload.fields([
-  { name: "imagen", maxCount: 1 },
+  { name: "imagenes", maxCount: 10 },
   { name: "documentos", maxCount: 10 }
 ]), async (req, res) => {
   const pool = require("../db");
   const { establecimiento_id } = req.params;
   try {
     let imagen_url = null;
-    if (req.files && req.files.imagen && req.files.imagen[0]) {
-      imagen_url = `/uploads/${req.files.imagen[0].filename}`;
+    // Cambia a imagenes (plural)
+    if (req.files && req.files.imagenes && req.files.imagenes.length > 0) {
+      imagen_url = `/uploads/${req.files.imagenes[0].filename}`;
     }
     await pool.query(
       `UPDATE establecimientos SET
