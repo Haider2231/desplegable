@@ -27,6 +27,7 @@ import MisReservas from "./pages/MisReservas";
 import HistorialAbonos from "./pages/HistorialAbonos";
 import HistorialAbonosPropietario from "./pages/HistorialAbonosPropietario";
 import { useLocation } from "react-router-dom";
+import Perfil from "./pages/Perfil";
 
 import ManualUsuario from "./pages/ManualUsuario";
 
