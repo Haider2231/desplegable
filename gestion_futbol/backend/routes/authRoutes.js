@@ -10,7 +10,7 @@ router.post("/verificar", authController.verifyUser);
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 router.post("/check-email", authController.checkEmailExists);
-router.post("/change-password", authMiddleware, authController.changePassword);
+router.post("/change-password", authMiddleware.verificarToken, authController.changePassword);
 
 // ENDPOINTS ADMIN USUARIOS
 
@@ -66,7 +66,5 @@ router.get("/usuarios/:id", async (req, res) => {
     res.status(500).json({ error: "Error al obtener usuario" });
   }
 });
-
-
 
 module.exports = router;
