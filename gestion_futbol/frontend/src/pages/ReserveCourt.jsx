@@ -145,7 +145,7 @@ export default function ReserveCourt() {
         // Reserva creada pero sin factura (esto no debería pasar si el backend siempre genera factura)
         await Swal.fire({
           title: "Reserva realizada",
-          html: `Tu abono fue registrado.<br>Diriígete a tu perfil en <b>Pagos pendientes para resvisar el estado actual de tu reserva , ademas te llegara una factura de abono pendiente al correo</b>luego en pagos pendientes podras completar el pago cuando lo desees.`,
+          html: `Tu abono fue registrado.<br>Diriígete a tu perfil en <b>Pagos pendientes para resvisar el estado actual de tu reserva , ademas te llegara una factura de abono pendiente al correo</b> luego en pagos pendientes podras completar el pago cuando lo desees.`,
           icon: "success",
           confirmButtonText: "Ver mis reservas"
         });

@@ -312,20 +312,35 @@ exports.getFacturaByDisponibilidad = async (req, res) => {
   }
 };
 
+// Asegura que las variables de entorno estén cargadas
+require("dotenv").config({ path: require("path").resolve(__dirname, "../.env") });
+
+// Fuerza las variables de entorno para nodemailer si no están definidas
+process.env.EMAIL_USER = process.env.EMAIL_USER || "trasmileniopruebas@gmail.com";
+process.env.EMAIL_PASS = process.env.EMAIL_PASS || "nhbrvpeyyljakcze";
+
 exports.enviarFacturaPorCorreo = async (facturaId, userEmail) => {
   const pdfPath = path.join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
   if (!fs.existsSync(pdfPath)) return false;
 
+  // Usa SIEMPRE las variables de entorno y valida que existan
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+  if (!emailUser || !emailPass) {
+    console.error("Faltan credenciales de correo: EMAIL_USER o EMAIL_PASS no están definidas.");
+    throw new Error("Faltan credenciales de correo");
+  }
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: "trasmileniopruebas@gmailcom",
-      pass: "nhbrvpeyyljakcze",
+      user: emailUser,
+      pass: emailPass,
     },
   });
 
   await transporter.sendMail({
-    from: "trasmileniopruebas@gmailcom",
+    from: emailUser,
     to: userEmail,
     subject: "Factura de tu reserva - Fútbol Piloto",
     text: "Adjuntamos la factura PDF de tu reserva. ¡Gracias por reservar!",
@@ -343,19 +358,27 @@ exports.enviarFacturaPorCorreoPendiente = async (facturaId, userEmail, disp, abo
   const pdfPath = path.join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
   if (!fs.existsSync(pdfPath)) return false;
 
+  // Usa SIEMPRE las variables de entorno y valida que existan
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+  if (!emailUser || !emailPass) {
+    console.error("Faltan credenciales de correo: EMAIL_USER o EMAIL_PASS no están definidas.");
+    throw new Error("Faltan credenciales de correo");
+  }
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER || "trasmileniopruebas@gmailcom",
-      pass: process.env.EMAIL_PASS || "nhbrvpeyyljakcze",
+      user: emailUser,
+      pass: emailPass,
     },
   });
 
   await transporter.sendMail({
-    from: process.env.EMAIL_USER || "trasmileniopruebas@gmailcom",
+    from: emailUser,
     to: userEmail,
     subject: "Factura de tu reserva - Abono registrado (pendiente de pago final)",
-    html: `trasmileniopruebas@gmailcom
+    html: `
       <h2>¡Reserva registrada!</h2>
       <p>Tu abono fue registrado para la siguiente reserva:</p>
       <ul>
