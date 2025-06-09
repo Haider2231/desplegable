@@ -1,4 +1,5 @@
 import axios from "axios";
+import Swal from "sweetalert2";
 
 const api = axios.create({
   baseURL: "/", // Vite proxy se encarga de redirigir
@@ -16,6 +17,7 @@ api.interceptors.request.use((config) => {
 });
 
 
+
 // --- NUEVO: Interceptor de respuesta para token vencido ---
 api.interceptors.response.use(
   (response) => response,
@@ -25,15 +27,21 @@ api.interceptors.response.use(
       error.response &&
       (error.response.status === 401 || error.response.status === 403)
     ) {
-      // Limpia el token y redirige a login solo si no está ya en login/register
       localStorage.removeItem("token");
       if (
         typeof window !== "undefined" &&
         !window.location.pathname.startsWith("/login") &&
         !window.location.pathname.startsWith("/register")
       ) {
-        alert("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
-        window.location.href = "/login";
+        Swal.fire({
+          icon: "warning",
+          title: "Sesión expirada",
+          text: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+          confirmButtonText: "Aceptar",
+          confirmButtonColor: "#3f51b5",
+          background: "#222",
+          color: "#fff",
+        });
       }
     }
     return Promise.reject(error);

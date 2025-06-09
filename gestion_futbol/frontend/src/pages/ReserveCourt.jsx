@@ -349,6 +349,7 @@ export default function ReserveCourt() {
                 return est && est.hora_cierre ? est.hora_cierre : "23:59";
               })()
             }
+            step="3600" 
             onChange={(e) => setHora(e.target.value)}
             className="reserve-input"
             style={{

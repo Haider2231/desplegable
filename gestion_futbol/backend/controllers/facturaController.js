@@ -190,7 +190,7 @@ exports.crearFacturaYGenerarPDF = async ({
 
     // Detalles de pago (recuadro, borde verde)
     doc
-      .rect(40, 270, 515, pagoFinal ? 90 : 70) // Más alto si es pago final
+      .rect(40, 270, 515, 70) // El recuadro termina en y=340
       .strokeColor("#43e97b")
       .lineWidth(1.5)
       .stroke()
@@ -230,17 +230,19 @@ exports.crearFacturaYGenerarPDF = async ({
       .fillColor(statusColor)
       .text(statusLabel, pageWidth - 160, 85, { align: "left", width: 120 });
 
-    // Mensaje destacado según el estado, debajo del resumen de pago
+    // --- Mensaje destacado según el estado, DEBAJO del recuadro, no dentro ---
+    // El recuadro termina en y=340, así que el mensaje va desde y=350
+    let mensajeY = 350;
     if (pagoFinal || estado === "pagada") {
       doc.font("Helvetica-Bold").fontSize(16).fillColor("#388e3c")
-        .text("PAGO FINALIZADO - RESERVA COMPLETAMENTE PAGADA", 50, 355, { align: "left" });
+        .text("PAGO FINALIZADO - RESERVA COMPLETAMENTE PAGADA", 50, mensajeY, { align: "left" });
       doc.font("Helvetica").fontSize(13).fillColor("#388e3c")
-        .text("Incluye abono y pago final.", 50, 375, { align: "left" });
+        .text("Incluye abono y pago final.", 50, mensajeY + 20, { align: "left" });
     } else if (estado === "pendiente") {
       doc.font("Helvetica-Bold").fontSize(16).fillColor("#fbc02d")
-        .text("ABONO REGISTRADO - PAGO PENDIENTE", 50, 355, { align: "left" });
+        .text("ABONO REGISTRADO - PAGO PENDIENTE", 50, mensajeY, { align: "left" });
       doc.font("Helvetica").fontSize(13).fillColor("#d32f2f")
-        .text("Esta factura corresponde a un abono. El pago final está pendiente.", 50, 375, { align: "left" });
+        .text("Esta factura corresponde a un abono. El pago final está pendiente.", 50, mensajeY + 20, { align: "left" });
     }
 
     // Mensaje final centrado (ajusta la posición Y para que no se salga)
