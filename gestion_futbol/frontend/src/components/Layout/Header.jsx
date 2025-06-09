@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import Swal from "sweetalert2";
 import "../../styles/globalHeaderNav.css";
 
 
@@ -11,6 +12,7 @@ export default function Header() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [mostrarMisEstablecimientos, setMostrarMisEstablecimientos] = useState(false);
+  const [showChangePass, setShowChangePass] = useState(false);
   const profileMenuRef = useRef(null);
 
   // Obtener usuario del token
@@ -97,6 +99,56 @@ export default function Header() {
   // Define handleRegistrarCancha para evitar el error
   const handleRegistrarCancha = () => {
     navigate("/quiero-registrar-cancha");
+  };
+
+  // Cambiar contraseña (modal simple)
+  const handleChangePassword = async () => {
+    const { value: formValues } = await Swal.fire({
+      title: "Cambiar contraseña",
+      html:
+        '<input id="swal-oldpass" class="swal2-input" type="password" placeholder="Contraseña actual">' +
+        '<input id="swal-newpass" class="swal2-input" type="password" placeholder="Nueva contraseña">',
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: "Cambiar",
+      cancelButtonText: "Cancelar",
+      preConfirm: () => {
+        return {
+          oldpass: document.getElementById("swal-oldpass").value,
+          newpass: document.getElementById("swal-newpass").value,
+        };
+      },
+    });
+    if (!formValues) return;
+    if (!formValues.oldpass || !formValues.newpass) {
+      Swal.fire("Error", "Debes completar ambos campos.", "error");
+      return;
+    }
+    if (formValues.newpass.length < 7) {
+      Swal.fire("Error", "La nueva contraseña debe tener al menos 7 caracteres.", "error");
+      return;
+    }
+    try {
+      const res = await fetch("/auth/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({
+          oldPassword: formValues.oldpass,
+          newPassword: formValues.newpass,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Swal.fire("Éxito", "Contraseña cambiada correctamente.", "success");
+      } else {
+        Swal.fire("Error", data.error || "No se pudo cambiar la contraseña.", "error");
+      }
+    } catch {
+      Swal.fire("Error", "No se pudo conectar con el servidor.", "error");
+    }
   };
 
   return (
@@ -392,6 +444,13 @@ export default function Header() {
                         >
                           📊 Estadísticas
                         </button>
+                        {/* Cambiar contraseña */}
+                        <button
+                          style={profileMenuBtnStyle}
+                          onClick={() => { setShowProfileMenu(false); navigate("/cambiar-contrasena"); }}
+                        >
+                          🔒 Cambiar contraseña
+                        </button>
                         <button
                           style={profileMenuBtnStyle}
                           onClick={() => { setShowProfileMenu(false); navigate("/manual-usuario"); }}
@@ -460,6 +519,13 @@ export default function Header() {
                             🏢 Mis establecimientos
                           </button>
                         )}
+                        {/* Cambiar contraseña */}
+                        <button
+                          style={profileMenuBtnStyle}
+                          onClick={() => { setShowProfileMenu(false); navigate("/cambiar-contrasena"); }}
+                        >
+                          🔒 Cambiar contraseña
+                        </button>
                         <button
                           style={profileMenuBtnStyle}
                           onClick={() => { setShowProfileMenu(false); navigate("/manual-usuario"); }}

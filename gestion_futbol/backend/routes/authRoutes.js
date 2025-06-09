@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
 const { verificarToken, verificarRol } = require("../middlewares/authMiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/login", authController.login);
 router.post("/usuarios", authController.registerUser); // Registro público
@@ -9,6 +10,8 @@ router.post("/verificar", authController.verifyUser);
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password", authController.resetPassword);
 router.post("/check-email", authController.checkEmailExists);
+router.post("/change-password", authMiddleware, authController.changePassword);
+
 // ENDPOINTS ADMIN USUARIOS
 
 // ENDPOINTS ADMIN USUARIOS
@@ -63,5 +66,7 @@ router.get("/usuarios/:id", async (req, res) => {
     res.status(500).json({ error: "Error al obtener usuario" });
   }
 });
+
+
 
 module.exports = router;

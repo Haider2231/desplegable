@@ -28,6 +28,7 @@ import HistorialAbonos from "./pages/HistorialAbonos";
 import HistorialAbonosPropietario from "./pages/HistorialAbonosPropietario";
 import { useLocation } from "react-router-dom";
 import Perfil from "./pages/Perfil";
+import CambiarContrasena from "./pages/CambiarContrasena";
 
 import ManualUsuario from "./pages/ManualUsuario";
 
@@ -103,6 +104,7 @@ function App() {
                   <Route path="/historial-abonos" element={<HistorialAbonos />} />
                   <Route path="/historial-abonos-propietario" element={<HistorialAbonosPropietario />} />
                     <Route path="/manual-usuario" element={<Perfil manualOnly={true} />} />
+                      <Route path="/cambiar-contrasena" element={<CambiarContrasena />} />
                 </Routes>
               </div>
               <Footer />
