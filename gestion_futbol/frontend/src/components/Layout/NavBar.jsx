@@ -137,7 +137,10 @@ export default function NavBar() {
           <NavLink to="/admin-users" className="nav-btn">
             Panel usuarios
           </NavLink>
-  
+        
+          <NavLink to="/validador/canchas" className="nav-btn">
+          Panel de validación
+        </NavLink>
         </>
       )}
 

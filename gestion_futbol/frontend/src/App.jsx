@@ -101,6 +101,7 @@ function App() {
                   <Route path="/mis-reservas" element={<MisReservas />} />
                   <Route path="/historial-abonos" element={<HistorialAbonos />} />
                   <Route path="/historial-abonos-propietario" element={<HistorialAbonosPropietario />} />
+                    <Route path="/manual-usuario" element={<Perfil manualOnly={true} />} />
                 </Routes>
               </div>
               <Footer />

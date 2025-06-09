@@ -342,7 +342,7 @@ exports.enviarFacturaPorCorreo = async (facturaId, userEmail) => {
   });
 
   await transporter.sendMail({
-    from: emailUser,
+    from: `"Fútbol Piloto" <${emailUser}>`, // <-- Esto pone el nombre "Fútbol Piloto" en el remitente
     to: userEmail,
     subject: "Factura de tu reserva - Fútbol Piloto",
     text: "Adjuntamos la factura PDF de tu reserva. ¡Gracias por reservar!",
@@ -377,7 +377,7 @@ exports.enviarFacturaPorCorreoPendiente = async (facturaId, userEmail, disp, abo
   });
 
   await transporter.sendMail({
-    from: emailUser,
+    from: `"Fútbol Piloto" <${emailUser}>`, // <-- Esto pone el nombre "Fútbol Piloto" en el remitente
     to: userEmail,
     subject: "Factura de tu reserva - Abono registrado (pendiente de pago final)",
     html: `
