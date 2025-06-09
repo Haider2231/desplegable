@@ -316,11 +316,18 @@ exports.enviarFacturaPorCorreo = async (facturaId, userEmail) => {
   const pdfPath = path.join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
   if (!fs.existsSync(pdfPath)) return false;
 
-  const transporter = nodemailer.createTransport({
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+  if (!emailUser || !emailPass) {
+    console.error("Faltan credenciales de correo: EMAIL_USER o EMAIL_PASS no están definidas.");
+    throw new Error("Faltan credenciales de correo");
+  }
+
+  const transporter = require("nodemailer").createTransport({
     service: "gmail",
     auth: {
-      user: "diazmontejodiegoalejandro@gmail.com",
-      pass: "mpcnakbsmmhalwak",
+      user: emailUser,
+      pass: emailPass,
     },
   });
 
@@ -343,11 +350,18 @@ exports.enviarFacturaPorCorreoPendiente = async (facturaId, userEmail, disp, abo
   const pdfPath = path.join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
   if (!fs.existsSync(pdfPath)) return false;
 
-  const transporter = nodemailer.createTransport({
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+  if (!emailUser || !emailPass) {
+    console.error("Faltan credenciales de correo: EMAIL_USER o EMAIL_PASS no están definidas.");
+    throw new Error("Faltan credenciales de correo");
+  }
+
+  const transporter = require("nodemailer").createTransport({
     service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER || "diazmontejodiegoalejandro@gmail.com",
-      pass: process.env.EMAIL_PASS || "mpcnakbsmmhalwak",
+      user: emailUser,
+      pass: emailPass,
     },
   });
 

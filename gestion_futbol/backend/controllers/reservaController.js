@@ -5,11 +5,17 @@ const facturaController = require("./facturaController");
 // Función para enviar correo al propietario
 async function enviarCorreoPropietario({ propietarioEmail, establecimiento, cancha, fecha, hora_inicio, hora_fin, abono, restante, usuario }) {
   // Configura tu transporter (ajusta según tu proveedor SMTP)
-  const transporter = nodemailer.createTransport({
-    service: "gmail", // o tu proveedor
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
+  if (!emailUser || !emailPass) {
+    console.error("Faltan credenciales de correo: EMAIL_USER o EMAIL_PASS no están definidas.");
+    throw new Error("Faltan credenciales de correo");
+  }
+  const transporter = require("nodemailer").createTransport({
+    service: "gmail",
     auth: {
-      user: process.env.EMAIL_USER, // tu correo
-      pass: process.env.EMAIL_PASS, // tu contraseña o app password
+      user: emailUser,
+      pass: emailPass,
     },
   });
 
