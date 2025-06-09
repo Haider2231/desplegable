@@ -56,6 +56,21 @@ export default function MisReservas() {
 
   // Nueva función para completar el pago real
   const handleCompletarPago = async (reservaId) => {
+    // Busca la reserva para mostrar el valor a pagar
+    const reserva = reservas.find(r => String(r.id) === String(reservaId));
+    if (!reserva) {
+      Swal.fire("Error", "Reserva no encontrada", "error");
+      return;
+    }
+    const confirm = await Swal.fire({
+      title: "¿Confirmar pago?",
+      html: `Vas a pagar <b style="color:#388e3c;font-size:1.3em;">$${reserva.restante}</b> para completar el pago<br>¿Deseas continuar?`,
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonText: "Pagar y recibir factura",
+      cancelButtonText: "Cancelar"
+    });
+    if (!confirm.isConfirmed) return;
     try {
       await pagarSaldoReserva(reservaId);
       await Swal.fire("Pago realizado", "El saldo ha sido pagado. Recibirás tu factura por correo.", "success");
@@ -119,7 +134,7 @@ export default function MisReservas() {
           <div style={{ color: "#ff9800", fontWeight: 700, marginBottom: 8 }}>
             Para completar tu pago, haz clic en el botón.
           </div>
-          <button
+          <button 
             onClick={() => handleCompletarPago(reserva.id)}
             style={{
               background: "linear-gradient(90deg, #388e3c 0%, #43a047 100%)",

@@ -71,14 +71,31 @@ exports.crearFacturaYGenerarPDF = async ({
   // Usa el cliente de la transacción si se pasa, si no usa pool
   const db = client || pool;
 
-  // 1. Guarda la factura en la base de datos
-  const result = await db.query(
-    `INSERT INTO facturas (reserva_id, usuario_id, monto, abono, restante, fecha, estado)
-     VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING id, fecha`,
-    [reservaId, usuarioId, precio, abono, restante, estado]
+  // 1. Guarda la factura en la base de datos SOLO si no existe para esta reserva
+  let facturaId;
+  let fechaFactura;
+  const facturaExistente = await db.query(
+    `SELECT id, fecha FROM facturas WHERE reserva_id = $1`,
+    [reservaId]
   );
-  const facturaId = result.rows[0].id;
-  const fechaFactura = result.rows[0].fecha;
+  if (facturaExistente.rows.length > 0) {
+    // Ya existe, actualiza el estado y los montos
+    facturaId = facturaExistente.rows[0].id;
+    fechaFactura = facturaExistente.rows[0].fecha;
+    await db.query(
+      `UPDATE facturas SET abono = $1, restante = $2, estado = $3, monto = $4 WHERE id = $5`,
+      [abono, restante, estado, precio, facturaId]
+    );
+  } else {
+    // No existe, crea la factura
+    const result = await db.query(
+      `INSERT INTO facturas (reserva_id, usuario_id, monto, abono, restante, fecha, estado)
+       VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING id, fecha`,
+      [reservaId, usuarioId, precio, abono, restante, estado]
+    );
+    facturaId = result.rows[0].id;
+    fechaFactura = result.rows[0].fecha;
+  }
 
   // Obtener el nombre del usuario
   const usuarioResult = await pool.query(
@@ -196,9 +213,34 @@ exports.crearFacturaYGenerarPDF = async ({
       .text(pagoFinal ? `$${pagoFinalMostrado}` : `$${precio - abonoMostrado}`, 200, 327)
       .fillColor("black");
 
-    if (pagoFinal) {
-      doc.font("Helvetica-Bold").fontSize(13).fillColor("#388e3c")
-        .text("¡Pago completado!", 50, 347);
+    // Estado de la factura (PENDIENTE o PAGADA)
+    let statusLabel = "";
+    let statusColor = "#d32f2f";
+    if (pagoFinal || estado === "pagada") {
+      statusLabel = "PAGADA";
+      statusColor = "#388e3c";
+    } else if (estado === "pendiente") {
+      statusLabel = "PENDIENTE";
+      statusColor = "#d32f2f";
+    }
+    // Mostrar el estado en la parte superior derecha del PDF
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(18)
+      .fillColor(statusColor)
+      .text(statusLabel, pageWidth - 160, 85, { align: "left", width: 120 });
+
+    // Mensaje destacado según el estado, debajo del resumen de pago
+    if (pagoFinal || estado === "pagada") {
+      doc.font("Helvetica-Bold").fontSize(16).fillColor("#388e3c")
+        .text("PAGO FINALIZADO - RESERVA COMPLETAMENTE PAGADA", 50, 355, { align: "left" });
+      doc.font("Helvetica").fontSize(13).fillColor("#388e3c")
+        .text("Incluye abono y pago final.", 50, 375, { align: "left" });
+    } else if (estado === "pendiente") {
+      doc.font("Helvetica-Bold").fontSize(16).fillColor("#fbc02d")
+        .text("ABONO REGISTRADO - PAGO PENDIENTE", 50, 355, { align: "left" });
+      doc.font("Helvetica").fontSize(13).fillColor("#d32f2f")
+        .text("Esta factura corresponde a un abono. El pago final está pendiente.", 50, 375, { align: "left" });
     }
 
     // Mensaje final centrado (ajusta la posición Y para que no se salga)
@@ -206,7 +248,7 @@ exports.crearFacturaYGenerarPDF = async ({
       .fontSize(15)
       .font("Helvetica-Bold")
       .fillColor("#388e3c")
-      .text("¡Gracias por reservar en Fútbol Piloto!", 0, 355, { align: "center", width: pageWidth });
+      .text("¡Gracias por reservar en Fútbol Piloto!", 0, 405, { align: "center", width: pageWidth });
 
     // --- FOOTER AL FINAL DE LA HOJA ---
     doc.save();
@@ -229,9 +271,7 @@ exports.crearFacturaYGenerarPDF = async ({
     throw new Error("Error al generar el archivo PDF de la factura");
   }
 
-  return {
-    factura_url: `/facturas/${facturaId}/pdf`
-  };
+  return { facturaId };
 };
 
 exports.getFacturasByCancha = async (req, res) => {
@@ -289,6 +329,48 @@ exports.enviarFacturaPorCorreo = async (facturaId, userEmail) => {
     to: userEmail,
     subject: "Factura de tu reserva - Fútbol Piloto",
     text: "Adjuntamos la factura PDF de tu reserva. ¡Gracias por reservar!",
+    attachments: [
+      {
+        filename: `factura_${facturaId}.pdf`,
+        path: pdfPath,
+      },
+    ],
+  });
+  return true;
+};
+
+exports.enviarFacturaPorCorreoPendiente = async (facturaId, userEmail, disp, abono, restante) => {
+  const pdfPath = path.join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
+  if (!fs.existsSync(pdfPath)) return false;
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER || "diazmontejodiegoalejandro@gmail.com",
+      pass: process.env.EMAIL_PASS || "mpcnakbsmmhalwak",
+    },
+  });
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER || "diazmontejodiegoalejandro@gmail.com",
+    to: userEmail,
+    subject: "Factura de tu reserva - Abono registrado (pendiente de pago final)",
+    html: `
+      <h2>¡Reserva registrada!</h2>
+      <p>Tu abono fue registrado para la siguiente reserva:</p>
+      <ul>
+        <li><b>Establecimiento:</b> ${disp.establecimiento_nombre}</li>
+        <li><b>Cancha:</b> ${disp.cancha_nombre}</li>
+        <li><b>Fecha:</b> ${disp.fecha}</li>
+        <li><b>Horario:</b> ${disp.hora_inicio} - ${disp.hora_fin}</li>
+        <li><b>Abono pagado:</b> $${abono}</li>
+        <li><b>Restante por pagar:</b> $${restante}</li>
+      </ul>
+      <p><b>Recuerda:</b> Tu reserva está pendiente de pago final. Adjuntamos la factura PDF de tu abono.</p>
+      <p>Cuando completes el pago, recibirás una nueva factura confirmando la reserva.</p>
+      <hr>
+      <p>¡Gracias por reservar en Fútbol Piloto!</p>
+    `,
     attachments: [
       {
         filename: `factura_${facturaId}.pdf`,

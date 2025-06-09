@@ -389,46 +389,6 @@ export default function Estadisticas({ rol: propRol }) {
       );
     }
 
-    // --- NUEVO: Calcular reservas por hora ---
-    // Suponemos que data.reservas_por_hora es un array [{ hora: "08:00", reservas: 3 }, ...]
-    // Si no existe, lo calculamos a partir de reservas_detalle de todas las canchas
-    let reservasPorHora = [];
-    if (data.reservas_por_hora && Array.isArray(data.reservas_por_hora)) {
-      reservasPorHora = data.reservas_por_hora;
-    } else if (Array.isArray(data.canchas)) {
-      // Junta todas las reservas_detalle de todas las canchas
-      const horasMap = {};
-      data.canchas.forEach((c) => {
-        let reservasDetalle = [];
-        if (Array.isArray(c.reservas_detalle)) reservasDetalle = c.reservas_detalle;
-        else if (typeof c.reservas_detalle === "string") {
-          try { reservasDetalle = JSON.parse(c.reservas_detalle); } catch {}
-        }
-        reservasDetalle.forEach((r) => {
-          const hora = r.hora_inicio ? r.hora_inicio.slice(0, 5) : null;
-          if (hora) horasMap[hora] = (horasMap[hora] || 0) + 1;
-        });
-      });
-      // --- Rellenar de 08:00 a 21:00 ---
-      const horasRango = [];
-      for (let h = 8; h <= 21; h++) {
-        horasRango.push(`${String(h).padStart(2, "0")}:00`);
-      }
-      reservasPorHora = horasRango.map(hora => ({
-        hora,
-        reservas: horasMap[hora] || 0
-      }));
-    }
-
-    // --- NUEVO: Hora más concurrida ---
-    let horaMasConcurrida = "";
-    let maxReservas = 0;
-    if (reservasPorHora.length > 0) {
-      const max = reservasPorHora.reduce((acc, cur) => cur.reservas > acc.reservas ? cur : acc, reservasPorHora[0]);
-      horaMasConcurrida = max.hora;
-      maxReservas = max.reservas;
-    }
-
     return (
       <div className="estadisticas-fullwidth-bg">
         <div>
@@ -453,34 +413,7 @@ export default function Estadisticas({ rol: propRol }) {
           >
             Descargar PDF
           </button>
-          {/* NUEVO: Estadística de hora más concurrida */}
-          <div style={{ marginBottom: 18, fontSize: 17, color: "#007991", fontWeight: 600 }}>
-            {horaMasConcurrida
-              ? <>Hora más concurrida: <b>{formatHour(horaMasConcurrida)}</b> ({maxReservas} reservas)</>
-              : "No hay datos de horarios más concurridos."}
-          </div>
-          {/* NUEVO: Gráfico de reservas por hora */}
-          {reservasPorHora.length > 0 && (
-            <div style={{ width: "100%", maxWidth: 700, margin: "0 auto 24px auto", background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px #43e97b22", padding: 10 }}>
-              <Bar
-                data={{
-                  labels: reservasPorHora.map(r => formatHour(r.hora)),
-                  datasets: [{
-                    label: "Reservas por hora",
-                    data: reservasPorHora.map(r => r.reservas),
-                    backgroundColor: "#007991"
-                  }]
-                }}
-                options={{
-                  plugins: { legend: { display: false } },
-                  scales: { y: { beginAtZero: true } },
-                  responsive: true,
-                  maintainAspectRatio: false,
-                }}
-                height={180}
-              />
-            </div>
-          )}
+          {/* Se eliminó la gráfica y estadística de reservas por hora global */}
           <div
             style={{
               display: "flex",
@@ -493,151 +426,275 @@ export default function Estadisticas({ rol: propRol }) {
               boxSizing: "border-box",
             }}
           >
-            {establecimientosArr.map((est, idx) => (
-              <div
-                key={est.nombre}
-                style={{
-                  minWidth: 420,
-                  maxWidth: 600,
-                  flex: "1 1 480px",
-                  background: "#f8fffe",
-                  borderRadius: 12,
-                  boxShadow: "0 2px 8px #43e97b22",
-                  padding: 18,
-                  marginBottom: 32,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <h4
+            {establecimientosArr.map((est, idx) => {
+              // --- Calcular reservas por hora para este establecimiento ---
+              const horasMap = {};
+              est.canchas.forEach((c) => {
+                let reservasDetalle = [];
+                // Asegura que reservas_detalle sea un array de objetos con hora_inicio
+                if (Array.isArray(c.reservas_detalle)) {
+                  reservasDetalle = c.reservas_detalle;
+                } else if (typeof c.reservas_detalle === "string" && c.reservas_detalle) {
+                  try {
+                    const parsed = JSON.parse(c.reservas_detalle);
+                    if (Array.isArray(parsed)) reservasDetalle = parsed;
+                  } catch {}
+                }
+                reservasDetalle.forEach((r) => {
+                  // Acepta tanto "hora_inicio" como "hora" por si el backend varía
+                  const hora = r.hora_inicio
+                    ? r.hora_inicio.slice(0, 5)
+                    : r.hora
+                      ? r.hora.slice(0, 5)
+                      : null;
+                  if (hora) horasMap[hora] = (horasMap[hora] || 0) + 1;
+                });
+              });
+              const horasRango = [];
+              for (let h = 8; h <= 21; h++) {
+                horasRango.push(`${String(h).padStart(2, "0")}:00`);
+              }
+              // Si hay reservas fuera del rango, agrégalas también
+              Object.keys(horasMap).forEach(hora => {
+                if (!horasRango.includes(hora)) horasRango.push(hora);
+              });
+              horasRango.sort(); // Ordena las horas
+
+              const reservasPorHoraEst = horasRango.map(hora => ({
+                hora,
+                reservas: horasMap[hora] || 0
+              }));
+
+              let horaMasConcurridaEst = "";
+              let maxReservasEst = 0;
+              if (reservasPorHoraEst.length > 0) {
+                const max = reservasPorHoraEst.reduce((acc, cur) => cur.reservas > acc.reservas ? cur : acc, reservasPorHoraEst[0]);
+                horaMasConcurridaEst = max.hora;
+                maxReservasEst = max.reservas;
+              }
+
+              return (
+                <div
+                  key={est.nombre}
                   style={{
-                    color: "#007991",
-                    fontWeight: 800,
-                    marginBottom: 18,
-                    fontSize: 22,
-                    borderBottom: "2px solid #43e97b",
-                    paddingBottom: 4,
-                    textAlign: "center",
+                    minWidth: 320,
+                    maxWidth: 600,
+                    flex: "1 1 480px",
+                    background: "#f8fffe",
+                    borderRadius: 12,
+                    boxShadow: "0 2px 8px #43e97b22",
+                    padding: 18,
+                    marginBottom: 32,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
                   }}
                 >
-                  {est.nombre}
-                </h4>
-                {/* Gráfico de barras: Reservas por cancha */}
-                {est.canchas && est.canchas.length > 0 ? (
-                  <>
-                    <div
-                      style={{
-                        width: "100%",
-                        minWidth: 320,
-                        maxWidth: 560,
-                        marginBottom: 18,
-                        background: "#fff",
-                        borderRadius: 12,
-                        boxShadow: "0 2px 8px #43e97b22",
-                        padding: 10,
-                      }}
-                    >
+                  <h4
+                    style={{
+                      color: "#007991",
+                      fontWeight: 800,
+                      marginBottom: 18,
+                      fontSize: 22,
+                      borderBottom: "2px solid #43e97b",
+                      paddingBottom: 4,
+                      textAlign: "center",
+                    }}
+                  >
+                    {est.nombre}
+                  </h4>
+                  {/* Gráfico de reservas por hora para este establecimiento */}
+                  <div
+                    style={{
+                      width: "100%",
+                      minWidth: 0,
+                      maxWidth: 480,
+                      marginBottom: 18,
+                      background: "#fff",
+                      borderRadius: 12,
+                      boxShadow: "0 2px 8px #43e97b22",
+                      padding: 10,
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, color: "#007991", marginBottom: 8, fontSize: 16, textAlign: "center" }}>
+                      Reservas por hora en {est.nombre}
+                    </div>
+                    <div style={{ width: "100%", height: 180 }}>
                       <Bar
                         data={{
-                          labels: est.canchas.map((c) => c.nombre),
-                          datasets: [
-                            {
-                              label: "Reservas",
-                              data: est.canchas.map((c) => c.reservas),
-                              backgroundColor: "#00c6fb",
-                            },
-                          ],
+                          labels: horasRango.map(hora => {
+                            const [hh, mm] = hora.split(":");
+                            const h12 = (parseInt(hh) % 12) || 12;
+                            const ampm = parseInt(hh) < 12 ? "AM" : "PM";
+                            return `${h12} ${ampm}`;
+                          }),
+                          datasets: [{
+                            label: "Reservas por hora",
+                            data: reservasPorHoraEst.map(r => r.reservas),
+                            backgroundColor: "#007991"
+                          }]
                         }}
                         options={{
                           plugins: { legend: { display: false } },
-                          scales: { y: { beginAtZero: true } },
+                          scales: { y: { beginAtZero: true, precision: 0 } },
                           responsive: true,
                           maintainAspectRatio: false,
                         }}
                         height={180}
+                        width={480}
                       />
                     </div>
-                    {/* Gráfico de barras: Ingresos por cancha */}
-                    <div
-                      style={{
-                        width: "100%",
-                        minWidth: 320,
-                        maxWidth: 560,
-                        marginBottom: 18,
-                        background: "#fff",
-                        borderRadius: 12,
-                        boxShadow: "0 2px 8px #43e97b22",
-                        padding: 10,
-                      }}
-                    >
-                      <Bar
-                        data={{
-                          labels: est.canchas.map((c) => c.nombre),
-                          datasets: [
-                            {
-                              label: "Ingresos (abonos)",
-                              data: est.canchas.map((c) => c.ingresos),
-                              backgroundColor: "#43a047",
-                            },
-                          ],
-                        }}
-                        options={{
-                          plugins: { legend: { display: false } },
-                          scales: { y: { beginAtZero: true } },
-                          responsive: true,
-                          maintainAspectRatio: false,
-                        }}
-                        height={180}
-                      />
+                    <div style={{ marginTop: 8, color: "#388e3c", fontWeight: 600, textAlign: "center" }}>
+                      {horaMasConcurridaEst
+                        ? <>Hora más concurrida: <b>{formatHour(horaMasConcurridaEst)}</b> ({maxReservasEst} reservas)</>
+                        : "No hay datos de horarios más concurridos para este establecimiento."}
                     </div>
-                    {/* Tabla de canchas */}
-                    <div style={{ width: "100%", marginTop: 8 }}>
-                      <table
+                  </div>
+                  {/* Gráfico de barras: Reservas por cancha */}
+                  {est.canchas && est.canchas.length > 0 ? (
+                    <>
+                      <div
                         style={{
                           width: "100%",
-                          borderCollapse: "collapse",
-                          marginBottom: 12,
+                          minWidth: 320,
+                          maxWidth: 560,
+                          marginBottom: 18,
+                          background: "#fff",
+                          borderRadius: 12,
+                          boxShadow: "0 2px 8px #43e97b22",
+                          padding: 10,
                         }}
                       >
-                        <thead>
-                          <tr style={{ background: "#e0f7fa" }}>
-                            <th
-                              style={{
-                                padding: 8,
-                                border: "1px solid #b2f7ef",
-                              }}
+                        <Bar
+                          data={{
+                            labels: est.canchas.map((c) => c.nombre),
+                            datasets: [
+                              {
+                                label: "Reservas",
+                                data: est.canchas.map((c) => c.reservas),
+                                backgroundColor: "#00c6fb",
+                              },
+                            ],
+                          }}
+                          options={{
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true } },
+                            responsive: true,
+                            maintainAspectRatio: false,
+                          }}
+                          height={180}
+                        />
+                      </div>
+                      {/* Gráfico de barras: Ingresos por cancha */}
+                      <div
+                        style={{
+                          width: "100%",
+                          minWidth: 320,
+                          maxWidth: 560,
+                          marginBottom: 18,
+                          background: "#fff",
+                          borderRadius: 12,
+                          boxShadow: "0 2px 8px #43e97b22",
+                          padding: 10,
+                        }}
+                      >
+                        <Bar
+                          data={{
+                            labels: est.canchas.map((c) => c.nombre),
+                            datasets: [
+                              {
+                                label: "Ingresos (abonos)",
+                                data: est.canchas.map((c) => c.ingresos),
+                                backgroundColor: "#43a047",
+                              },
+                            ],
+                          }}
+                          options={{
+                            plugins: { legend: { display: false } },
+                            scales: { y: { beginAtZero: true } },
+                            responsive: true,
+                            maintainAspectRatio: false,
+                          }}
+                          height={180}
+                        />
+                      </div>
+                      {/* Tabla de canchas */}
+                      <div style={{ width: "100%", marginTop: 8 }}>
+                        <table
+                          style={{
+                            width: "100%",
+                            borderCollapse: "collapse",
+                            marginBottom: 12,
+                          }}
+                        >
+                          <thead>
+                            <tr style={{ background: "#e0f7fa" }}>
+                              <th
+                                style={{
+                                  padding: 8,
+                                  border: "1px solid #b2f7ef",
+                                }}
+                              >
+                                Cancha
+                              </th>
+                              <th
+                                style={{
+                                  padding: 8,
+                                  border: "1px solid #b2f7ef",
+                                }}
+                              >
+                                Reservas
+                              </th>
+                              <th
+                                style={{
+                                  padding: 8,
+                                  border: "1px solid #b2f7ef",
+                                }}
+                              >
+                                Ingresos (abonos)
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {est.canchas.map((c, idx2) => (
+                              <tr key={c.cancha_id || c.nombre || idx2}>
+                                <td
+                                  style={{
+                                    padding: 8,
+                                    border: "1px solid #b2f7ef",
+                                  }}
+                                >
+                                  {c.nombre}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: 8,
+                                    border: "1px solid #b2f7ef",
+                                  }}
+                                >
+                                  {c.reservas}
+                                </td>
+                                <td
+                                  style={{
+                                    padding: 8,
+                                    border: "1px solid #b2f7ef",
+                                  }}
+                                >
+                                  ${c.ingresos || 0}
+                                </td>
+                              </tr>
+                            ))}
+                            <tr
+                              style={{ background: "#f7fff7", fontWeight: 700 }}
                             >
-                              Cancha
-                            </th>
-                            <th
-                              style={{
-                                padding: 8,
-                                border: "1px solid #b2f7ef",
-                              }}
-                            >
-                              Reservas
-                            </th>
-                            <th
-                              style={{
-                                padding: 8,
-                                border: "1px solid #b2f7ef",
-                              }}
-                            >
-                              Ingresos (abonos)
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {est.canchas.map((c, idx2) => (
-                            <tr key={c.cancha_id || c.nombre || idx2}>
                               <td
                                 style={{
                                   padding: 8,
                                   border: "1px solid #b2f7ef",
                                 }}
                               >
-                                {c.nombre}
+                                Total {est.nombre}
                               </td>
                               <td
                                 style={{
@@ -645,7 +702,7 @@ export default function Estadisticas({ rol: propRol }) {
                                   border: "1px solid #b2f7ef",
                                 }}
                               >
-                                {c.reservas}
+                                {est.totalReservas}
                               </td>
                               <td
                                 style={{
@@ -653,51 +710,23 @@ export default function Estadisticas({ rol: propRol }) {
                                   border: "1px solid #b2f7ef",
                                 }}
                               >
-                                ${c.ingresos || 0}
+                                ${est.totalIngresos}
                               </td>
                             </tr>
-                          ))}
-                          <tr
-                            style={{ background: "#f7fff7", fontWeight: 700 }}
-                          >
-                            <td
-                              style={{
-                                padding: 8,
-                                border: "1px solid #b2f7ef",
-                              }}
-                            >
-                              Total {est.nombre}
-                            </td>
-                            <td
-                              style={{
-                                padding: 8,
-                                border: "1px solid #b2f7ef",
-                              }}
-                            >
-                              {est.totalReservas}
-                            </td>
-                            <td
-                              style={{
-                                padding: 8,
-                                border: "1px solid #b2f7ef",
-                              }}
-                            >
-                              ${est.totalIngresos}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  ) : (
+                    <div
+                      style={{ color: "#888", fontSize: 15, margin: "24px 0" }}
+                    >
+                      No hay canchas registradas.
                     </div>
-                  </>
-                ) : (
-                  <div
-                    style={{ color: "#888", fontSize: 15, margin: "24px 0" }}
-                  >
-                    No hay canchas registradas.
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div style={{ marginTop: 16, textAlign: "center" }}>
             <strong>Reservas totales:</strong> {data.total_reservas} <br />
@@ -733,6 +762,25 @@ export default function Estadisticas({ rol: propRol }) {
       maxReservas = max.reservas;
     }
 
+    // --- NUEVO: Gráfico de reservas por establecimiento ---
+    // Suponiendo que data.reservas_por_establecimiento = [{ nombre: "Establecimiento 1", reservas: 10 }, ...]
+    let reservasPorEstablecimiento = [];
+    if (Array.isArray(data.reservas_por_establecimiento)) {
+      reservasPorEstablecimiento = data.reservas_por_establecimiento;
+    } else if (Array.isArray(data.reservas)) {
+      // Fallback: agrupa reservas por establecimiento_nombre si existe
+      const estMap = {};
+      data.reservas.forEach(r => {
+        const nombre = r.establecimiento_nombre || "Sin nombre";
+        if (!estMap[nombre]) estMap[nombre] = 0;
+        estMap[nombre]++;
+      });
+      reservasPorEstablecimiento = Object.entries(estMap).map(([nombre, reservas]) => ({
+        nombre,
+        reservas
+      }));
+    }
+
     return (
       <div className="estadisticas-fullwidth-bg">
         <div>
@@ -765,34 +813,7 @@ export default function Estadisticas({ rol: propRol }) {
           >
             Descargar PDF
           </button>
-          {/* NUEVO: Cancha más reservada */}
-          {canchaMasReservada && (
-            <div style={{ marginBottom: 18, fontSize: 17, color: "#007991", fontWeight: 600 }}>
-              Cancha más reservada: <b>{canchaMasReservada}</b> ({maxReservas} reservas)
-            </div>
-          )}
-          {/* NUEVO: Gráfico de reservas por cancha */}
-          {reservasPorCancha.length > 0 && (
-            <div style={{ width: "100%", maxWidth: 700, margin: "0 auto 24px auto", background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px #43e97b22", padding: 10 }}>
-              <Bar
-                data={{
-                  labels: reservasPorCancha.map(r => r.nombre),
-                  datasets: [{
-                    label: "Reservas por cancha",
-                    data: reservasPorCancha.map(r => r.reservas),
-                    backgroundColor: "#388e3c"
-                  }]
-                }}
-                options={{
-                  plugins: { legend: { display: false } },
-                  scales: { y: { beginAtZero: true } },
-                  responsive: true,
-                  maintainAspectRatio: false,
-                }}
-                height={180}
-              />
-            </div>
-          )}
+          {/* --- ELIMINADO: Gráfico de reservas por cancha --- */}
           <div
             style={{
               display: "flex",
@@ -896,10 +917,53 @@ export default function Estadisticas({ rol: propRol }) {
               </div>
             </div>
           </div>
+   
+          {/* --- MUESTRA LA GRÁFICA DE ESTABLECIMIENTOS AQUÍ, ABAJO DE TODO --- */}
+          {reservasPorEstablecimiento.length > 0 && (
+            <div style={{
+              width: "100%",
+              maxWidth: 700,
+              margin: "32px auto 0 auto",
+              background: "#fff",
+              borderRadius: 12,
+              boxShadow: "0 2px 8px #43e97b22",
+              padding: 18,
+              overflow: "hidden",
+              height: 340,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center"
+            }}>
+              <h4 style={{ textAlign: "center", marginBottom: 8, fontSize: 22 }}>
+                Estadisticas de Reservas por establecimiento
+              </h4>
+              <div style={{ width: "100%", height: 260 }}>
+                <Bar
+                  data={{
+                    labels: reservasPorEstablecimiento.map(r => r.nombre),
+                    datasets: [{
+                      label: " Reservas por establecimiento",
+                      data: reservasPorEstablecimiento.map(r => r.reservas),
+                      backgroundColor: "#00bcd4"
+                    }]
+                  }}
+                  options={{
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                  }}
+                  height={260}
+                  width={700}
+                />
+              </div>
+            </div>
+          )}
+          {/* --- CAMBIA EL ORDEN DE LOS TOTALES --- */}
           <div style={{ marginTop: 16, textAlign: "center" }}>
-            <strong>Usuarios registrados:</strong> {data.usuarios} <br />
+            <strong>Reservas totales:</strong> {data.reservas} <br />
             <strong>Canchas:</strong> {data.canchas} <br />
-            <strong>Reservas totales:</strong> {data.reservas}
+            <strong>Usuarios registrados:</strong> {data.usuarios}
           </div>
         </div>
       </div>

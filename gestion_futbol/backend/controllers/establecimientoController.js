@@ -159,6 +159,17 @@ exports.createEstablecimiento = async (req, res) => {
   }
 };
 
+// Obtener todos los establecimientos (para el mapa)
+exports.getAllEstablecimientos = async (req, res) => {
+  try {
+    // Solo retorna los establecimientos activos
+    const result = await pool.query("SELECT * FROM establecimientos WHERE estado = 'activo'");
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener establecimientos" });
+  }
+};
+
 // Obtener establecimientos por dueño
 exports.getEstablecimientosByDueno = async (req, res) => {
   // Verifica que el usuario autenticado sea el dueño o admin
@@ -168,21 +179,11 @@ exports.getEstablecimientosByDueno = async (req, res) => {
     return res.status(403).json({ error: "No autorizado para ver estos establecimientos" });
   }
   try {
+    // CAMBIO: Trae también el campo id (clave primaria) y todos los campos relevantes
     const result = await pool.query(
       `SELECT * FROM establecimientos WHERE dueno_id = $1`,
       [dueno_id]
     );
-    res.json(result.rows);
-  } catch (error) {
-    res.status(500).json({ error: "Error al obtener establecimientos" });
-  }
-};
-
-// Obtener todos los establecimientos (para el mapa)
-exports.getAllEstablecimientos = async (req, res) => {
-  try {
-    // Solo retorna los establecimientos activos
-    const result = await pool.query("SELECT * FROM establecimientos WHERE estado = 'activo'");
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener establecimientos" });

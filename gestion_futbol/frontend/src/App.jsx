@@ -24,6 +24,8 @@ import ValidadorCanchas from "./pages/ValidadorCanchas";
 import RegistrarEstablecimiento from "./pages/RegistrarEstablecimiento";
 import MisEstablecimientos from "./pages/MisEstablecimientos";
 import MisReservas from "./pages/MisReservas";
+import HistorialAbonos from "./pages/HistorialAbonos";
+import HistorialAbonosPropietario from "./pages/HistorialAbonosPropietario";
 import { useLocation } from "react-router-dom";
 
 import ManualUsuario from "./pages/ManualUsuario";
@@ -97,6 +99,8 @@ function App() {
                   <Route path="/registrar-establecimiento" element={<RegistrarEstablecimiento />} />
                   <Route path="/mis-establecimientos" element={<MisEstablecimientos />} />
                   <Route path="/mis-reservas" element={<MisReservas />} />
+                  <Route path="/historial-abonos" element={<HistorialAbonos />} />
+                  <Route path="/historial-abonos-propietario" element={<HistorialAbonosPropietario />} />
                 </Routes>
               </div>
               <Footer />
@@ -156,10 +160,17 @@ function QuieroRegistrarCancha() {
       <p>
         Para registrar tu cancha debes primero crear una cuenta e iniciar sesión.<br />
         Luego podrás acceder al formulario para registrar tu establecimiento y subir los documentos requeridos.<br /><br />
+        <b>Requisitos:</b>
+        <ul>
+          <li>Documento de identidad (cédula) del propietario.</li>
+          <li>Certificado de Cámara de Comercio (certificado mercantil) <b>o</b> un recibo de servicio público a nombre del establecimiento.</li>
+          <li>Al menos una imagen clara del establecimiento.</li>
+          <li>Teléfono de contacto y dirección exacta (usa el buscador de direcciones).</li>
+        </ul>
         <b>Pasos:</b>
         <ol>
           <li>Regístrate o inicia sesión.</li>
-          <li>Accede a este apartado y haz clic en el botón de abajo.</li>
+          <li>Accede al apartado en el perfil de usuario donde dice registrar establecimiento y haz clic .</li>
           <li>Llena el formulario y sube los documentos.</li>
           <li>Un validador revisará tu solicitud y te notificaremos cuando esté aprobada.</li>
         </ol>

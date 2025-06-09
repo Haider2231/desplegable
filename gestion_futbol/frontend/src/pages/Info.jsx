@@ -101,24 +101,24 @@ export default function Info() {
           <br />
           Correo electrónico:{" "}
           <a
-            href="mailto:santiago-chavez@upc.edu.co"
+            href="mailto:haider-canon@upc.edu.co"
             style={{
               color: "#007991",
               fontWeight: 600,
             }}
           >
-            santiago-chavez@upc.edu.co
+            haider-canon@upc.edu.co
           </a>
           <br />
           Teléfono:{" "}
           <a
-            href="tel:+573223691238"
+            href="tel:+57 3219055593"
             style={{
               color: "#007991",
               fontWeight: 600,
             }}
           >
-            +57 322 369 1238
+            +57 3219055593
           </a>
         </p>
       </div>

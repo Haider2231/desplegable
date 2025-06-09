@@ -15,6 +15,31 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+
+// --- NUEVO: Interceptor de respuesta para token vencido ---
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Si el backend responde 401 o 403, asume token vencido/no válido
+    if (
+      error.response &&
+      (error.response.status === 401 || error.response.status === 403)
+    ) {
+      // Limpia el token y redirige a login solo si no está ya en login/register
+      localStorage.removeItem("token");
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.startsWith("/login") &&
+        !window.location.pathname.startsWith("/register")
+      ) {
+        alert("Tu sesión ha expirado. Por favor, inicia sesión nuevamente.");
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const login = (email, password) =>
   api.post("/auth/login", { email, password }).then((res) => res.data);
 
@@ -83,4 +108,16 @@ export const cancelarReserva = (reserva_id) =>
 export const getReservasByUsuario = () =>
   api.get("/reservas/mis-reservas").then((res) => res.data);
 
+
+// Obtener historial de abonos y pagos del usuario
+export const getHistorialAbonos = async () => {
+  const res = await api.get("/reservas/historial-abonos");
+  return res.data;
+};
+
+// Obtener historial de abonos y pagos de reservas de todas las canchas del propietario
+export const getHistorialAbonosPropietario = async () => {
+  const res = await api.get("/reservas/historial-abonos-propietario");
+  return res.data;
+};
 // ...agrega más métodos según tus endpoints...

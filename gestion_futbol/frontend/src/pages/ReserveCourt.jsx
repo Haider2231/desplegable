@@ -131,27 +131,27 @@ export default function ReserveCourt() {
       });
       const data = await response.json();
       if (response.ok && data.factura_url) {
-        setCanchas(prev =>
-          prev.map(c =>
-            c.cancha_id === cancha.cancha_id
-              ? {
-                  ...c,
-                  horarios: c.horarios.map(h =>
-                    h.id === horario.id ? { ...h, disponible: false, abono: data.abono, restante: data.restante } : h
-                  )
-                }
-              : c
-          )
-        );
-        // Mensaje de abono exitoso y guía al usuario
+        // Reserva y factura OK
+        // Redirige a la página de éxito SOLO si hay factura_url
+        navigate("/reserva-exitosa", { state: {
+          monto: data.monto,
+          abono: data.abono,
+          restante: data.restante,
+          factura_url: data.factura_url,
+          fecha: data.fecha,
+          hora_fin: data.hora_fin
+        }});
+      } else if (response.ok && !data.factura_url) {
+        // Reserva creada pero sin factura (esto no debería pasar si el backend siempre genera factura)
         await Swal.fire({
-          title: "Abono realizado",
-          html: `Tu abono fue registrado.<br>Dirígete a tu perfil en <b>Pagos pendientes</b> para completar el pago cuando lo desees.`,
+          title: "Reserva realizada",
+          html: `Tu abono fue registrado.<br>Diriígete a tu perfil en <b>Pagos pendientes para resvisar el estado actual de tu reserva , ademas te llegara una factura de abono pendiente al correo</b>luego en pagos pendientes podras completar el pago cuando lo desees.`,
           icon: "success",
           confirmButtonText: "Ver mis reservas"
         });
         navigate("/mis-reservas?estado=pendiente");
       } else {
+        // Error real, NO se ocupó la disponibilidad
         Swal.fire("Error", data.error || "No se pudo crear la reserva", "error");
       }
     } catch {

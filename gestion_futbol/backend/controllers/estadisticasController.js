@@ -66,7 +66,11 @@ exports.propietario = async (req, res) => {
           COUNT(r.id) AS reservas,
           COALESCE(
             json_agg(
-              json_build_object('abono', f.abono)
+              json_build_object(
+                'abono', f.abono,
+                'hora_inicio', d.hora_inicio,
+                'fecha', d.fecha
+              )
             ) FILTER (WHERE r.id IS NOT NULL AND f.abono IS NOT NULL),
             '[]'
           ) AS reservas_detalle
@@ -132,7 +136,6 @@ exports.admin = async (req, res) => {
     // Reservas totales
     const reservasRes = await pool.query(`SELECT COUNT(*) FROM reservas`);
     // Actividad por día (últimos 7 días)
-    // Cambia 'fecha' por el campo correcto, por ejemplo 'created_at' o 'fecha_reserva'
     const actividadRes = await pool.query(
       `SELECT TO_CHAR(r.fecha_reserva, 'YYYY-MM-DD') AS fecha, COUNT(*) AS reservas
          FROM reservas r
@@ -140,12 +143,43 @@ exports.admin = async (req, res) => {
         GROUP BY fecha
         ORDER BY fecha`
     );
+
+    // --- NUEVO: Reservas por establecimiento ---
+    // Agrupa reservas por establecimiento
+    const reservasPorEstablecimientoRes = await pool.query(
+      `SELECT e.nombre, COUNT(r.id) AS reservas
+         FROM reservas r
+         JOIN disponibilidades d ON r.disponibilidad_id = d.id
+         JOIN canchas c ON d.cancha_id = c.id
+         JOIN establecimientos e ON c.establecimiento_id = e.id
+        GROUP BY e.nombre
+        ORDER BY reservas DESC`
+    );
+
+    // --- NUEVO: Reservas por cancha (para el gráfico de canchas más reservadas) ---
+    const reservasPorCanchaRes = await pool.query(
+      `SELECT c.nombre, COUNT(r.id) AS reservas
+         FROM reservas r
+         JOIN disponibilidades d ON r.disponibilidad_id = d.id
+         JOIN canchas c ON d.cancha_id = c.id
+        GROUP BY c.nombre
+        ORDER BY reservas DESC`
+    );
+
     res.json({
       usuarios: parseInt(usuariosRes.rows[0].count),
       canchas: parseInt(canchasRes.rows[0].count),
       reservas: parseInt(reservasRes.rows[0].count),
       actividad: actividadRes.rows.map(r => ({
         fecha: r.fecha,
+        reservas: parseInt(r.reservas)
+      })),
+      reservas_por_establecimiento: reservasPorEstablecimientoRes.rows.map(r => ({
+        nombre: r.nombre,
+        reservas: parseInt(r.reservas)
+      })),
+      reservas_por_cancha: reservasPorCanchaRes.rows.map(r => ({
+        nombre: r.nombre,
         reservas: parseInt(r.reservas)
       }))
     });

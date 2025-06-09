@@ -139,11 +139,11 @@ exports.getReservasByUsuario = async (req, res) => {
 
 // Crear reserva y generar factura (con abono parcial, estado pendiente)
 exports.createReservaConFactura = async (req, res) => {
-  const { disponibilidad_id, abono } = req.body;
-  const usuario_id = req.user?.userId || null;
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const { disponibilidad_id, abono } = req.body;
+    const usuario_id = req.user?.userId || null;
     // Trae también el establecimiento_id para la factura
     const disponibilidadCheck = await client.query(
       `SELECT d.*, e.precio, c.nombre AS cancha_nombre, e.direccion, c.id AS cancha_id, c.establecimiento_id, e.nombre AS establecimiento_nombre, e.dueno_id
@@ -233,8 +233,10 @@ exports.createReservaConFactura = async (req, res) => {
     }
 
     await client.query("COMMIT");
+    client.release();
 
     // --- Enviar correo al propietario (fuera de la transacción, no afecta la reserva) ---
+    let usuario; // <--- define usuario aquí para usarlo después
     try {
       // Obtener email y nombre del propietario
       const propietario = await pool.query(
@@ -242,7 +244,7 @@ exports.createReservaConFactura = async (req, res) => {
         [disp.dueno_id]
       );
       const propietarioEmail = propietario.rows[0]?.email;
-      const usuario = await pool.query(
+      usuario = await pool.query(
         `SELECT nombre, email FROM usuarios WHERE id = $1`,
         [usuario_id]
       );
@@ -263,6 +265,25 @@ exports.createReservaConFactura = async (req, res) => {
       console.error("Error enviando correo al propietario:", correoErr);
     }
     // --- Fin correo propietario ---
+
+    // --- Enviar factura PDF al usuario con mensaje de pendiente ---
+    try {
+      // Asegúrate de que usuario esté definido y tenga la estructura correcta
+      const userEmail = usuario && usuario.rows && usuario.rows[0] && usuario.rows[0].email;
+      if (userEmail && factura && factura.facturaId) {
+        const facturaController = require("./facturaController");
+        await facturaController.enviarFacturaPorCorreoPendiente(
+          factura.facturaId,
+          userEmail,
+          disp,
+          abonoReal,
+          restante
+        );
+      }
+    } catch (correoErr) {
+      console.error("Error enviando factura PDF al usuario:", correoErr);
+    }
+    // --- Fin correo usuario ---
 
     res.json({
       ...reserva,
@@ -298,9 +319,9 @@ exports.pagarSaldoReserva = async (req, res) => {
       client.release();
       return res.status(404).json({ error: "Reserva no encontrada o ya pagada/cancelada" });
     }
-    // Actualiza la factura
+    // Trae el valor restante antes de actualizar
     const facturaRes = await client.query(
-      `UPDATE facturas SET restante = 0, estado = 'pagada' WHERE reserva_id = $1 RETURNING id, usuario_id`,
+      `UPDATE facturas SET restante = 0, estado = 'pagada' WHERE reserva_id = $1 RETURNING id, usuario_id, restante, monto, abono`,
       [reserva_id]
     );
     if (facturaRes.rowCount === 0) {
@@ -321,7 +342,7 @@ exports.pagarSaldoReserva = async (req, res) => {
     await client.query("COMMIT");
     client.release();
 
-    // --- Enviar la factura PDF real como adjunto ---
+    // --- Enviar la factura PDF real como adjunto y regenerar el PDF con estado pagada ---
     try {
       const usuarioRes = await pool.query(
         `SELECT email, nombre FROM usuarios WHERE id = $1`,
@@ -329,6 +350,36 @@ exports.pagarSaldoReserva = async (req, res) => {
       );
       const usuario = usuarioRes.rows[0];
       const facturaId = facturaRes.rows[0].id;
+
+      // Traer datos completos de la reserva para el PDF
+      const reservaDatos = await pool.query(
+        `SELECT r.fecha_reserva, d.fecha, d.hora_inicio, d.hora_fin, c.nombre AS cancha_nombre, e.direccion, c.id AS cancha_id
+         FROM reservas r
+         JOIN disponibilidades d ON r.disponibilidad_id = d.id
+         JOIN canchas c ON d.cancha_id = c.id
+         JOIN establecimientos e ON c.establecimiento_id = e.id
+         WHERE r.id = $1`,
+        [reserva_id]
+      );
+      const datos = reservaDatos.rows[0] || {};
+
+      // Regenerar el PDF de la factura con estado pagada (pagoFinal = true)
+      await facturaController.crearFacturaYGenerarPDF({
+        reservaId: reserva_id,
+        usuarioId: reservaRes.rows[0].usuario_id,
+        precio: facturaRes.rows[0].monto,
+        abono: facturaRes.rows[0].abono,
+        fecha_reserva: datos.fecha_reserva,
+        cancha_nombre: datos.cancha_nombre,
+        direccion: datos.direccion,
+        fecha: datos.fecha,
+        hora_inicio: datos.hora_inicio,
+        hora_fin: datos.hora_fin,
+        cancha_id: datos.cancha_id,
+        estado: "pagada",
+        pagoFinal: true
+      });
+
       const pdfPath = require("path").join(__dirname, "..", "uploads", `factura_${facturaId}.pdf`);
       const fs = require("fs");
       if (usuario && fs.existsSync(pdfPath)) {
@@ -363,7 +414,12 @@ exports.pagarSaldoReserva = async (req, res) => {
     }
     // --- Fin correo usuario ---
 
-    res.json({ message: "Pago completado y reserva confirmada" });
+    res.json({
+      message: "Pago completado y reserva confirmada",
+      pagado: facturaRes.rows[0].restante,
+      monto: facturaRes.rows[0].monto,
+      abono: facturaRes.rows[0].abono
+    });
   } catch (error) {
     await client.query("ROLLBACK");
     client.release();
@@ -428,5 +484,81 @@ exports.getReservasByCancha = async (req, res) => {
   } catch (error) {
     console.error("Error al obtener reservas por cancha:", error);
     res.status(500).json({ error: "Error al obtener reservas por cancha" });
+  }
+};
+
+// Historial de abonos y pagos del usuario
+exports.getHistorialAbonos = async (req, res) => {
+  const usuario_id = req.user?.userId;
+  try {
+    const result = await pool.query(
+      `SELECT r.id AS reserva_id, r.fecha_reserva, d.fecha, d.hora_inicio, d.hora_fin, 
+              c.nombre AS cancha, e.nombre AS establecimiento, 
+              f.abono, f.restante, f.estado AS estado_pago, f.id AS factura_id, f.monto AS total
+       FROM reservas r
+       JOIN disponibilidades d ON r.disponibilidad_id = d.id
+       JOIN canchas c ON d.cancha_id = c.id
+       JOIN establecimientos e ON c.establecimiento_id = e.id
+       LEFT JOIN facturas f ON f.reserva_id = r.id
+       WHERE r.usuario_id = $1
+       ORDER BY r.fecha_reserva DESC` ,
+      [usuario_id]
+    );
+    const historial = result.rows.map(row => ({
+      fecha: row.fecha_reserva,
+      cancha: row.cancha,
+      establecimiento: row.establecimiento,
+      abono: row.abono,
+      restante: row.restante,
+      estado: row.estado_pago,
+      factura_url: row.factura_id ? `/uploads/factura_${row.factura_id}.pdf` : null,
+      hora_inicio: row.hora_inicio,
+      hora_fin: row.hora_fin,
+      total: row.total
+    }));
+    res.json(historial);
+  } catch (error) {
+    console.error("Error al obtener historial de abonos:", error);
+    res.status(500).json({ error: "Error al obtener historial de abonos", detalle: error.message });
+  }
+};
+
+// Historial de abonos y pagos de todas las reservas de las canchas del propietario
+exports.getHistorialAbonosPropietario = async (req, res) => {
+  const propietario_id = req.user?.userId;
+  try {
+    const result = await pool.query(
+      `SELECT r.fecha_reserva, d.fecha, d.hora_inicio, d.hora_fin,
+              c.nombre AS cancha, e.nombre AS establecimiento,
+              f.abono, f.restante, f.estado AS estado_pago, f.id AS factura_id, f.monto AS total,
+              u.nombre AS usuario_nombre, u.email AS usuario_email, u.telefono AS usuario_telefono
+       FROM reservas r
+       JOIN disponibilidades d ON r.disponibilidad_id = d.id
+       JOIN canchas c ON d.cancha_id = c.id
+       JOIN establecimientos e ON c.establecimiento_id = e.id
+       LEFT JOIN facturas f ON f.reserva_id = r.id
+       JOIN usuarios u ON r.usuario_id = u.id
+       WHERE e.dueno_id = $1
+       ORDER BY r.fecha_reserva DESC`,
+      [propietario_id]
+    );
+    const historial = result.rows.map(row => ({
+      fecha_reserva: row.fecha_reserva,
+      cancha: row.cancha,
+      hora_inicio: row.hora_inicio, // <-- Asegura que se incluya
+      hora_fin: row.hora_fin,       // <-- Asegura que se incluya
+      usuario: row.usuario_nombre,
+      email: row.usuario_email,
+      telefono: row.usuario_telefono,
+      abono: row.abono,
+      estado: row.estado_pago === 'pagada' ? 'Pagado' : 'Pendiente',
+      restante: row.restante,
+      total: row.total,
+      valor_restante_pagado: row.estado_pago === 'pagada' && row.total && row.abono != null ? (row.total - row.abono) : null
+    }));
+    res.json(historial);
+  } catch (error) {
+    console.error("Error al obtener historial de abonos del propietario:", error);
+    res.status(500).json({ error: "Error al obtener historial de abonos del propietario", detalle: error.message });
   }
 };
